@@ -1,8 +1,8 @@
 import { Entity, Column, Index } from 'typeorm';
-import { TenantBaseEntity } from '../../../common/base/tenant-base.entity';
+import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
 
 @Entity()
-export class AnswerSheet extends TenantBaseEntity {
+export class AnswerSheet extends ClientScopedEntity {
   @Index()
   @Column({ type: 'varchar' })
   participantId!: string;

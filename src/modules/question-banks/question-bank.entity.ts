@@ -1,5 +1,5 @@
 import { Entity, Column } from 'typeorm';
-import { TenantBaseEntity } from '../../common/base/tenant-base.entity';
+import { ClientScopedEntity } from '../../common/base/client-scoped.entity';
 
 export enum BankVisibility {
   PRIVATE = 'PRIVATE',
@@ -7,7 +7,7 @@ export enum BankVisibility {
 }
 
 @Entity()
-export class QuestionBank extends TenantBaseEntity {
+export class QuestionBank extends ClientScopedEntity {
   @Column({ type: 'varchar', length: 256})
   name!: string;
 

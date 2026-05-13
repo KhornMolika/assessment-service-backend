@@ -6,6 +6,7 @@ import {
 import { TopicRepository } from './repositories/topic.repository';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
+import slugify from 'slugify';
 
 @Injectable()
 export class TopicsService {
@@ -18,14 +19,19 @@ export class TopicsService {
   */
   async create(dto: CreateTopicDto) {
     try {
-      const exists = await this.topicRepository.existsBySlug(dto.slug);
+      const slug = this.generateSlug(dto.name);
+      
+      const exists = await this.topicRepository.findOne({ slug } as any);
 
-      if (exists) {
-        throw new BadRequestException('Topic slug already exists');
-      }
+      if (exists) throw new BadRequestException('Topic slug already exists');
 
-      return this.topicRepository.createTopic(dto);
+      return await this.topicRepository.create ({
+        ...dto,
+        slug
+      });
+
     } catch (error) {
+      console.log(error);
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException('Failed to create topic');
     }
@@ -38,7 +44,7 @@ export class TopicsService {
   */
   async findAll() {
     try {
-      return this.topicRepository.findAllTopics();
+      return this.topicRepository.findAll();
     } catch (error) {
       throw new BadRequestException('Could not fetch topics');
     }
@@ -51,7 +57,7 @@ export class TopicsService {
   */
   async findById(id: string) {
     try {
-      const topic = await this.topicRepository.findTopicById(id);
+      const topic = await this.topicRepository.findOne({ id } as any);
 
       if (!topic) {
         throw new NotFoundException('Topic not found');
@@ -75,13 +81,24 @@ export class TopicsService {
 
       await this.findById(id);
 
-      if (dto.slug) {
-        const exists = await this.topicRepository.existsBySlug(dto.slug);
-        if (exists) throw new BadRequestException('The new slug is already taken');
-      }
+      const updateData: any = { ...dto };
 
-      return this.topicRepository.updateTopic(id, dto);
+      if (dto.name) {
+        const slug = this.generateSlug(dto.name);
+
+        // Ensure new slug is not taken by another topic record
+        const exists = await this.topicRepository.findOne({ slug} as any);
+
+        if (exists && exists.id !== id) throw new BadRequestException('The new name is already taken');
+
+        updateData.slug = slug;
+      }
+      
+      await this.topicRepository.update({ id } as any, updateData);
+      return this.findById(id);
+
     } catch (error) {
+      console.log(error);
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       throw new BadRequestException('Update failed');
     }
@@ -91,10 +108,22 @@ export class TopicsService {
     try {
       await this.findById(id);
 
-      return await this.topicRepository.deleteTopic(id);
+      return await this.topicRepository.softDelete({ id } as any);
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new BadRequestException('Delete failed');
     }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Helper Utilities
+  |--------------------------------------------------------------------------
+  */
+  private generateSlug(name: string): string {
+    return slugify(name, {
+      lower: true,
+      strict: true,
+    });
   }
 }

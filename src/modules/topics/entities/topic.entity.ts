@@ -1,9 +1,8 @@
 import { Column, Entity, Index } from "typeorm";
-import { TenantBaseEntity } from "../../../common/base/tenant-base.entity";
+import { ClientScopedEntity } from "../../../common/base/client-scoped.entity";
 
 @Entity()
-@Index(['clientId', 'slug'], { unique: true })
-export class Topic extends TenantBaseEntity {
+export class Topic extends ClientScopedEntity  {
   @Column({
     type: 'varchar',
     length: 256
@@ -12,7 +11,7 @@ export class Topic extends TenantBaseEntity {
 
   @Column({
     type: 'varchar',
-    length: 256,
+    length: 320,
   })
   slug!: string;
 
