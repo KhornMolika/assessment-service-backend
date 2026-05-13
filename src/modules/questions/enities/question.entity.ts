@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, Index } from 'typeorm';
-import { TenantBaseEntity } from '../../../common/base/tenant-base.entity';
 import { QuestionType } from './question-type.entity';
 import { QuestionBank } from '../../question-banks/question-bank.entity';
+import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
 
 export enum Difficulty {
   EASY = 'EASY',
@@ -10,7 +10,7 @@ export enum Difficulty {
 }
 
 @Entity()
-export class Question extends TenantBaseEntity {
+export class Question extends ClientScopedEntity {
   @Index()
   @Column({ type: 'varchar' })
   bankId!: string;

@@ -13,7 +13,7 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ExecutionsModule } from './modules/executions/executions.module';
-import { ContextMiddleware } from './common/context/context.middleware';
+import { ContextModule } from './common/context/context.module';
 
 @Module({
   imports: [
@@ -50,10 +50,8 @@ import { ContextMiddleware } from './common/context/context.middleware';
     AnalyticsModule,
 
     ExecutionsModule,
+
+    ContextModule,
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ContextMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}
