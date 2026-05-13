@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TopicsModule } from './modules/topics/topics.module';
@@ -13,6 +13,7 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ExecutionsModule } from './modules/executions/executions.module';
+import { ContextMiddleware } from './common/context/context.middleware';
 
 @Module({
   imports: [
@@ -51,4 +52,8 @@ import { ExecutionsModule } from './modules/executions/executions.module';
     ExecutionsModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ContextMiddleware).forRoutes('*');
+  }
+}

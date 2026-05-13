@@ -26,6 +26,7 @@ export class TopicsService {
 
       return this.topicRepository.createTopic(dto);
     } catch (error) {
+      console.log(error);
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException('Failed to create topic');
     }
@@ -82,6 +83,7 @@ export class TopicsService {
 
       return this.topicRepository.updateTopic(id, dto);
     } catch (error) {
+      console.log(error);
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       throw new BadRequestException('Update failed');
     }

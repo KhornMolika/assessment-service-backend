@@ -5,7 +5,6 @@ import { Topic } from '../entities/topic.entity';
 
 @Injectable()
 export class TopicRepository extends TenantRepository<Topic> {
-  
   constructor(protected readonly dataSource: DataSource) {
     super(dataSource, Topic);
   }
@@ -16,7 +15,7 @@ export class TopicRepository extends TenantRepository<Topic> {
   |--------------------------------------------------------------------------
   */
   async createTopic(data: Partial<Topic>) {
-    return this.repository.save({
+    return await this.repository.save({
       ...data,
       clientId: this.clientId(),
     });

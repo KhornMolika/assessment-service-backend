@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common';
 
 export enum ErrorCode {
-  BAD_REQUEST = 'BAD_REQUEST',
   VALIDATION_ERROR = 'VALIDATION_ERROR',
-  NOT_FOUND = 'NOT_FOUND',
+  BAD_REQUEST = 'BAD_REQUEST',
   UNAUTHORIZED = 'UNAUTHORIZED',
   FORBIDDEN = 'FORBIDDEN',
+  NOT_FOUND = 'NOT_FOUND',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
 
@@ -89,10 +89,10 @@ export class HttpExceptionFilter
 
     response.status(status).json({
       success: false,
-      error: normalized,
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
+      error: normalized,
     });
   }
 }
