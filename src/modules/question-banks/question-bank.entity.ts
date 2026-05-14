@@ -1,5 +1,6 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ClientScopedEntity } from '../../common/base/client-scoped.entity';
+import { Topic } from '../topics/entities/topic.entity';
 
 export enum BankVisibility {
   PRIVATE = 'PRIVATE',
@@ -23,4 +24,12 @@ export class QuestionBank extends ClientScopedEntity {
     default: BankVisibility.PRIVATE,
   })
   visibility!: BankVisibility;
+
+  @ManyToMany(() => Topic, (topic) => topic.questionBanks, { cascade: true })
+  @JoinTable({
+    name: 'question_bank_topics', // Custom clean table name
+    joinColumn: { name: 'questionBankId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'topicId', referencedColumnName: 'id' }
+  })
+  topics!: Topic[];
 }

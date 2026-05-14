@@ -4,10 +4,15 @@ import {
   Repository,
   FindOptionsWhere,
   ObjectLiteral,
+  ILike,
+  Raw,
 } from 'typeorm';
 import { RequestContext } from '../context/request-context';
+import { PaginationQueryDto } from '../dto/pagination-query.dto';
 
-export abstract class ClientRepository<T extends ObjectLiteral & { clientId: string }> {
+export abstract class ClientRepository<
+  T extends ObjectLiteral & { clientId: string },
+> {
   protected repository: Repository<T>;
 
   constructor(
@@ -24,6 +29,53 @@ export abstract class ClientRepository<T extends ObjectLiteral & { clientId: str
       ...where,
       clientId: this.context.clientId,
     };
+  }
+
+  async findPaginated(
+    query: PaginationQueryDto,
+    searchFields: (keyof T)[],
+    relations: string[] = [],
+  ) {
+    const { page, limit, search, sortBy, order, visibility, tag, topicId } =
+      query;
+    const skip = (page - 1) * limit;
+
+    // 1. Build the explicit base filters
+    const explicitFilters: any = {};
+
+    if (visibility) {
+      explicitFilters.visibility = visibility;
+    }
+
+    if (tag) {
+      explicitFilters.tags = Raw((alias) => `:tag = ANY(${alias})`, { tag });
+    }
+
+    // 2. FIXED: Multi-relation Many-to-Many nesting filter check
+    if (topicId) {
+      explicitFilters.topics = { id: topicId }; // TypeORM resolves this to an INNER JOIN on the junction table
+    }
+
+    const baseWhere = this.scope(explicitFilters);
+    let whereConditions: FindOptionsWhere<T> | FindOptionsWhere<T>[] =
+      baseWhere;
+
+    // 3. ONLY create an OR array block if a search keyword is actually provided
+    if (search && search.trim() !== '' && searchFields.length > 0) {
+      whereConditions = searchFields.map((field) => ({
+        ...baseWhere,
+        [field]: ILike(`%${search.trim()}%`),
+      }));
+    }
+
+    // 4. Return paginated results and pass the relations array down cleanly
+    return this.repository.findAndCount({
+      where: whereConditions,
+      relations, // 👈 Added relations array parameter to load linked tables (like 'topics') dynamically
+      order: { [sortBy]: order.toUpperCase() } as any,
+      skip,
+      take: limit,
+    });
   }
 
   async findAll(where: FindOptionsWhere<T> = {}) {

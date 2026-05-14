@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AutoMigration1778658190932 implements MigrationInterface {
-    name = 'AutoMigration1778658190932'
+export class AutoMigration1778737549170 implements MigrationInterface {
+    name = 'AutoMigration1778737549170'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "public"."question_bank_visibility_enum" AS ENUM('PRIVATE', 'PUBLIC')`);
@@ -38,8 +38,8 @@ export class AutoMigration1778658190932 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "question_topic" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" character varying NOT NULL, "questionId" character varying NOT NULL, "topicId" character varying NOT NULL, CONSTRAINT "PK_39d305cac1df890f9724157e2e4" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_9c919dc6b987984a41daaeb5bc" ON "question_topic" ("clientId", "topicId") `);
         await queryRunner.query(`CREATE INDEX "IDX_c73f89d531a4454b441e95df27" ON "question_topic" ("clientId", "questionId") `);
-        await queryRunner.query(`CREATE TABLE "assessment_topic" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" character varying NOT NULL, "assessmentId" character varying NOT NULL, "topicId" character varying NOT NULL, CONSTRAINT "PK_b869f1f61818237c05191cb449d" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "bank_topic" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" character varying NOT NULL, "questionBankId" character varying NOT NULL, "topicId" character varying NOT NULL, CONSTRAINT "PK_36bd39126880697e80eb007055c" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "assessment_topic" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" character varying NOT NULL, "assessmentId" character varying NOT NULL, "topicId" character varying NOT NULL, CONSTRAINT "PK_b869f1f61818237c05191cb449d" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."question_type_gradingstrategy_enum" AS ENUM('BINARY', 'DEDUCTIVE', 'SCALED', 'AI')`);
         await queryRunner.query(`CREATE TABLE "question_type" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "name" character varying(50) NOT NULL, "gradingStrategy" "public"."question_type_gradingstrategy_enum" NOT NULL, "hasOptions" boolean NOT NULL DEFAULT false, "supportsAi" boolean NOT NULL DEFAULT false, "isManualOnly" boolean NOT NULL DEFAULT false, "defaultMaxScore" integer NOT NULL DEFAULT '5', "description" text, CONSTRAINT "PK_8ee0ca6ea5ac1770d54b7ff5ca4" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."question_difficulty_enum" AS ENUM('EASY', 'MEDIUM', 'HARD')`);
@@ -63,8 +63,8 @@ export class AutoMigration1778658190932 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE "public"."question_difficulty_enum"`);
         await queryRunner.query(`DROP TABLE "question_type"`);
         await queryRunner.query(`DROP TYPE "public"."question_type_gradingstrategy_enum"`);
-        await queryRunner.query(`DROP TABLE "bank_topic"`);
         await queryRunner.query(`DROP TABLE "assessment_topic"`);
+        await queryRunner.query(`DROP TABLE "bank_topic"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_c73f89d531a4454b441e95df27"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_9c919dc6b987984a41daaeb5bc"`);
         await queryRunner.query(`DROP TABLE "question_topic"`);

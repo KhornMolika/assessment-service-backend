@@ -1,5 +1,6 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { Topic } from '../../topics/entities/topic.entity';
 
 export enum AssessmentStatus {
   DRAFT = 'DRAFT',
@@ -21,4 +22,12 @@ export class Assessment extends ClientScopedEntity {
     default: AssessmentStatus.DRAFT
   })
   status!: AssessmentStatus;
+
+  @ManyToMany(() => Topic, (topic) => topic.assessments)
+  @JoinTable({
+    name: 'assessment_topics', // Custom junction table name
+    joinColumn: { name: 'assessmentId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'topicId', referencedColumnName: 'id' },
+  })
+  topics!: Topic[];
 }

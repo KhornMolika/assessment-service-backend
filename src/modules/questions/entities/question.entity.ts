@@ -1,7 +1,8 @@
-import { Entity, Column, ManyToOne, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, Index, ManyToMany, JoinTable } from 'typeorm';
 import { QuestionType } from './question-type.entity';
 import { QuestionBank } from '../../question-banks/question-bank.entity';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { Topic } from '../../topics/entities/topic.entity';
 
 export enum Difficulty {
   EASY = 'EASY',
@@ -42,4 +43,12 @@ export class Question extends ClientScopedEntity {
 
   @ManyToOne(() => QuestionBank, { nullable: true })
   bank!: QuestionBank;
+
+  @ManyToMany(() => Topic, (topic) => topic.questions)
+  @JoinTable({
+    name: 'question_topics', // Custom junction table name
+    joinColumn: { name: 'questionId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'topicId', referencedColumnName: 'id' },
+  })
+  topics!: Topic[];
 }

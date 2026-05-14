@@ -7,10 +7,12 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { TopicsService } from './topics.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @Controller('topics')
 export class TopicsController {
@@ -22,8 +24,8 @@ export class TopicsController {
   }
 
   @Get()
-  async findAll() {
-    return await this.topicService.findAll();
+  async findAll(@Query() query: PaginationQueryDto) {
+    return await this.topicService.findAll(query);
   }
 
   @Get(':id')

@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
@@ -16,5 +17,6 @@ export abstract class SystemBaseEntity {
   updatedAt!: Date;
 
   @DeleteDateColumn({  type: 'timestamp' })
+  @Exclude()
   deletedAt!: Date;
 }
