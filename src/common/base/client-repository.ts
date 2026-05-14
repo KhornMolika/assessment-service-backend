@@ -24,7 +24,7 @@ export abstract class ClientRepository<
   }
 
   // HARD GUARANTEE: every query is scoped
-  protected scope(where: FindOptionsWhere<T> = {}): FindOptionsWhere<T> {
+  public scope(where: FindOptionsWhere<T> = {}): FindOptionsWhere<T> {
     return {
       ...where,
       clientId: this.context.clientId,
