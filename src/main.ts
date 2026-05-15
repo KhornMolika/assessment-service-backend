@@ -25,6 +25,12 @@ async function bootstrap() {
     new ClassSerializerInterceptor(app.get(Reflector)),
     new TransformInterceptor());
 
+  app.enableCors({
+  origin: '*',
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-client-id'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+});
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

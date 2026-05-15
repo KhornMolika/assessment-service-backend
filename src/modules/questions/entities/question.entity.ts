@@ -1,8 +1,8 @@
 import { Entity, Column, ManyToOne, Index, ManyToMany, JoinTable } from 'typeorm';
-import { QuestionType } from './question-type.entity';
 import { QuestionBank } from '../../question-banks/question-bank.entity';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
 import { Topic } from '../../topics/entities/topic.entity';
+import { QuestionTypeName } from '../constants/question-types.config';
 
 export enum Difficulty {
   EASY = 'EASY',
@@ -13,15 +13,14 @@ export enum Difficulty {
 @Entity()
 export class Question extends ClientScopedEntity {
   @Index()
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid' })
   bankId!: string;
-
-  @Index()
-  @Column({ type: 'varchar' })
-  typeId!: string;
 
   @Column({ type: 'text' })
   questionText!: string;
+  
+  @Column({ type: 'enum', enum: QuestionTypeName }) // Stored directly as an Enum type string
+  type!: QuestionTypeName;
 
   @Column({ type: 'enum', enum: Difficulty })
   difficulty!: Difficulty;
@@ -33,13 +32,10 @@ export class Question extends ClientScopedEntity {
   tags?: string[];
 
   @Column({ type: 'jsonb' })
-  settings: any;
+  settings!: Record<string, any>;
 
   @Column({ type: 'jsonb' })
-  correctAnswer: any;
-
-  @ManyToOne(() => QuestionType)
-  type!: QuestionType;
+  correctAnswer!: Record<string, any>;
 
   @ManyToOne(() => QuestionBank, { nullable: true })
   bank!: QuestionBank;

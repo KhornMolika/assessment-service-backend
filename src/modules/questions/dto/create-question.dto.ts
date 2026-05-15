@@ -9,13 +9,14 @@ import {
   Min,
 } from 'class-validator';
 import { Difficulty } from '../entities/question.entity';
+import { QuestionTypeName } from '../constants/question-types.config';
 
 export class CreateQuestionDto {
   @IsUUID('4')
   bankId!: string;
 
-  @IsUUID('4')
-  typeId!: string;
+  @IsEnum(QuestionTypeName)
+  type!: QuestionTypeName;
 
   @IsString()
   questionText!: string;
@@ -33,13 +34,13 @@ export class CreateQuestionDto {
   tags?: string[];
 
   @IsObject()
-  settings!: any;
+  settings!:  Record<string, any>;
 
   @IsObject()
-  correctAnswer!: any;
+  correctAnswer!: Record<string, any>; 
 
   @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
-  topicIds?: string[];
+  topicIds!: string[];
 }
