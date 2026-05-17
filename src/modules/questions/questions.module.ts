@@ -6,6 +6,7 @@ import { QuestionRepository } from './repositories/question.repository';
 import { TopicsModule } from '../topics/topics.module';
 import { ContextModule } from '../../common/context/context.module';
 import { QuestionsController } from './questions.controller';
+import { TopicQuestionsController } from './topic-questions.controller';
 import { TopicRepository } from '../topics/repositories/topic.repository';
 import { QuestionBanksModule } from '../question-banks/question-banks.module';
 
@@ -16,9 +17,9 @@ import { QuestionBanksModule } from '../question-banks/question-banks.module';
     ContextModule,
     QuestionBanksModule
   ],
-  controllers: [QuestionsController],
+  controllers: [QuestionsController, TopicQuestionsController],
   providers: [QuestionsService, QuestionRepository],
-  exports: [QuestionsService],
+  exports: [QuestionsService, QuestionRepository],
 })
 export class QuestionsModule {}
 

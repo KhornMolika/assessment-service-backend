@@ -8,7 +8,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { BankVisibility } from '../../modules/question-banks/question-bank.entity';
+import { BankVisibility } from '../../modules/question-banks/entities/question-bank.entity';
 
 export class PaginationQueryDto {
   @IsOptional()

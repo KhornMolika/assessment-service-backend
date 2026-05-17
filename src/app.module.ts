@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TopicsModule } from './modules/topics/topics.module';
@@ -6,6 +6,7 @@ import appConfig from './config/app.config';
 import { envValidationSchema } from './config/env.validation';
 import { databaseConfig } from './config/database.config';
 import { ClientsModule } from './modules/clients/clients.module';
+import { ClientMiddleware } from './common/middleware/client.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
@@ -54,4 +55,8 @@ import { QuestionBanksModule } from './modules/question-banks/question-banks.mod
     ContextModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ClientMiddleware).forRoutes('*');
+  }
+}

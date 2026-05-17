@@ -17,6 +17,8 @@ async function bootstrap() {
     }),
   );
 
+  app.setGlobalPrefix('api/v1');
+
   // Global error formatting filter
   app.useGlobalFilters(new HttpExceptionFilter());
 

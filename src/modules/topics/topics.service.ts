@@ -27,13 +27,16 @@ export class TopicsService {
       const slug = this.generateSlug(dto.name);
 
       const topic = await this.topicRepository.create({
-        ...dto,
+        name: dto.name,
+        description: dto.description,
+        visibility: dto.visibility,
         slug,
       });
 
       return topic;
 
     } catch (error) {
+      console.log('Error creating topic:', error);
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException('Failed to create topic');
     }
@@ -57,7 +60,7 @@ export class TopicsService {
           total,
           page: query.page,
           limit: query.limit,
-          totalPages: Math.ceil(total / query.limit),
+          pageCount: Math.ceil(total / query.limit),
         },
       };
     } catch (error) {
@@ -72,13 +75,38 @@ export class TopicsService {
   */
   async findById(id: string) {
     try {
-      const topic = await this.topicRepository.findOne({ id } as any);
+      const topic = await this.topicRepository.findById(id, ['questionBanks', 'assessments', 'questions']);
 
       if (!topic) {
         throw new NotFoundException('Topic not found');
       }
 
-      return topic;
+      const mapped: any = { ...topic };
+      mapped.summary = {
+        totalQuestions: topic.questions?.length || 0,
+        totalQuestionBanks: topic.questionBanks?.length || 0,
+        totalAssessments: topic.assessments?.length || 0,
+      };
+
+      // Do not return all questions raw in the response per API doc
+      delete mapped.questions;
+      
+      // Map question counts for nested banks/assessments if necessary
+      if(mapped.questionBanks) {
+        mapped.questionBanks = mapped.questionBanks.map((b: any) => ({
+          ...b,
+          questionCount: b.questions?.length || 0 // assuming relation loaded or just mock for now
+        }));
+      }
+
+      if(mapped.assessments) {
+        mapped.assessments = mapped.assessments.map((a: any) => ({
+          ...a,
+          questionCount: a.assessmentQuestions?.length || 0
+        }));
+      }
+
+      return mapped;
 
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -95,7 +123,10 @@ export class TopicsService {
     try {
       await this.findById(id);
 
-      const updateData: any = { ...dto };
+      const updateData: any = {};
+      if (dto.name) updateData.name = dto.name;
+      if (dto.description) updateData.description = dto.description;
+      if (dto.visibility) updateData.visibility = dto.visibility;
 
       if (dto.name) {
         const slug = this.generateSlug(dto.name);

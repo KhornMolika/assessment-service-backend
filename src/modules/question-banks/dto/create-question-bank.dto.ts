@@ -1,5 +1,5 @@
 import { IsString, Length, IsOptional, IsArray, IsEnum, IsUUID } from 'class-validator';
-import { BankVisibility } from '../question-bank.entity';
+import { BankVisibility } from '../entities/question-bank.entity';
 
 export class CreateQuestionBankDto {
   @IsString()
@@ -16,9 +16,8 @@ export class CreateQuestionBankDto {
   tags?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsUUID('4', { each: true }) // 👈 Enforces valid UUIDs for topics
-  topicId?: string[];
+  @IsUUID('4')
+  topicId?: string;
 
   @IsOptional()
   @IsEnum(BankVisibility)

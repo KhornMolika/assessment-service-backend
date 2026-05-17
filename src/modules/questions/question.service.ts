@@ -1,10 +1,10 @@
-// src/modules/questions/questions.service.ts
+// src/modules/questions/question.service.ts
 import {
   Injectable,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { In, DataSource } from 'typeorm';
+import { In } from 'typeorm';
 import { QuestionRepository } from './repositories/question.repository';
 import { TopicRepository } from '../topics/repositories/topic.repository';
 import { QuestionBankRepository } from '../question-banks/repositories/question-bank.repository';
@@ -21,70 +21,64 @@ export class QuestionsService {
     private readonly bankRepository: QuestionBankRepository,
   ) {}
 
-  /**
-   * Transforms response entity to flatten topics mapping array
-   */
   private transformResponse(question: any) {
     if (!question) return question;
-    return {
-      ...question,
-      topics: question.topics ? question.topics.map((t: any) => t.name) : [],
-    };
+    
+    const mapped = { ...question };
+    
+    // API expects `text`, DB has `questionText`
+    if (mapped.questionText) {
+      mapped.text = mapped.questionText;
+      delete mapped.questionText;
+    }
+
+    // No longer need to unpack — entity column is now `options` directly
+    // Just keep mapped.options as-is from the entity
+
+    if (mapped.correctAnswer !== undefined) {
+      mapped.correct_answer = mapped.correctAnswer;
+      delete mapped.correctAnswer;
+    }
+
+    return mapped;
   }
 
-  /*
-
-  |--------------------------------------------------------------------------
-  | Create Question
-  |--------------------------------------------------------------------------
-  */
-  async create(dto: CreateQuestionDto) {
+  async createTopicQuestion(topicId: string, dto: CreateQuestionDto) {
     try {
-      // 1. Verify target type exists in static config map
       const typeConfig = QUESTION_TYPES_CONFIG[dto.type];
       if (!typeConfig) {
         throw new BadRequestException(`Invalid question type specified: [${dto.type}]`);
       }
 
-      // 2. Multi-tenant secure lookup using tenant-scoped bank repository wrapper
-      const bankExists = await this.bankRepository.findOne({ id: dto.bankId } as any);
-      if (!bankExists) {
-        throw new BadRequestException('Target question bank not found or unauthorized');
-      }
+      // Verify topic exists
+      const topic = await this.topicRepository.findById(topicId);
+      if (!topic) throw new NotFoundException('Topic not found');
 
-      const questionData: any = { ...dto };
-      delete questionData.topicIds;
+      const saved = await this.questionRepository.create({
+        questionText: dto.text,
+        type: dto.type,
+        difficulty: dto.difficulty,
+        topic: { id: topic.id },
+        options: dto.options || [],
+        correctAnswer: dto.correct_answer,
+      } as any);
 
-      // 3. Resolve and assign topics securely
-      if (dto.topicIds && dto.topicIds.length > 0) {
-        questionData.topics = await this.topicRepository['repository'].find({
-          where: { 
-            id: In(dto.topicIds), 
-            clientId: this.questionRepository['context'].clientId 
-          },
-        });
-      }
-
-      const saved = await this.questionRepository.create(questionData);
-      return this.transformResponse(await this.findById(saved.id));
+      return this.transformResponse(saved);
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
+      console.error('createTopicQuestion error:', error);
+      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
       throw new BadRequestException('Failed to create question');
     }
   }
 
-  /*
-
-  |--------------------------------------------------------------------------
-  | Find All Questions
-  |--------------------------------------------------------------------------
-  */
-  async findAll(query: PaginationQueryDto) {
+  async findTopicQuestions(topicId: string, query: PaginationQueryDto) {
     try {
+      // Force filter by topicId
+      query.topicId = topicId;
+      
       const [questions, total] = await this.questionRepository.findPaginated(
         query,
-        ['questionText'],
-        ['topics']
+        ['questionText']
       );
 
       return {
@@ -93,27 +87,19 @@ export class QuestionsService {
           total, 
           page: query.page, 
           limit: query.limit, 
-          totalPages: Math.ceil(total / query.limit) 
+          pageCount: Math.ceil(total / query.limit),
+          topicId
         },
       };
     } catch (error) {
+      console.error('findTopicQuestions error:', error);
       throw new BadRequestException('Could not fetch questions');
     }
   }
 
-  /*
-
-  |--------------------------------------------------------------------------
-  | Find Question By Id
-  |--------------------------------------------------------------------------
-  */
   async findById(id: string) {
     try {
-      const question = await this.questionRepository['repository'].findOne({
-        where: this.questionRepository.scope({ id } as any),
-        relations: ['topics'],
-      });
-
+      const question = await this.questionRepository.findById(id);
       if (!question) throw new NotFoundException('Question not found');
       return this.transformResponse(question);
     } catch (error) {
@@ -122,45 +108,19 @@ export class QuestionsService {
     }
   }
 
-  /*
-
-  |--------------------------------------------------------------------------
-  | Update Question
-  |--------------------------------------------------------------------------
-  */
   async update(id: string, dto: UpdateQuestionDto) {
     try {
-      const question = await this.questionRepository['repository'].findOne({
-        where: this.questionRepository.scope({ id } as any),
-        relations: ['topics'],
-      });
+      const question = await this.questionRepository.findById(id);
       if (!question) throw new NotFoundException('Question not found');
 
-      const updateData: any = { ...dto };
+      const updateData: any = {};
+      if (dto.text) updateData.questionText = dto.text;
+      if (dto.type) updateData.type = dto.type;
+      if (dto.difficulty) updateData.difficulty = dto.difficulty;
+      if (dto.options) updateData.options = dto.options;
+      if (dto.correct_answer !== undefined) updateData.correctAnswer = dto.correct_answer;
 
-      if (dto.type) {
-        const typeConfig = QUESTION_TYPES_CONFIG[dto.type];
-        if (!typeConfig) throw new BadRequestException(`Invalid question type specified: [${dto.type}]`);
-      }
-
-      if (dto.bankId) {
-        const bankExists = await this.bankRepository.findOne({ id: dto.bankId } as any);
-        if (!bankExists) throw new BadRequestException('Target question bank not found or unauthorized');
-      }
-
-      if (dto.topicIds) {
-        updateData.topics = await this.topicRepository['repository'].find({
-          where: { 
-            id: In(dto.topicIds), 
-            clientId: this.questionRepository['context'].clientId 
-          },
-        });
-        delete updateData.topicIds;
-      }
-
-      // Mutate and save instance securely preserving multi-tenant tracking keys
-      Object.assign(question, updateData);
-      await this.questionRepository.create(question);
+      await this.questionRepository.update({ id } as any, updateData);
       return this.findById(id);
     } catch (error) {
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
@@ -168,12 +128,6 @@ export class QuestionsService {
     }
   }
 
-  /*
-
-  |--------------------------------------------------------------------------
-  | Delete Question
-  |--------------------------------------------------------------------------
-  */
   async delete(id: string) {
     try {
       await this.findById(id);
@@ -184,5 +138,5 @@ export class QuestionsService {
       throw new BadRequestException('Delete failed');
     }
   }
-}
 
+}

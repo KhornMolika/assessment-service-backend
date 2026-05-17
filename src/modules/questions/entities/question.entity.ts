@@ -1,50 +1,56 @@
-import { Entity, Column, ManyToOne, Index, ManyToMany, JoinTable } from 'typeorm';
-import { QuestionBank } from '../../question-banks/question-bank.entity';
+import { Entity, Column, ManyToOne, Index, OneToMany } from 'typeorm';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
 import { Topic } from '../../topics/entities/topic.entity';
-import { QuestionTypeName } from '../constants/question-types.config';
+import { QuestionBankQuestion } from '../../question-banks/entities/question-bank-question.entity';
+import { AssessmentQuestion } from '../../assessments/entities/assessment-question.entity';
 
 export enum Difficulty {
-  EASY = 'EASY',
-  MEDIUM = 'MEDIUM',
-  HARD = 'HARD',
+  EASY = "EASY",
+  MEDIUM = "MEDIUM",
+  HARD = "HARD",
+}
+
+export enum QuestionType {
+  SINGLE_CHOICE = "SINGLE_CHOICE",
+  MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
+  TRUE_FALSE = "TRUE_FALSE",
+  ORDERING = "ORDERING",
+  FILL_IN_THE_BLANK = "FILL_IN_THE_BLANK",
+  MATCHING = "MATCHING",
+  RATING = "RATING",
+  SHORT_ANSWER = "SHORT_ANSWER",
+  ESSAY = "ESSAY",
 }
 
 @Entity()
+@Index(["clientId", "topic"], { unique: false })
 export class Question extends ClientScopedEntity {
-  @Index()
-  @Column({ type: 'uuid' })
-  bankId!: string;
+  @ManyToOne(() => Topic, (topic) => topic.questions, {
+    onDelete: "CASCADE",
+  })
+  topic: Topic;
 
-  @Column({ type: 'text' })
-  questionText!: string;
-  
-  @Column({ type: 'enum', enum: QuestionTypeName }) // Stored directly as an Enum type string
-  type!: QuestionTypeName;
+  @Column({ type: "enum", enum: QuestionType })
+  type: QuestionType;
 
-  @Column({ type: 'enum', enum: Difficulty })
+  @Column({ type: "text" })
+  questionText: string;
+
+  @Column({ type: "enum", enum: Difficulty })
   difficulty!: Difficulty;
 
-  @Column({ type: 'int' })
-  points!: number;
+  @Column({ default: 1 })
+  points: number;
 
-  @Column('text', { array: true, nullable: true })
-  tags?: string[];
+  @Column({ name: "settings", type: "jsonb", nullable: true })
+  options?: Record<string, any>;
 
-  @Column({ type: 'jsonb' })
-  settings!: Record<string, any>;
+  @Column({ type: "jsonb", nullable: true })
+  correctAnswer?: string | string[] | Record<string, any>[] | null;
 
-  @Column({ type: 'jsonb' })
-  correctAnswer!: Record<string, any>;
+  @OneToMany(() => QuestionBankQuestion, (bq) => bq.question)
+  bankQuestions: QuestionBankQuestion[];
 
-  @ManyToOne(() => QuestionBank, { nullable: true })
-  bank!: QuestionBank;
-
-  @ManyToMany(() => Topic, (topic) => topic.questions)
-  @JoinTable({
-    name: 'question_topics', // Custom junction table name
-    joinColumn: { name: 'questionId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'topicId', referencedColumnName: 'id' },
-  })
-  topics!: Topic[];
+  @OneToMany(() => AssessmentQuestion, (aq) => aq.question)
+  assessmentQuestions: AssessmentQuestion[];
 }

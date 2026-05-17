@@ -1,12 +1,14 @@
-import { Injectable, Scope } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { ClientRepository } from '../../../common/base/client-repository';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Question } from '../entities/question.entity';
-import { RequestContext } from '../../../common/context/request-context';
+import { ClientRepository } from '../../../common/base/client-repository';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class QuestionRepository extends ClientRepository<Question> {
-  constructor(dataSource: DataSource, context: RequestContext) {
-    super(dataSource, Question, context);
+  constructor(
+    @InjectRepository(Question) repo: Repository<Question>
+  ) {
+    super(repo);
   }
 }

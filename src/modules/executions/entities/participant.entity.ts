@@ -1,17 +1,18 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { AssessmentParticipant } from './assessment-participant.entity';
 
 @Entity()
 export class Participant extends ClientScopedEntity {
-  @Column({ type: 'varchar'})
-  assessmentId!: string;
+  @Column()
+  name!: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ nullable: true })
   email?: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ nullable: true })
   phone?: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  name?: string;
+  @OneToMany(() => AssessmentParticipant, (a) => a.participant)
+  assessments!: AssessmentParticipant[];
 }

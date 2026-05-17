@@ -1,9 +1,11 @@
 import {
+  IsEnum,
   IsOptional,
   IsString,
   Length,
   MaxLength,
 } from 'class-validator';
+import { TopicVisibility } from '../entities/topic.entity';
 
 export class CreateTopicDto {
   @IsString({ message: 'name must be a string' })
@@ -14,4 +16,8 @@ export class CreateTopicDto {
   @IsString()
   @MaxLength(500)
   description?: string;
+
+  @IsOptional()
+  @IsEnum(TopicVisibility)
+  visibility?: TopicVisibility;
 }

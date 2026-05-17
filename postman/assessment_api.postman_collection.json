@@ -1,0 +1,396 @@
+{
+  "info": {
+    "name": "Fintech Assessment API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1", "type": "string" },
+    { "key": "clientId", "value": "f0f1cb24-c031-4097-a186-0f23995ac62a", "type": "string" },
+    { "key": "topicId", "value": "TOPIC-UUID-HERE", "type": "string" },
+    { "key": "bankId", "value": "BANK-UUID-HERE", "type": "string" },
+    { "key": "questionId", "value": "QUESTION-UUID-HERE", "type": "string" },
+    { "key": "assessmentId", "value": "ASSESSMENT-UUID-HERE", "type": "string" },
+    { "key": "participantId", "value": "PARTICIPANT-UUID-HERE", "type": "string" },
+    { "key": "sessionId", "value": "SESSION-UUID-HERE", "type": "string" },
+    { "key": "assessmentQuestionId", "value": "AQ-UUID-HERE", "type": "string" },
+    { "key": "entryId", "value": "ENTRY-UUID-HERE", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": ["pm.request.headers.add({key: 'x-client-id', value: pm.collectionVariables.get('clientId')});"]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Topics",
+      "item": [
+        {
+          "name": "Create Topic",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"NestJS Fundamentals\",\n  \"description\": \"Learn the basics of NestJS\",\n  \"visibility\": \"PUBLIC\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics", "host": ["{{baseUrl}}"], "path": ["topics"] }
+          }
+        },
+        {
+          "name": "Get Topics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/topics?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["topics"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
+          }
+        },
+        {
+          "name": "Get Topic By ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/topics/{{topicId}}", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}"] } }
+        },
+        {
+          "name": "Update Topic",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"NestJS Masterclass\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}"] }
+          }
+        },
+        {
+          "name": "Delete Topic",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/topics/{{topicId}}", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "Create Question (SINGLE_CHOICE)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"What is the capital of Cambodia?\",\n  \"type\": \"SINGLE_CHOICE\",\n  \"difficulty\": \"EASY\",\n  \"options\": [\n    { \"label\": \"A\", \"text\": \"Phnom Penh\" },\n    { \"label\": \"B\", \"text\": \"Siem Reap\" },\n    { \"label\": \"C\", \"text\": \"Battambang\" },\n    { \"label\": \"D\", \"text\": \"Sihanoukville\" }\n  ],\n  \"correct_answer\": \"A\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (MULTIPLE_CHOICE)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Which are JavaScript frameworks?\",\n  \"type\": \"MULTIPLE_CHOICE\",\n  \"difficulty\": \"MEDIUM\",\n  \"options\": [\n    { \"label\": \"A\", \"text\": \"React\" },\n    { \"label\": \"B\", \"text\": \"Angular\" },\n    { \"label\": \"C\", \"text\": \"Python\" },\n    { \"label\": \"D\", \"text\": \"Vue\" }\n  ],\n  \"correct_answer\": [\"A\", \"B\", \"D\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (TRUE_FALSE)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"TypeScript is a superset of JavaScript.\",\n  \"type\": \"TRUE_FALSE\",\n  \"difficulty\": \"EASY\",\n  \"options\": [\n    { \"label\": \"True\", \"text\": \"True\" },\n    { \"label\": \"False\", \"text\": \"False\" }\n  ],\n  \"correct_answer\": \"True\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (ORDERING)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Arrange the NestJS request lifecycle steps in order.\",\n  \"type\": \"ORDERING\",\n  \"difficulty\": \"HARD\",\n  \"options\": [\n    { \"label\": \"1\", \"text\": \"Middleware\" },\n    { \"label\": \"2\", \"text\": \"Guard\" },\n    { \"label\": \"3\", \"text\": \"Interceptor (before)\" },\n    { \"label\": \"4\", \"text\": \"Pipe\" },\n    { \"label\": \"5\", \"text\": \"Controller\" }\n  ],\n  \"correct_answer\": [\"1\", \"2\", \"3\", \"4\", \"5\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (FILL_IN_THE_BLANK)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"The @___() decorator marks a class as a ___.\",\n  \"type\": \"FILL_IN_THE_BLANK\",\n  \"difficulty\": \"EASY\",\n  \"options\": [],\n  \"correct_answer\": [\"Controller\", \"controller\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (MATCHING)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Match the decorator with its purpose.\",\n  \"type\": \"MATCHING\",\n  \"difficulty\": \"MEDIUM\",\n  \"options\": [\n    { \"left\": \"@Injectable()\", \"right\": \"Mark as provider\" },\n    { \"left\": \"@Controller()\", \"right\": \"Mark as controller\" }\n  ],\n  \"correct_answer\": [\n    { \"left\": \"@Injectable()\", \"right\": \"Mark as provider\" },\n    { \"left\": \"@Controller()\", \"right\": \"Mark as controller\" }\n  ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (RATING)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Rate your confidence with dependency injection (1-5).\",\n  \"type\": \"RATING\",\n  \"difficulty\": \"EASY\",\n  \"options\": [\n    { \"label\": \"1\", \"text\": \"Not confident\" },\n    { \"label\": \"5\", \"text\": \"Very confident\" }\n  ],\n  \"correct_answer\": null\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (SHORT_ANSWER)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"What command creates a new NestJS project?\",\n  \"type\": \"SHORT_ANSWER\",\n  \"difficulty\": \"EASY\",\n  \"options\": [],\n  \"correct_answer\": \"nest new\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Create Question (ESSAY)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Explain benefits of NestJS over Express.js.\",\n  \"type\": \"ESSAY\",\n  \"difficulty\": \"HARD\",\n  \"options\": [],\n  \"correct_answer\": null\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Get Topic Questions",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/questions", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "questions"] } }
+        },
+        {
+          "name": "Get Question By ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["questions", "{{questionId}}"] } }
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"difficulty\": \"MEDIUM\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["questions", "{{questionId}}"] }
+          }
+        },
+        {
+          "name": "Delete Question",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["questions", "{{questionId}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Question Banks",
+      "item": [
+        {
+          "name": "Create Bank",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"NestJS Core Concepts Bank\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/banks", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "banks"] }
+          }
+        },
+        {
+          "name": "Get Topic Banks",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/banks", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "banks"] } }
+        },
+        {
+          "name": "Get Bank By ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/banks/{{bankId}}", "host": ["{{baseUrl}}"], "path": ["banks", "{{bankId}}"] } }
+        },
+        {
+          "name": "Update Bank",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Bank Name\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/banks/{{bankId}}", "host": ["{{baseUrl}}"], "path": ["banks", "{{bankId}}"] }
+          }
+        },
+        {
+          "name": "Delete Bank",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/banks/{{bankId}}", "host": ["{{baseUrl}}"], "path": ["banks", "{{bankId}}"] } }
+        },
+        {
+          "name": "Get Bank Questions",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/banks/{{bankId}}/questions", "host": ["{{baseUrl}}"], "path": ["banks", "{{bankId}}", "questions"] } }
+        },
+        {
+          "name": "Add Question To Bank",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"questionId\": \"{{questionId}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/banks/{{bankId}}/questions", "host": ["{{baseUrl}}"], "path": ["banks", "{{bankId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Remove Question From Bank",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/banks/{{bankId}}/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["banks", "{{bankId}}", "questions", "{{questionId}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Assessments",
+      "item": [
+        {
+          "name": "Create Assessment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"NestJS Quiz\",\n  \"type\": \"quiz\",\n  \"description\": \"A quiz about NestJS\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/assessments", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "assessments"] }
+          }
+        },
+        {
+          "name": "Get Topic Assessments",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/topics/{{topicId}}/assessments", "host": ["{{baseUrl}}"], "path": ["topics", "{{topicId}}", "assessments"] } }
+        },
+        {
+          "name": "Get Assessment By ID",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}"] } }
+        },
+        {
+          "name": "Update Assessment",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Quiz Name\",\n  \"description\": \"Updated description\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}"] }
+          }
+        },
+        {
+          "name": "Delete Assessment",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}"] } }
+        },
+        {
+          "name": "Publish Assessment",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/publish", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "publish"] } }
+        },
+        {
+          "name": "Archive Assessment",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/archive", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "archive"] } }
+        },
+        {
+          "name": "Get Assessment Questions",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "questions"] } }
+        },
+        {
+          "name": "Add Question to Assessment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"questionId\": \"{{questionId}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Replace Assessment Questions",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"questionIds\": [\"{{questionId}}\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "questions"] }
+          }
+        },
+        {
+          "name": "Remove Question from Assessment",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions/{{assessmentQuestionId}}", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "questions", "{{assessmentQuestionId}}"] } }
+        },
+        {
+          "name": "Generate Questions from Bank",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"bankId\": \"{{bankId}}\",\n  \"count\": 5,\n  \"difficulty\": \"MEDIUM\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions/generate", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "questions", "generate"] }
+          }
+        },
+        {
+          "name": "Get Assessment Settings",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "settings"] } }
+        },
+        {
+          "name": "Update Assessment Settings",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"timeLimit\": 45,\n  \"passMark\": 75,\n  \"isShuffle\": true,\n  \"mode\": \"EXAM\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "settings"] }
+          }
+        },
+        {
+          "name": "Get Assessment Participants",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "participants"] } }
+        },
+        {
+          "name": "Add Participant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+855123456789\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "participants"] }
+          }
+        },
+        {
+          "name": "Get Participant",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "participants", "{{participantId}}"] } }
+        },
+        {
+          "name": "Update Participant",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Updated\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "participants", "{{participantId}}"] } }
+        },
+        {
+          "name": "Remove Participant",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["assessments", "{{assessmentId}}", "participants", "{{participantId}}"] } }
+        }
+      ]
+    },
+    {
+      "name": "Assessment Sessions",
+      "item": [
+        {
+          "name": "Start Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"assessmentId\": \"{{assessmentId}}\",\n  \"participantId\": \"{{participantId}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessment-sessions/start", "host": ["{{baseUrl}}"], "path": ["assessment-sessions", "start"] }
+          }
+        },
+        {
+          "name": "Save Answer",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"answer\": \"A\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessment-sessions/{{sessionId}}/answers", "host": ["{{baseUrl}}"], "path": ["assessment-sessions", "{{sessionId}}", "answers"] }
+          }
+        },
+        {
+          "name": "Update Answer",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{\n  \"answer\": \"B\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessment-sessions/{{sessionId}}/answers/{{entryId}}", "host": ["{{baseUrl}}"], "path": ["assessment-sessions", "{{sessionId}}", "answers", "{{entryId}}"] }
+          }
+        },
+        {
+          "name": "Submit Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/assessment-sessions/{{sessionId}}/submit", "host": ["{{baseUrl}}"], "path": ["assessment-sessions", "{{sessionId}}", "submit"] }
+          }
+        },
+        {
+          "name": "Get Result",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/assessment-sessions/{{sessionId}}/result", "host": ["{{baseUrl}}"], "path": ["assessment-sessions", "{{sessionId}}", "result"] } }
+        }
+      ]
+    }
+  ]
+}

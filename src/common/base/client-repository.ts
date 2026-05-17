@@ -1,66 +1,70 @@
-// src/common/base/client-repository.ts
 import {
-  DataSource,
   Repository,
   FindOptionsWhere,
-  ObjectLiteral,
+  DeepPartial,
+  SelectQueryBuilder,
+  UpdateResult,
+  DeleteResult,
   ILike,
-  Raw,
 } from 'typeorm';
-import { RequestContext } from '../context/request-context';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { ClientContextService } from '../context/client-context.service';
+import { ClientScopedEntity } from './client-scoped.entity';
 
-export abstract class ClientRepository<
-  T extends ObjectLiteral & { clientId: string },
-> {
-  protected repository: Repository<T>;
+export class ClientRepository<T extends ClientScopedEntity> {
+  constructor(protected readonly repo: Repository<T>) {}
 
-  constructor(
-    protected readonly dataSource: DataSource,
-    entity: new () => T,
-    protected readonly context: RequestContext,
-  ) {
-    this.repository = dataSource.getRepository(entity);
+  private get clientId(): string {
+    return ClientContextService.getClientId();
   }
 
-  // HARD GUARANTEE: every query is scoped
-  public scope(where: FindOptionsWhere<T> = {}): FindOptionsWhere<T> {
-    return {
-      ...where,
-      clientId: this.context.clientId,
-    };
+  protected clientWhere(where: FindOptionsWhere<T> | FindOptionsWhere<T>[]): FindOptionsWhere<T> | FindOptionsWhere<T>[] {
+    if (Array.isArray(where)) {
+      return where.map(w => ({ ...w, clientId: this.clientId } as FindOptionsWhere<T>));
+    }
+    return { ...where, clientId: this.clientId } as FindOptionsWhere<T>;
+  }
+
+  // Alias for clientWhere to avoid breaking existing services calling scope
+  scope(where: FindOptionsWhere<T> = {}): FindOptionsWhere<T> {
+    return this.clientWhere(where) as FindOptionsWhere<T>;
+  }
+
+  find(where: FindOptionsWhere<T> = {}): Promise<T[]> {
+    return this.repo.find({ where: this.clientWhere(where) });
+  }
+
+  findOne(where: FindOptionsWhere<T>): Promise<T | null> {
+    return this.repo.findOne({ where: this.clientWhere(where) });
+  }
+
+  findById(id: string, relations: string[] = []): Promise<T | null> {
+    return this.repo.findOne({
+      where: this.clientWhere({ id } as FindOptionsWhere<T>),
+      relations
+    });
+  }
+
+  create(data: DeepPartial<T>): Promise<T> {
+    return this.save(data);
   }
 
   async findPaginated(
-    query: PaginationQueryDto,
+    query: any,
     searchFields: (keyof T)[],
     relations: string[] = [],
   ) {
-    const { page, limit, search, sortBy, order, visibility, tag, topicId } =
-      query;
+    const { page = 1, limit = 10, search, sortBy = 'createdAt', order = 'DESC', visibility, tag, topicId, assessmentId } = query;
     const skip = (page - 1) * limit;
 
-    // 1. Build the explicit base filters
     const explicitFilters: any = {};
+    if (visibility && this.repo.metadata.columns.some(c => c.propertyName === 'visibility')) explicitFilters.visibility = visibility;
+    if (tag && this.repo.metadata.columns.some(c => c.propertyName === 'tags')) explicitFilters.tags = tag;
+    if (topicId && this.repo.metadata.relations.some(r => r.propertyName === 'topic')) explicitFilters.topic = { id: topicId };
+    if (assessmentId && this.repo.metadata.relations.some(r => r.propertyName === 'assessment')) explicitFilters.assessment = { id: assessmentId };
 
-    if (visibility) {
-      explicitFilters.visibility = visibility;
-    }
+    let baseWhere = this.clientWhere(explicitFilters);
+    let whereConditions: any = baseWhere;
 
-    if (tag) {
-      explicitFilters.tags = Raw((alias) => `:tag = ANY(${alias})`, { tag });
-    }
-
-    // 2. FIXED: Multi-relation Many-to-Many nesting filter check
-    if (topicId) {
-      explicitFilters.topics = { id: topicId }; // TypeORM resolves this to an INNER JOIN on the junction table
-    }
-
-    const baseWhere = this.scope(explicitFilters);
-    let whereConditions: FindOptionsWhere<T> | FindOptionsWhere<T>[] =
-      baseWhere;
-
-    // 3. ONLY create an OR array block if a search keyword is actually provided
     if (search && search.trim() !== '' && searchFields.length > 0) {
       whereConditions = searchFields.map((field) => ({
         ...baseWhere,
@@ -68,40 +72,43 @@ export abstract class ClientRepository<
       }));
     }
 
-    // 4. Return paginated results and pass the relations array down cleanly
-    return this.repository.findAndCount({
+    return this.repo.findAndCount({
       where: whereConditions,
-      relations, // 👈 Added relations array parameter to load linked tables (like 'topics') dynamically
+      relations,
       order: { [sortBy]: order.toUpperCase() } as any,
       skip,
       take: limit,
     });
   }
 
-  async findAll(where: FindOptionsWhere<T> = {}) {
-    return this.repository.find({
-      where: this.scope(where),
-    });
-  }
-
-  async findOne(where: FindOptionsWhere<T>) {
-    return this.repository.findOne({
-      where: this.scope(where),
-    });
-  }
-
-  async create(data: Partial<T>) {
-    return this.repository.save({
+  save(data: DeepPartial<T>): Promise<T> {
+    return this.repo.save({
       ...data,
-      clientId: this.context.clientId,
+      clientId: this.clientId,
     } as T);
   }
 
-  async update(where: FindOptionsWhere<T>, data: Partial<T>) {
-    return this.repository.update(this.scope(where), data);
+  update(where: FindOptionsWhere<T>, data: DeepPartial<T>): Promise<UpdateResult> {
+    return this.repo.update(this.clientWhere(where), data as any);
   }
 
-  async softDelete(where: FindOptionsWhere<T>) {
-    return this.repository.softDelete(this.scope(where));
+  softDelete(where: FindOptionsWhere<T>): Promise<UpdateResult> {
+    return this.repo.softDelete(this.clientWhere(where));
+  }
+
+  hardDelete(where: FindOptionsWhere<T>): Promise<DeleteResult> {
+    return this.repo.delete(this.clientWhere(where));
+  }
+
+  protected qb(alias: string): SelectQueryBuilder<T> {
+    return this.repo
+      .createQueryBuilder(alias)
+      .andWhere(`${alias}.clientId = :clientId`, { clientId: this.clientId });
+  }
+
+  get unsafe(): never {
+    throw new Error(
+      'Direct repository access is disabled. Use ClientRepository methods only.',
+    );
   }
 }

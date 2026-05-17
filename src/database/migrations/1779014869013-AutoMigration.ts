@@ -1,0 +1,128 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class AutoMigration1779014869013 implements MigrationInterface {
+    name = 'AutoMigration1779014869013'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE "refresh_token" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "tokenHash" character varying NOT NULL, "expiresAt" TIMESTAMP NOT NULL, "isRevoked" boolean NOT NULL DEFAULT false, CONSTRAINT "PK_b575dd3c21fb0831013c909e7fe" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_f6f07caa0ec6df39d56b0aa9f6" ON "refresh_token" ("clientId") `);
+        await queryRunner.query(`CREATE TYPE "public"."assessment_setting_mode_enum" AS ENUM('EXAM', 'PRACTICE')`);
+        await queryRunner.query(`CREATE TYPE "public"."assessment_setting_questionselection_enum" AS ENUM('FIXED', 'RANDOM')`);
+        await queryRunner.query(`CREATE TYPE "public"."assessment_setting_participantidentity_enum" AS ENUM('ANONYMOUS', 'AUTHENTICATED')`);
+        await queryRunner.query(`CREATE TYPE "public"."assessment_setting_showresults_enum" AS ENUM('IMMEDIATELY', 'AFTER_DEADLINE', 'NEVER')`);
+        await queryRunner.query(`CREATE TABLE "assessment_setting" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "mode" "public"."assessment_setting_mode_enum" NOT NULL, "questionSelection" "public"."assessment_setting_questionselection_enum" NOT NULL, "participantIdentity" "public"."assessment_setting_participantidentity_enum" NOT NULL, "numQuestions" integer NOT NULL, "selectionRules" jsonb, "timeLimit" integer, "startsAt" TIMESTAMP, "endsAt" TIMESTAMP, "passMark" integer, "isShuffle" boolean NOT NULL DEFAULT false, "showResults" "public"."assessment_setting_showresults_enum", "gradeLabels" jsonb, "isAllowShare" boolean NOT NULL DEFAULT false, "allowReview" boolean NOT NULL DEFAULT false, "assessmentId" uuid, CONSTRAINT "REL_70c1934847ce30cdff71536dee" UNIQUE ("assessmentId"), CONSTRAINT "PK_df8639343d79074988962ec2335" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "participant" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "name" character varying NOT NULL, "email" character varying, "phone" character varying, CONSTRAINT "PK_64da4237f502041781ca15d4c41" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_dae9fc44421d72a99bdb3e064b" ON "participant" ("clientId") `);
+        await queryRunner.query(`CREATE TABLE "ai_grading_job" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "status" character varying NOT NULL, "score" double precision, "confidence" double precision, "feedback" text, "errorMessage" text, "answerEntryId" uuid, CONSTRAINT "PK_0ab9a8b84e749d0194c0176df4e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_d62320bd51e10e0bd85967e5bb" ON "ai_grading_job" ("clientId") `);
+        await queryRunner.query(`CREATE TYPE "public"."answer_entry_gradingstatus_enum" AS ENUM('PENDING', 'AUTOMATIC', 'AI_EVALUATED', 'MANUAL_REVISED')`);
+        await queryRunner.query(`CREATE TABLE "answer_entry" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "response" jsonb, "scoreAwarded" integer, "isCorrect" boolean, "gradingStatus" "public"."answer_entry_gradingstatus_enum" NOT NULL DEFAULT 'PENDING', "answerSheetId" uuid, "assessmentQuestionId" uuid, CONSTRAINT "PK_cd45b5af889a089ef8ecb12a5b9" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_7595c8c872a775b9d3967c3186" ON "answer_entry" ("clientId") `);
+        await queryRunner.query(`CREATE TABLE "answer_sheet" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "totalScore" integer, "grade" character varying, "isPassed" boolean NOT NULL DEFAULT false, "startedAt" TIMESTAMP, "submittedAt" TIMESTAMP, "assessmentParticipantId" uuid, CONSTRAINT "PK_ef5379f5ea02fbf44ca7049fbd2" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_129f6628585f83169f832a7e32" ON "answer_sheet" ("clientId") `);
+        await queryRunner.query(`CREATE TABLE "assessment_participant" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "status" character varying(20) NOT NULL, "totalScore" integer, "assessmentId" uuid, "participantId" uuid, CONSTRAINT "PK_3031fa768f2fbd357869f002e28" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_cd9e202a41c4d8745b367e5030" ON "assessment_participant" ("clientId") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_c80e4a4be9ad9058a81ca673ab" ON "assessment_participant" ("assessmentId", "participantId") `);
+        await queryRunner.query(`CREATE TYPE "public"."assessment_status_enum" AS ENUM('DRAFT', 'PUBLISHED', 'ARCHIVED')`);
+        await queryRunner.query(`CREATE TABLE "assessment" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "name" character varying NOT NULL, "type" character varying NOT NULL DEFAULT 'quiz', "description" text, "status" "public"."assessment_status_enum" NOT NULL DEFAULT 'DRAFT', "topicId" uuid, CONSTRAINT "PK_c511a7dc128256876b6b1719401" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_324b65b0282ce85363a485d85d" ON "assessment" ("clientId") `);
+        await queryRunner.query(`CREATE TABLE "assessment_question" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "order" integer NOT NULL DEFAULT '1', "snapshot" jsonb, "assessmentId" uuid, "questionId" uuid, CONSTRAINT "PK_fd68807257b91c34ac9f08cdd7e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_4c6f2db62a29416f97a5cc5111" ON "assessment_question" ("clientId") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_4e46fd690b8fa4446ebaca2aac" ON "assessment_question" ("assessmentId", "questionId") `);
+        await queryRunner.query(`CREATE TYPE "public"."question_type_enum" AS ENUM('SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY')`);
+        await queryRunner.query(`CREATE TYPE "public"."question_difficulty_enum" AS ENUM('EASY', 'MEDIUM', 'HARD')`);
+        await queryRunner.query(`CREATE TABLE "question" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "type" "public"."question_type_enum" NOT NULL, "questionText" text NOT NULL, "difficulty" "public"."question_difficulty_enum" NOT NULL, "points" integer NOT NULL DEFAULT '1', "settings" jsonb, "correctAnswer" jsonb, "tags" text array NOT NULL DEFAULT '{}', "topicId" uuid, CONSTRAINT "PK_21e5786aa0ea704ae185a79b2d5" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_87df6afba485965b2d3cab7c6f" ON "question" ("clientId") `);
+        await queryRunner.query(`CREATE INDEX "IDX_5c82b20e78bb0a363cf07a2223" ON "question" ("clientId", "topicId") `);
+        await queryRunner.query(`CREATE TABLE "question_bank_question" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "order" integer, "questionBankId" uuid, "questionId" uuid, CONSTRAINT "PK_9d90cc945a01251f3b56280f6b7" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_e3aec5aa6f1bad98f4a25a8455" ON "question_bank_question" ("clientId") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_d842fd1e3b7c6ad60656e144a4" ON "question_bank_question" ("questionBankId", "questionId") `);
+        await queryRunner.query(`CREATE TYPE "public"."question_bank_visibility_enum" AS ENUM('PUBLIC', 'PRIVATE', 'SHARED')`);
+        await queryRunner.query(`CREATE TABLE "question_bank" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "name" character varying NOT NULL, "visibility" "public"."question_bank_visibility_enum" NOT NULL DEFAULT 'PRIVATE', "description" text, "tags" text array NOT NULL DEFAULT '{}', "topicId" uuid, CONSTRAINT "PK_ddf9cd18bcda25d31e7ef21b519" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_df5ece6f12d072f11a1e24048b" ON "question_bank" ("clientId") `);
+        await queryRunner.query(`CREATE TYPE "public"."topic_visibility_enum" AS ENUM('PUBLIC', 'PRIVATE')`);
+        await queryRunner.query(`CREATE TABLE "topic" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "clientId" uuid NOT NULL, "name" character varying(256) NOT NULL, "slug" character varying(320) NOT NULL, "description" text, "visibility" "public"."topic_visibility_enum" NOT NULL DEFAULT 'PRIVATE', CONSTRAINT "PK_33aa4ecb4e4f20aa0157ea7ef61" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_2004c8b383b5feb891073e40d1" ON "topic" ("clientId") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_a040c677e75c29f1952b93fa0e" ON "topic" ("clientId", "name") `);
+        await queryRunner.query(`CREATE TABLE "client" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "name" character varying NOT NULL, "slug" character varying NOT NULL, "clientId" uuid NOT NULL, "clientSecretHash" character varying NOT NULL, "allowedOrigins" text array, "scopes" text array, "webhookUrl" character varying, "webhookSecret" character varying, CONSTRAINT "UQ_3ce23f3709983d19bc42758b01e" UNIQUE ("slug"), CONSTRAINT "UQ_6ed9067942d7537ce359e172ff6" UNIQUE ("clientId"), CONSTRAINT "PK_96da49381769303a6515a8785c7" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "ai_grading_config" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "deletedAt" TIMESTAMP, "questionId" character varying NOT NULL, "rubric" jsonb NOT NULL, "instruction" text NOT NULL, "maxScore" double precision NOT NULL, CONSTRAINT "PK_965339fd6c2bf29b05578124a12" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`ALTER TABLE "refresh_token" ADD CONSTRAINT "FK_f6f07caa0ec6df39d56b0aa9f62" FOREIGN KEY ("clientId") REFERENCES "client"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "assessment_setting" ADD CONSTRAINT "FK_70c1934847ce30cdff71536deea" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "ai_grading_job" ADD CONSTRAINT "FK_7849c2b324980ddb00618220009" FOREIGN KEY ("answerEntryId") REFERENCES "answer_entry"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "answer_entry" ADD CONSTRAINT "FK_60ab0e2e552d666de51d09db136" FOREIGN KEY ("answerSheetId") REFERENCES "answer_sheet"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "answer_entry" ADD CONSTRAINT "FK_4fbdc5941db95ff8e1d578fbf7d" FOREIGN KEY ("assessmentQuestionId") REFERENCES "assessment_question"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "answer_sheet" ADD CONSTRAINT "FK_1988073311cf9475dc74b21fe37" FOREIGN KEY ("assessmentParticipantId") REFERENCES "assessment_participant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "assessment_participant" ADD CONSTRAINT "FK_61b51eed2813b17772dbca82dd0" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "assessment_participant" ADD CONSTRAINT "FK_49e530cdd78ca0d7ddca7da628e" FOREIGN KEY ("participantId") REFERENCES "participant"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "assessment" ADD CONSTRAINT "FK_0fa2b999352312c75eefbeb9cd5" FOREIGN KEY ("topicId") REFERENCES "topic"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "assessment_question" ADD CONSTRAINT "FK_64fb59c76db6d7f9b7693049468" FOREIGN KEY ("assessmentId") REFERENCES "assessment"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "assessment_question" ADD CONSTRAINT "FK_751aa686514c23072c84703e464" FOREIGN KEY ("questionId") REFERENCES "question"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "question" ADD CONSTRAINT "FK_9c94ad4e743815401ff57f89833" FOREIGN KEY ("topicId") REFERENCES "topic"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "question_bank_question" ADD CONSTRAINT "FK_4cc414687db4253f841a7101dcf" FOREIGN KEY ("questionBankId") REFERENCES "question_bank"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "question_bank_question" ADD CONSTRAINT "FK_34c3b20fdc40c9ee40ed6c64151" FOREIGN KEY ("questionId") REFERENCES "question"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "question_bank" ADD CONSTRAINT "FK_998d7b9a9aa7d0338e230b59634" FOREIGN KEY ("topicId") REFERENCES "topic"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "topic" ADD CONSTRAINT "FK_2004c8b383b5feb891073e40d19" FOREIGN KEY ("clientId") REFERENCES "client"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "topic" DROP CONSTRAINT "FK_2004c8b383b5feb891073e40d19"`);
+        await queryRunner.query(`ALTER TABLE "question_bank" DROP CONSTRAINT "FK_998d7b9a9aa7d0338e230b59634"`);
+        await queryRunner.query(`ALTER TABLE "question_bank_question" DROP CONSTRAINT "FK_34c3b20fdc40c9ee40ed6c64151"`);
+        await queryRunner.query(`ALTER TABLE "question_bank_question" DROP CONSTRAINT "FK_4cc414687db4253f841a7101dcf"`);
+        await queryRunner.query(`ALTER TABLE "question" DROP CONSTRAINT "FK_9c94ad4e743815401ff57f89833"`);
+        await queryRunner.query(`ALTER TABLE "assessment_question" DROP CONSTRAINT "FK_751aa686514c23072c84703e464"`);
+        await queryRunner.query(`ALTER TABLE "assessment_question" DROP CONSTRAINT "FK_64fb59c76db6d7f9b7693049468"`);
+        await queryRunner.query(`ALTER TABLE "assessment" DROP CONSTRAINT "FK_0fa2b999352312c75eefbeb9cd5"`);
+        await queryRunner.query(`ALTER TABLE "assessment_participant" DROP CONSTRAINT "FK_49e530cdd78ca0d7ddca7da628e"`);
+        await queryRunner.query(`ALTER TABLE "assessment_participant" DROP CONSTRAINT "FK_61b51eed2813b17772dbca82dd0"`);
+        await queryRunner.query(`ALTER TABLE "answer_sheet" DROP CONSTRAINT "FK_1988073311cf9475dc74b21fe37"`);
+        await queryRunner.query(`ALTER TABLE "answer_entry" DROP CONSTRAINT "FK_4fbdc5941db95ff8e1d578fbf7d"`);
+        await queryRunner.query(`ALTER TABLE "answer_entry" DROP CONSTRAINT "FK_60ab0e2e552d666de51d09db136"`);
+        await queryRunner.query(`ALTER TABLE "ai_grading_job" DROP CONSTRAINT "FK_7849c2b324980ddb00618220009"`);
+        await queryRunner.query(`ALTER TABLE "assessment_setting" DROP CONSTRAINT "FK_70c1934847ce30cdff71536deea"`);
+        await queryRunner.query(`ALTER TABLE "refresh_token" DROP CONSTRAINT "FK_f6f07caa0ec6df39d56b0aa9f62"`);
+        await queryRunner.query(`DROP TABLE "ai_grading_config"`);
+        await queryRunner.query(`DROP TABLE "client"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_a040c677e75c29f1952b93fa0e"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_2004c8b383b5feb891073e40d1"`);
+        await queryRunner.query(`DROP TABLE "topic"`);
+        await queryRunner.query(`DROP TYPE "public"."topic_visibility_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_df5ece6f12d072f11a1e24048b"`);
+        await queryRunner.query(`DROP TABLE "question_bank"`);
+        await queryRunner.query(`DROP TYPE "public"."question_bank_visibility_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_d842fd1e3b7c6ad60656e144a4"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_e3aec5aa6f1bad98f4a25a8455"`);
+        await queryRunner.query(`DROP TABLE "question_bank_question"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_5c82b20e78bb0a363cf07a2223"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_87df6afba485965b2d3cab7c6f"`);
+        await queryRunner.query(`DROP TABLE "question"`);
+        await queryRunner.query(`DROP TYPE "public"."question_difficulty_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."question_type_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_4e46fd690b8fa4446ebaca2aac"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_4c6f2db62a29416f97a5cc5111"`);
+        await queryRunner.query(`DROP TABLE "assessment_question"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_324b65b0282ce85363a485d85d"`);
+        await queryRunner.query(`DROP TABLE "assessment"`);
+        await queryRunner.query(`DROP TYPE "public"."assessment_status_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_c80e4a4be9ad9058a81ca673ab"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_cd9e202a41c4d8745b367e5030"`);
+        await queryRunner.query(`DROP TABLE "assessment_participant"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_129f6628585f83169f832a7e32"`);
+        await queryRunner.query(`DROP TABLE "answer_sheet"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_7595c8c872a775b9d3967c3186"`);
+        await queryRunner.query(`DROP TABLE "answer_entry"`);
+        await queryRunner.query(`DROP TYPE "public"."answer_entry_gradingstatus_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_d62320bd51e10e0bd85967e5bb"`);
+        await queryRunner.query(`DROP TABLE "ai_grading_job"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_dae9fc44421d72a99bdb3e064b"`);
+        await queryRunner.query(`DROP TABLE "participant"`);
+        await queryRunner.query(`DROP TABLE "assessment_setting"`);
+        await queryRunner.query(`DROP TYPE "public"."assessment_setting_showresults_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."assessment_setting_participantidentity_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."assessment_setting_questionselection_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."assessment_setting_mode_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_f6f07caa0ec6df39d56b0aa9f6"`);
+        await queryRunner.query(`DROP TABLE "refresh_token"`);
+    }
+
+}
