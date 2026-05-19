@@ -16,10 +16,6 @@ export class CreateQuestionBankDto {
   tags?: string[];
 
   @IsOptional()
-  @IsUUID('4')
-  topicId?: string;
-
-  @IsOptional()
   @IsEnum(BankVisibility)
   visibility?: BankVisibility;
 }

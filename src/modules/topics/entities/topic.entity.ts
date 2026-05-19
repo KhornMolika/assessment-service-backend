@@ -16,7 +16,7 @@ export class Topic extends ClientScopedEntity {
   @ManyToOne(() => Client, (client) => client.topics, {
     onDelete: "CASCADE",
   })
-  client: Client;
+  client!: Client;
 
   @Column({
     type: 'varchar',
@@ -36,19 +36,13 @@ export class Topic extends ClientScopedEntity {
   })
   description?: string;
 
-  @Column({
-    type: "enum",
-    enum: TopicVisibility,
-    default: TopicVisibility.PRIVATE,
-  })
-  visibility!: TopicVisibility;
 
   @OneToMany(() => Question, (question) => question.topic)
-  questions: Question[];
+  questions!: Question[];
 
   @OneToMany(() => QuestionBank, (bank) => bank.topic)
-  questionBanks: QuestionBank[];
+  questionBanks!: QuestionBank[];
 
   @OneToMany(() => Assessment, (assessment) => assessment.topic)
-  assessments: Assessment[];
+  assessments!: Assessment[];
 }

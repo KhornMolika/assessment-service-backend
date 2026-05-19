@@ -24,16 +24,21 @@ export class QuestionBanksService {
 
   async create(dto: CreateQuestionBankDto) {
     try {
-      const exists = await this.bankRepository.findOne({ name: dto.name } as any);
-      if (exists) throw new BadRequestException('A question bank with this name already exists');
+      const exists = await this.bankRepository.findOne({
+        name: dto.name,
+      } as any);
+      if (exists)
+        throw new BadRequestException(
+          'A question bank with this name already exists',
+        );
 
       const savedBank = await this.bankRepository.create({
-        name: dto.name,
+        ...dto,
       } as any);
 
       return {
         ...savedBank,
-        questionCount: 0
+        questionCount: 0,
       };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
@@ -46,7 +51,7 @@ export class QuestionBanksService {
       const [banks, total] = await this.bankRepository.findPaginated(
         query,
         ['name', 'description'],
-        ['questions']
+        ['questions'],
       );
 
       const mappedData = banks.map((bank: any) => ({
@@ -54,7 +59,7 @@ export class QuestionBanksService {
         questionCount: bank.questions?.length || 0,
       }));
 
-      mappedData.forEach(m => delete m.questions);
+      mappedData.forEach((m) => delete m.questions);
 
       return {
         data: mappedData,
@@ -72,23 +77,32 @@ export class QuestionBanksService {
 
   async createTopicBank(topicId: string, dto: CreateQuestionBankDto) {
     try {
-      const exists = await this.bankRepository.findOne({ name: dto.name } as any);
-      if (exists) throw new BadRequestException('A question bank with this name already exists');
+      const exists = await this.bankRepository.findOne({
+        name: dto.name,
+      } as any);
+      if (exists)
+        throw new BadRequestException(
+          'A question bank with this name already exists',
+        );
 
       const topic = await this.topicRepository.findById(topicId);
       if (!topic) throw new NotFoundException('Topic not found');
 
       const savedBank = await this.bankRepository.create({
-        name: dto.name,
+        ...dto,
         topic: { id: topic.id },
       } as any);
 
       return {
         ...savedBank,
-        questionCount: 0
+        questionCount: 0,
       };
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      )
+        throw error;
       throw new BadRequestException('Failed to create question bank');
     }
   }
@@ -99,7 +113,7 @@ export class QuestionBanksService {
       const [banks, total] = await this.bankRepository.findPaginated(
         query,
         ['name', 'description'],
-        ['questions']
+        ['questions'],
       );
 
       const mappedData = banks.map((bank: any) => ({
@@ -108,7 +122,7 @@ export class QuestionBanksService {
       }));
 
       // Cleanup
-      mappedData.forEach(m => delete m.questions);
+      mappedData.forEach((m) => delete m.questions);
 
       return {
         data: mappedData,
@@ -117,7 +131,7 @@ export class QuestionBanksService {
           page: query.page,
           limit: query.limit,
           pageCount: Math.ceil(total / query.limit),
-          topicId
+          topicId,
         },
       };
     } catch (error) {
@@ -145,16 +159,24 @@ export class QuestionBanksService {
       await this.findById(id);
 
       if (dto.name) {
-        const exists = await this.bankRepository.findOne({ name: dto.name } as any);
+        const exists = await this.bankRepository.findOne({
+          name: dto.name,
+        } as any);
         if (exists && exists.id !== id) {
-          throw new BadRequestException('This question bank name is already taken');
+          throw new BadRequestException(
+            'This question bank name is already taken',
+          );
         }
       }
 
       await this.bankRepository.update({ id } as any, { ...dto } as any);
       return await this.findById(id);
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      )
+        throw error;
       throw new BadRequestException('Update failed');
     }
   }
@@ -178,28 +200,28 @@ export class QuestionBanksService {
         where: { questionBank: { id: bankId } } as any,
         relations: ['question'],
         skip,
-        take: query.limit
+        take: query.limit,
       });
 
       return {
-        data: junctions.map(j => {
+        data: junctions.map((j) => {
           const q: any = j.question;
           return {
             id: j.id, // The junction ID or could be mapped differently based on API
             text: q.questionText,
             type: q.type,
             difficulty: q.difficulty,
-            createdAt: q.createdAt
-          }
+            createdAt: q.createdAt,
+          };
         }),
         meta: {
           total,
           page: query.page,
           limit: query.limit,
           pageCount: Math.ceil(total / query.limit),
-          bankId
-        }
-      }
+          bankId,
+        },
+      };
     } catch (error) {
       console.error('getBankQuestions error:', error);
       throw new BadRequestException('Failed to get bank questions');
@@ -209,42 +231,70 @@ export class QuestionBanksService {
   async addQuestionToBank(bankId: string, questionId: string) {
     try {
       const bank = await this.findById(bankId);
-      if(!bank) throw new NotFoundException('Bank not found');
+      if (!bank) throw new NotFoundException('Bank not found');
 
       const clientId = ClientContextService.getClientId();
 
       const junction = this.bankQuestionRepo.create({
         questionBank: { id: bankId },
         question: { id: questionId },
-        clientId: clientId
+        clientId: clientId,
       } as any);
 
       await this.bankQuestionRepo.save(junction);
-      
+
       return {
         bankId,
         questionId,
-        addedAt: new Date().toISOString()
+        addedAt: new Date().toISOString(),
       };
     } catch (error) {
       throw new BadRequestException('Failed to add question to bank');
     }
   }
 
+  async addQuestionsToBank(bankId: string, questionIds: string[]) {
+    try {
+      const bank = await this.findById(bankId);
+      if (!bank) throw new NotFoundException('Bank not found');
+
+      const clientId = ClientContextService.getClientId();
+
+      const junctions = this.bankQuestionRepo.create(
+        questionIds.map((qid) => ({
+          questionBank: { id: bankId },
+          question: { id: qid },
+          clientId: clientId,
+        } as any)),
+      );
+
+      await this.bankQuestionRepo.save(junctions);
+
+      return {
+        bankId,
+        questionIds,
+        addedCount: questionIds.length,
+        addedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException('Failed to add questions to bank');
+    }
+  }
+
   async removeQuestionFromBank(bankId: string, questionId: string) {
     try {
       const clientId = ClientContextService.getClientId();
-      await this.bankQuestionRepo.createQueryBuilder()
-        .delete()
-        .where('questionBankId = :bankId', { bankId })
-        .andWhere('questionId = :questionId', { questionId })
-        .andWhere('clientId = :clientId', { clientId })
-        .execute();
+      await this.bankQuestionRepo.delete({
+        questionBank: { id: bankId },
+        question: { id: questionId },
+        clientId,
+      } as any);
 
       return {
         bankId,
         questionId,
-        removedAt: new Date().toISOString()
+        removedAt: new Date().toISOString(),
       };
     } catch (error) {
       console.error('removeQuestionFromBank error:', error);

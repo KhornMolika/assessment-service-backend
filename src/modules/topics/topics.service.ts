@@ -29,7 +29,6 @@ export class TopicsService {
       const topic = await this.topicRepository.create({
         name: dto.name,
         description: dto.description,
-        visibility: dto.visibility,
         slug,
       });
 
@@ -126,7 +125,6 @@ export class TopicsService {
       const updateData: any = {};
       if (dto.name) updateData.name = dto.name;
       if (dto.description) updateData.description = dto.description;
-      if (dto.visibility) updateData.visibility = dto.visibility;
 
       if (dto.name) {
         const slug = this.generateSlug(dto.name);

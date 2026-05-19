@@ -28,16 +28,19 @@ export class QuestionSchemaValidationPipe implements PipeTransform {
       throw new BadRequestException(`Invalid type: [${value.type}] is not a recognized configuration type name`);
     }
 
-    await this.validateSchemas(value.type, value.settings, value.correctAnswer);
+    const settings = value.options ?? value.settings;
+    const correctAnswer = value.correctAnswers ?? value.correctAnswer;
+
+    await this.validateSchemas(value.type, settings, correctAnswer);
     return value;
   }
 
   private async validateSchemas(typeName: QuestionTypeName, settings: any, correctAnswer: any) {
     if (!settings || typeof settings !== 'object') {
-      throw new BadRequestException('settings must be a valid JSON object');
+      throw new BadRequestException('options (or settings) must be a valid JSON object');
     }
     if (!correctAnswer || typeof correctAnswer !== 'object') {
-      throw new BadRequestException('correctAnswer must be a valid JSON object');
+      throw new BadRequestException('correctAnswers (or correctAnswer) must be a valid JSON object');
     }
 
     let settingsClassInstance: any;

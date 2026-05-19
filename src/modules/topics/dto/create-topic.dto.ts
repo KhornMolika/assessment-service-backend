@@ -17,7 +17,4 @@ export class CreateTopicDto {
   @MaxLength(500)
   description?: string;
 
-  @IsOptional()
-  @IsEnum(TopicVisibility)
-  visibility?: TopicVisibility;
 }

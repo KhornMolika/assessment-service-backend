@@ -3,6 +3,8 @@ import {
   IsEnum,
   IsOptional,
   IsArray,
+  IsNumber,
+  IsPositive,
 } from 'class-validator';
 import { Difficulty } from '../entities/question.entity';
 import { QuestionTypeName } from '../constants/question-types.config';
@@ -17,10 +19,13 @@ export class CreateQuestionDto {
   @IsEnum(Difficulty)
   difficulty!: Difficulty;
 
-  @IsOptional()
-  @IsArray()
-  options?: any[];
+  @IsNumber()
+  @IsPositive()
+  points!: number;
 
   @IsOptional()
-  correct_answer?: string | string[] | Record<string, any>[] | null;
+  options?: string | string[] | Record<string, any>[];
+
+  @IsOptional()
+  correctAnswers?: string | string[] | Record<string, any>[];
 }

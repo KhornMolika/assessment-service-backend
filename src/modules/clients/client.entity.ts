@@ -33,5 +33,5 @@ export class Client extends SystemBaseEntity {
   refreshTokens!: RefreshToken[];
 
   @OneToMany(() => Topic, (topic) => topic.client)
-  topics: Topic[];
+  topics!: Topic[];
 }

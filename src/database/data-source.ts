@@ -31,7 +31,7 @@ export const AppDataSource = new DataSource({
 
   // safer in Docker/K8s environments
   ssl: false
-    // process.env.NODE_ENV === 'production'
-    //   ? { rejectUnauthorized: false }
-    //   : false,
+  // process.env.NODE_ENV === 'production'
+  //   ? { rejectUnauthorized: false }
+  //   : false,
 });

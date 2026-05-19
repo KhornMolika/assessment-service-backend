@@ -19,13 +19,13 @@ export class QuestionsService {
     private readonly questionRepository: QuestionRepository,
     private readonly topicRepository: TopicRepository,
     private readonly bankRepository: QuestionBankRepository,
-  ) {}
+  ) { }
 
   private transformResponse(question: any) {
     if (!question) return question;
-    
+
     const mapped = { ...question };
-    
+
     // API expects `text`, DB has `questionText`
     if (mapped.questionText) {
       mapped.text = mapped.questionText;
@@ -36,7 +36,7 @@ export class QuestionsService {
     // Just keep mapped.options as-is from the entity
 
     if (mapped.correctAnswer !== undefined) {
-      mapped.correct_answer = mapped.correctAnswer;
+      mapped.correctAnswers = mapped.correctAnswer;
       delete mapped.correctAnswer;
     }
 
@@ -45,6 +45,7 @@ export class QuestionsService {
 
   async createTopicQuestion(topicId: string, dto: CreateQuestionDto) {
     try {
+      console.log('createTopicQuestion DTO:', JSON.stringify(dto, null, 2));
       const typeConfig = QUESTION_TYPES_CONFIG[dto.type];
       if (!typeConfig) {
         throw new BadRequestException(`Invalid question type specified: [${dto.type}]`);
@@ -58,9 +59,10 @@ export class QuestionsService {
         questionText: dto.text,
         type: dto.type,
         difficulty: dto.difficulty,
+        points: dto.points !== undefined ? dto.points : 1,
         topic: { id: topic.id },
         options: dto.options || [],
-        correctAnswer: dto.correct_answer,
+        correctAnswer: dto.correctAnswers,
       } as any);
 
       return this.transformResponse(saved);
@@ -75,7 +77,7 @@ export class QuestionsService {
     try {
       // Force filter by topicId
       query.topicId = topicId;
-      
+
       const [questions, total] = await this.questionRepository.findPaginated(
         query,
         ['questionText']
@@ -83,10 +85,10 @@ export class QuestionsService {
 
       return {
         data: questions.map((q) => this.transformResponse(q)),
-        meta: { 
-          total, 
-          page: query.page, 
-          limit: query.limit, 
+        meta: {
+          total,
+          page: query.page,
+          limit: query.limit,
           pageCount: Math.ceil(total / query.limit),
           topicId
         },
@@ -114,15 +116,17 @@ export class QuestionsService {
       if (!question) throw new NotFoundException('Question not found');
 
       const updateData: any = {};
-      if (dto.text) updateData.questionText = dto.text;
-      if (dto.type) updateData.type = dto.type;
-      if (dto.difficulty) updateData.difficulty = dto.difficulty;
-      if (dto.options) updateData.options = dto.options;
-      if (dto.correct_answer !== undefined) updateData.correctAnswer = dto.correct_answer;
+      if (dto.text !== undefined) updateData.questionText = dto.text;
+      if (dto.type !== undefined) updateData.type = dto.type;
+      if (dto.difficulty !== undefined) updateData.difficulty = dto.difficulty;
+      if (dto.points !== undefined) updateData.points = dto.points;
+      if (dto.options !== undefined) updateData.options = dto.options;
+      if (dto.correctAnswers !== undefined) updateData.correctAnswer = dto.correctAnswers;
 
       await this.questionRepository.update({ id } as any, updateData);
       return this.findById(id);
     } catch (error) {
+      console.error('Update question error:', error);
       if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       throw new BadRequestException('Update failed');
     }
