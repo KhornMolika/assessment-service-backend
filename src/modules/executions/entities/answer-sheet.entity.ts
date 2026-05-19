@@ -1,34 +1,30 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { AssessmentParticipant } from './assessment-participant.entity';
+import { AnswerEntry } from './answer-entry.entity';
 
 @Entity()
 export class AnswerSheet extends ClientScopedEntity {
-  @Index()
-  @Column({ type: 'varchar' })
-  participantId!: string;
+  @ManyToOne(() => AssessmentParticipant, (p) => p.answerSheets, {
+    onDelete: "CASCADE",
+  })
+  assessmentParticipant!: AssessmentParticipant;
 
-  @Index()
-  @Column({ type: 'varchar' })
-  assessmentId!: string;
+  @Column({ nullable: true })
+  totalScore?: number;
 
-  @Column({ type: 'float', nullable: true })
-  totalScore!: number;
+  @Column({ nullable: true })
+  grade?: string;
 
-  @Column({ type: 'float', nullable: true })
-  maxScore!: number;
-
-  @Column({ type: 'varchar', nullable: true })
-  grade!: string;
-
-  @Column({ type: 'boolean', default: false })
+  @Column({ default: false })
   isPassed!: boolean;
 
-  @Column({ type: 'timestamp', nullable: true })
-  startedAt!: Date;
+  @Column({ nullable: true })
+  startedAt?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
-  submittedAt!: Date;
+  @Column({ nullable: true })
+  submittedAt?: Date;
 
-  @Column({ type: 'varchar', nullable: true })
-  shareToken!: string;
+  @OneToMany(() => AnswerEntry, (e) => e.answerSheet)
+  entries!: AnswerEntry[];
 }

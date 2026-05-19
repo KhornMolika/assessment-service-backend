@@ -1,39 +1,24 @@
-import { Entity, Column } from 'typeorm';
-import { SystemBaseEntity } from '../../../common/base/system-base.entity';
-
-export enum Status {
-    QUEUED = 'QUEUED',
-    RUNNING = 'RUNNING',
-    COMPLETED = 'COMPLETED',
-    FAILED = 'FAILED'
-}
+import { Entity, Column, ManyToOne } from 'typeorm';
+import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { AnswerEntry } from '../../executions/entities/answer-entry.entity';
 
 @Entity()
-export class AIGradingJob extends SystemBaseEntity {
-  @Column({ type: 'varchar' })
-  entryId!: string;
+export class AIGradingJob extends ClientScopedEntity {
+  @ManyToOne(() => AnswerEntry, (e) => e.aiJobs, { onDelete: "CASCADE" })
+  answerEntry!: AnswerEntry;
 
-  @Column({ type: 'varchar' })
-  configId!: string;
+  @Column()
+  status!: string;
 
-  @Column({ type: 'enum', enum: Status, default: Status.QUEUED })
-  status!: Status;
+  @Column({ nullable: true, type: "float" })
+  score?: number;
 
-  @Column({ nullable: true })
-  modelUsed!: string;
+  @Column({ nullable: true, type: "float" })
+  confidence?: number;
 
-  @Column({ type: 'float', nullable: true })
-  score!: number;
+  @Column({ nullable: true, type: "text" })
+  feedback?: string;
 
-  @Column({ type: 'int', nullable: true })
-  confidence!: number;
-
-  @Column({ type: 'text', nullable: true })
-  feedback!: string;
-
-  @Column({ type: 'text', nullable: true })
-  errorMessage!: string;
-
-  @Column({ type: 'int', default: 0 })
-  attemptCount!: number;
+  @Column({ nullable: true, type: "text" })
+  errorMessage?: string;
 }

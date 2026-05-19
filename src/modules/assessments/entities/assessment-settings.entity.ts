@@ -1,75 +1,82 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import { Assessment } from './assessment.entity';
 
 export enum Mode {
-  SELF_PACED = 'SELF_PACED',
-  REAL_TIME = 'REAL_TIME',
-}
-
-export enum ParticipantIdentity {
-  INTERNAL = 'INTERNAL',
-  EXTERNAL = 'EXTERNAL',
-  ANONYMOUS = 'ANONYMOUS',
+  EXAM = 'EXAM',
+  PRACTICE = 'PRACTICE',
 }
 
 export enum QuestionSelection {
-  MANUAL = 'MANUAL',
-  DYNAMIC_FROM_BANK = 'DYNAMIC_FROM_BANK',
+  FIXED = 'FIXED',
+  RANDOM = 'RANDOM',
+}
+
+export enum ParticipantIdentity {
+  ANONYMOUS = 'ANONYMOUS',
+  AUTHENTICATED = 'AUTHENTICATED',
 }
 
 export enum ShowResults {
-  IMMEDIATE = 'IMMEDIATE',
-  MANUAL = 'MANUAL',
-  HIDDEN = 'HIDDEN',
+  IMMEDIATELY = 'IMMEDIATELY',
+  AFTER_DEADLINE = 'AFTER_DEADLINE',
+  NEVER = 'NEVER',
 }
 
 @Entity()
-export class AssessmentSettings {
-  @PrimaryColumn('uuid')
-  assessmentId!: string;
+export class AssessmentSetting {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
 
-  @Column({ type: 'enum', enum: Mode })
+  @OneToOne(() => Assessment, (a) => a.settings, { onDelete: "CASCADE" })
+  @JoinColumn()
+  assessment: Assessment;
+
+  @Column({ type: "enum", enum: Mode })
   mode!: Mode;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: QuestionSelection,
     nullable: false,
   })
   questionSelection!: QuestionSelection;
 
-  @Column({ type: 'int'})
+  @Column({
+    type: "enum",
+    enum: ParticipantIdentity,
+  })
+  participantIdentity!: ParticipantIdentity;
+
+  @Column({ type: "int" })
   numQuestions!: number;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   selectionRules?: any; // { easy: 3, medium: 4, hard: 3 }
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: "int", nullable: true })
   timeLimit?: number;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   startsAt?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   endsAt?: Date;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: "int", nullable: true })
   passMark!: number;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: "boolean", default: false })
   isShuffle!: boolean;
 
-  @Column({ type: 'enum', enum: ShowResults, nullable: true })
+  @Column({ type: "enum", enum: ShowResults, nullable: true })
   showResults!: ShowResults;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   gradeLabels: any; // [{ name: 'A', min: 90 }]
 
   @Column({ default: false })
   isAllowShare!: boolean;
 
-  @Column({
-    type: 'enum',
-    enum: ParticipantIdentity,
-  })
-  participantIdentity!: ParticipantIdentity;
+  @Column({ default: false })
+  allowReview: boolean;
 }

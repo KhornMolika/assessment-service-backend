@@ -10,5 +10,6 @@ import { ContextModule } from '../../common/context/context.module';
   imports: [TypeOrmModule.forFeature([Topic]), ContextModule],
   providers: [TopicsService, TopicRepository],
   controllers: [TopicsController],
+  exports: [TopicRepository]
 })
 export class TopicsModule {}

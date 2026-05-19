@@ -21,14 +21,13 @@ export const databaseConfig: TypeOrmModuleAsyncOptions = {
 
     synchronize: false,
 
-    logging:
-      configService.get<string>('NODE_ENV') === 'development',
+    logging: false,
 
-    ssl:
-      configService.get<string>('NODE_ENV') === 'production'
-        ? {
-            rejectUnauthorized: false,
-          }
-        : false,
+    ssl: false
+      // configService.get<string>('NODE_ENV') === 'production'
+      //   ? {
+      //       rejectUnauthorized: false,
+      //     }
+      //   : false,
   }),
 }; 

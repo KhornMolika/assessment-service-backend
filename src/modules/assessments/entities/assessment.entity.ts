@@ -1,5 +1,9 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToOne, OneToMany } from 'typeorm';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { Topic } from '../../topics/entities/topic.entity';
+import { AssessmentSetting } from './assessment-settings.entity';
+import { AssessmentQuestion } from './assessment-question.entity';
+import { AssessmentParticipant } from '../../executions/entities/assessment-participant.entity';
 
 export enum AssessmentStatus {
   DRAFT = 'DRAFT',
@@ -9,16 +13,33 @@ export enum AssessmentStatus {
 
 @Entity()
 export class Assessment extends ClientScopedEntity {
-  @Column({ type: 'varchar'})
-  name!: string;
+  @ManyToOne(() => Topic, (topic) => topic.assessments, {
+    onDelete: "CASCADE",
+  })
+  topic: Topic;
 
-  @Column({ type: 'text', nullable: true })
+  @Column()
+  name: string;
+
+  @Column({ default: "quiz" })
+  type!: string;
+
+  @Column({ nullable: true, type: "text" })
   description?: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: AssessmentStatus,
-    default: AssessmentStatus.DRAFT
+    default: AssessmentStatus.DRAFT,
   })
-  status!: AssessmentStatus;
+  status: AssessmentStatus;
+
+  @OneToOne(() => AssessmentSetting, (s) => s.assessment, { cascade: true })
+  settings: AssessmentSetting;
+
+  @OneToMany(() => AssessmentQuestion, (q) => q.assessment)
+  questions: AssessmentQuestion[];
+
+  @OneToMany(() => AssessmentParticipant, (p) => p.assessment)
+  participants: AssessmentParticipant[];
 }

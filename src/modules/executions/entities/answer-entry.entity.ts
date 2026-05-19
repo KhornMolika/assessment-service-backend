@@ -1,44 +1,36 @@
-import { Entity, Column, Index } from 'typeorm';
-import { SystemBaseEntity } from '../../../common/base/system-base.entity';
+import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
+import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { AnswerSheet } from './answer-sheet.entity';
+import { AssessmentQuestion } from '../../assessments/entities/assessment-question.entity';
+import { AIGradingJob } from '../../ai/entities/ai-grading-job.entity';
 
 export enum GradingStatus {
-  AUTOMATIC = 'AUTOMATIC',
-  PENDING = 'PENDING',
-  AI_EVALUATED = 'AI_EVALUATED',
-  MANUAL_REVISED = 'MANUAL_REVISED',
+  PENDING = "PENDING",
+  AUTOMATIC = "AUTOMATIC",
+  AI_EVALUATED = "AI_EVALUATED",
+  MANUAL_REVISED = "MANUAL_REVISED",
 }
 
 @Entity()
-export class AnswerEntry extends SystemBaseEntity {
-  @Index()
-  @Column({ type: 'varchar' })
-  sheetId!: string;
+export class AnswerEntry extends ClientScopedEntity {
+  @ManyToOne(() => AnswerSheet, (s) => s.entries, { onDelete: "CASCADE" })
+  answerSheet!: AnswerSheet;
 
-  @Column({ type: 'varchar' })
-  assessmentId!: string;
+  @ManyToOne(() => AssessmentQuestion, { onDelete: "CASCADE" })
+  assessmentQuestion!: AssessmentQuestion;
 
-  @Column({ type: 'varchar' })
-  participantId!: string;
+  @Column({ type: "jsonb", nullable: true })
+  response?: Record<string, any>;
 
-  @Column({ type: 'varchar' })
-  questionId!: string;
+  @Column({ nullable: true })
+  scoreAwarded?: number;
 
-  @Column({ type: 'jsonb' })
-  questionSnapshot: any;
+  @Column({ nullable: true })
+  isCorrect?: boolean;
 
-  @Column({ type: 'jsonb' })
-  response: any;
-
-  @Column({ type: 'boolean', default: false })
-  isCorrect!: boolean;
-
-  @Column({ type: 'float', nullable: true })
-  scoreAwarded!: number;
-
-  @Column({
-    type: 'enum',
-    enum: GradingStatus,
-    default: GradingStatus.PENDING,
-  })
+  @Column({ type: "enum", enum: GradingStatus, default: GradingStatus.PENDING })
   gradingStatus!: GradingStatus;
+
+  @OneToMany(() => AIGradingJob, (j) => j.answerEntry)
+  aiJobs!: AIGradingJob[];
 }

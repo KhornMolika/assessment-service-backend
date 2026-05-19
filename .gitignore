@@ -50,3 +50,7 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+scratch/
+api-endpoint.md
+assessment_service_typeorm_entities_nestjs.md

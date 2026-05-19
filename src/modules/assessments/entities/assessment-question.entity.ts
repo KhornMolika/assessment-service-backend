@@ -1,22 +1,22 @@
-import { Entity, Column, Index } from 'typeorm';
-import { SystemBaseEntity } from '../../../common/base/system-base.entity';
+import { Entity, Column, ManyToOne, Index } from 'typeorm';
+import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { Assessment } from './assessment.entity';
+import { Question } from '../../questions/entities/question.entity';
 
-@Entity('assessments_questions')
-export class AssessmentQuestion extends SystemBaseEntity {
-  @Index()
-  @Column({ type: 'varchar'})
-  assessmentId!: string;
+@Entity()
+@Index(["assessment", "question"], { unique: true })
+export class AssessmentQuestion extends ClientScopedEntity {
+  @ManyToOne(() => Assessment, (a) => a.questions, { onDelete: "CASCADE" })
+  assessment!: Assessment;
 
-  @Index()
-  @Column({ type: 'varchar'})
-  questionId!: string;
+  @ManyToOne(() => Question, (q) => q.assessmentQuestions, {
+    onDelete: "CASCADE",
+  })
+  question!: Question;
 
-  @Column({ type: 'int'})
+  @Column({ default: 1 })
   order!: number;
 
-  @Column({ type: 'float', nullable: true })
-  pointsOverride!: number;
-
-  @Column({ type: 'jsonb', nullable: true })
-  snapshot: any;
+  @Column({ type: "jsonb", nullable: true })
+  snapshot?: Record<string, any>;
 }
