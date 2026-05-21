@@ -7,7 +7,6 @@ import { TopicsModule } from '../topics/topics.module';
 import { ContextModule } from '../../common/context/context.module';
 import { QuestionsController } from './questions.controller';
 import { TopicQuestionsController } from './topic-questions.controller';
-import { TopicRepository } from '../topics/repositories/topic.repository';
 import { QuestionBanksModule } from '../question-banks/question-banks.module';
 
 @Module({

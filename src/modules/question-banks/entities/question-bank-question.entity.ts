@@ -9,12 +9,12 @@ export class QuestionBankQuestion extends ClientScopedEntity {
   @ManyToOne(() => QuestionBank, (bank) => bank.questions, {
     onDelete: "CASCADE",
   })
-  questionBank: QuestionBank;
+  questionBank!: QuestionBank;
 
   @ManyToOne(() => Question, (question) => question.bankQuestions, {
     onDelete: "CASCADE",
   })
-  question: Question;
+  question!: Question;
 
   @Column({ nullable: true })
   order?: number;

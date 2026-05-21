@@ -12,7 +12,7 @@ class MatchPairDto {
   rightId!: string;
 }
 
-export class MatchingSettingsDto {
+export class MatchingOptionsDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => KeyedOptionDto)

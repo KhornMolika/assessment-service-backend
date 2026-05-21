@@ -56,7 +56,7 @@ export class QuestionsService {
       if (!topic) throw new NotFoundException('Topic not found');
 
       const saved = await this.questionRepository.create({
-        questionText: dto.text,
+        questionText: dto.questionText,
         type: dto.type,
         difficulty: dto.difficulty,
         points: dto.points !== undefined ? dto.points : 1,
@@ -116,7 +116,7 @@ export class QuestionsService {
       if (!question) throw new NotFoundException('Question not found');
 
       const updateData: any = {};
-      if (dto.text !== undefined) updateData.questionText = dto.text;
+      if (dto.questionText !== undefined) updateData.questionText = dto.questionText;
       if (dto.type !== undefined) updateData.type = dto.type;
       if (dto.difficulty !== undefined) updateData.difficulty = dto.difficulty;
       if (dto.points !== undefined) updateData.points = dto.points;

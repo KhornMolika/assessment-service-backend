@@ -5,30 +5,30 @@ import { AssessmentQuestion } from '../../assessments/entities/assessment-questi
 import { AIGradingJob } from '../../ai/entities/ai-grading-job.entity';
 
 export enum GradingStatus {
-  PENDING = "PENDING",
-  AUTOMATIC = "AUTOMATIC",
-  AI_EVALUATED = "AI_EVALUATED",
-  MANUAL_REVISED = "MANUAL_REVISED",
+  PENDING = 'PENDING',
+  AUTOMATIC = 'AUTOMATIC',
+  AI_EVALUATED = 'AI_EVALUATED',
+  MANUAL_REVISED = 'MANUAL_REVISED',
 }
 
 @Entity()
 export class AnswerEntry extends ClientScopedEntity {
-  @ManyToOne(() => AnswerSheet, (s) => s.entries, { onDelete: "CASCADE" })
+  @ManyToOne(() => AnswerSheet, (s) => s.entries, { onDelete: 'CASCADE' })
   answerSheet!: AnswerSheet;
 
-  @ManyToOne(() => AssessmentQuestion, { onDelete: "CASCADE" })
+  @ManyToOne(() => AssessmentQuestion, { onDelete: 'CASCADE' })
   assessmentQuestion!: AssessmentQuestion;
 
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   response?: Record<string, any>;
 
-  @Column({ nullable: true })
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   scoreAwarded?: number;
 
-  @Column({ nullable: true })
-  isCorrect?: boolean;
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  maxScore?: number; // store the max at time of grading (from AssessmentQuestion.points)
 
-  @Column({ type: "enum", enum: GradingStatus, default: GradingStatus.PENDING })
+  @Column({ type: 'enum', enum: GradingStatus, default: GradingStatus.PENDING })
   gradingStatus!: GradingStatus;
 
   @OneToMany(() => AIGradingJob, (j) => j.answerEntry)

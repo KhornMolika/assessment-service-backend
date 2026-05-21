@@ -13,10 +13,6 @@ export enum TopicVisibility {
 @Entity()
 @Index(["clientId", "name"], { unique: true })
 export class Topic extends ClientScopedEntity {
-  @ManyToOne(() => Client, (client) => client.topics, {
-    onDelete: "CASCADE",
-  })
-  client!: Client;
 
   @Column({
     type: 'varchar',

@@ -5,52 +5,52 @@ import { QuestionBankQuestion } from '../../question-banks/entities/question-ban
 import { AssessmentQuestion } from '../../assessments/entities/assessment-question.entity';
 
 export enum Difficulty {
-  EASY = "EASY",
-  MEDIUM = "MEDIUM",
-  HARD = "HARD",
+  EASY = 'EASY',
+  MEDIUM = 'MEDIUM',
+  HARD = 'HARD',
 }
 
 export enum QuestionType {
-  SINGLE_CHOICE = "SINGLE_CHOICE",
-  MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
-  TRUE_FALSE = "TRUE_FALSE",
-  ORDERING = "ORDERING",
-  FILL_IN_THE_BLANK = "FILL_IN_THE_BLANK",
-  MATCHING = "MATCHING",
-  RATING = "RATING",
-  SHORT_ANSWER = "SHORT_ANSWER",
-  ESSAY = "ESSAY",
+  SINGLE_CHOICE = 'SINGLE_CHOICE',
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  TRUE_FALSE = 'TRUE_FALSE',
+  ORDERING = 'ORDERING',
+  FILL_IN_THE_BLANK = 'FILL_IN_THE_BLANK',
+  MATCHING = 'MATCHING',
+  RATING = 'RATING',
+  SHORT_ANSWER = 'SHORT_ANSWER',
+  ESSAY = 'ESSAY',
 }
 
 @Entity()
-@Index(["clientId", "topic"], { unique: false })
+@Index(['clientId', 'topic'], { unique: false })
 export class Question extends ClientScopedEntity {
   @ManyToOne(() => Topic, (topic) => topic.questions, {
-    onDelete: "CASCADE",
+    onDelete: 'CASCADE',
   })
-  topic: Topic;
+  topic!: Topic;
 
-  @Column({ type: "enum", enum: QuestionType })
-  type: QuestionType;
+  @Column({ type: 'enum', enum: QuestionType })
+  type!: QuestionType;
 
-  @Column({ type: "text" })
-  questionText: string;
+  @Column({ type: 'text' })
+  questionText!: string;
 
-  @Column({ type: "enum", enum: Difficulty })
+  @Column({ type: 'enum', enum: Difficulty })
   difficulty!: Difficulty;
 
   @Column({ default: 1 })
-  points: number;
+  points!: number;
 
-  @Column({ name: "options", type: "jsonb", nullable: true })
-  options!: string | string[] | Record<string, any>[];
+  @Column({ type: 'jsonb', nullable: true })
+  options!: Record<string, any> | null;
 
-  @Column({ type: "jsonb", nullable: true })
-  correctAnswer!: string | string[] | Record<string, any>[];
+  @Column({ type: 'jsonb', nullable: true })
+  correctAnswer!: Record<string, any> | null;
 
   @OneToMany(() => QuestionBankQuestion, (bq) => bq.question)
-  bankQuestions: QuestionBankQuestion[];
+  bankQuestions!: QuestionBankQuestion[];
 
   @OneToMany(() => AssessmentQuestion, (aq) => aq.question)
-  assessmentQuestions: AssessmentQuestion[];
+  assessmentQuestions!: AssessmentQuestion[];
 }

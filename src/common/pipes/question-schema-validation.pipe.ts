@@ -1,140 +1,344 @@
-import { ArgumentMetadata, Injectable, PipeTransform, BadRequestException } from '@nestjs/common';
+// question-schema-validation.pipe.ts
+import {
+  ArgumentMetadata,
+  Injectable,
+  PipeTransform,
+  BadRequestException,
+} from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
-import { QUESTION_TYPES_CONFIG, QuestionTypeName } from '../../modules/questions/constants/question-types.config';
+import {
+  QUESTION_TYPES_CONFIG,
+  QuestionTypeName,
+} from '../../modules/questions/constants/question-types.config';
 
-// Import payload pair structures
-import { SingleChoiceSettingsDto, SingleChoiceAnswerDto } from '../../modules/questions/dto/types/single-choice.dto';
-import { MultipleChoiceSettingsDto, MultipleChoiceAnswerDto } from '../../modules/questions/dto/types/multiple-choice.dto';
-import { TrueFalseSettingsDto, TrueFalseAnswerDto } from '../../modules/questions/dto/types/true-false.dto';
-import { OrderingSettingsDto, OrderingAnswerDto } from '../../modules/questions/dto/types/ordering.dto';
-import { FillBlankSettingsDto, FillBlankAnswerDto } from '../../modules/questions/dto/types/fill-blank.dto';
-import { MatchingSettingsDto, MatchingAnswerDto } from '../../modules/questions/dto/types/matching.dto';
-import { RatingSettingsDto, RatingAnswerDto } from '../../modules/questions/dto/types/rating.dto';
-import { OpenEndedTextAnswerDto, OpenEndedTextSettingsDto } from '../../modules/questions/dto/types/open-ended-text.dto';
+import {
+  SingleChoiceOptionsDto,
+  SingleChoiceAnswerDto,
+} from '../../modules/questions/dto/types/single-choice.dto';
+import {
+  MultipleChoiceOptionsDto,
+  MultipleChoiceAnswerDto,
+} from '../../modules/questions/dto/types/multiple-choice.dto';
+import {
+  TrueFalseOptionsDto,
+  TrueFalseAnswerDto,
+} from '../../modules/questions/dto/types/true-false.dto';
+import {
+  OrderingOptionsDto,
+  OrderingAnswerDto,
+} from '../../modules/questions/dto/types/ordering.dto';
+import {
+  FillBlankOptionsDto,
+  FillBlankAnswerDto,
+} from '../../modules/questions/dto/types/fill-blank.dto';
+import {
+  MatchingOptionsDto,
+  MatchingAnswerDto,
+} from '../../modules/questions/dto/types/matching.dto';
+import { RatingOptionsDto } from '../../modules/questions/dto/types/rating.dto';
+import {
+  OpenEndedTextOptionsDto,
+  OpenEndedTextAnswerDto,
+} from '../../modules/questions/dto/types/open-ended-text.dto';
 
 @Injectable()
 export class QuestionSchemaValidationPipe implements PipeTransform {
-  // Removed DataSource constructor dependency completely!
-
   async transform(value: any, metadata: ArgumentMetadata) {
     if (metadata.type !== 'body' || !value || !value.type) {
       return value;
     }
 
-    // Direct configuration validation lookup loop
     const config = QUESTION_TYPES_CONFIG[value.type as QuestionTypeName];
     if (!config) {
-      throw new BadRequestException(`Invalid type: [${value.type}] is not a recognized configuration type name`);
+      throw new BadRequestException(
+        `Invalid type: [${value.type}] is not a recognized question type`,
+      );
     }
 
-    const settings = value.options ?? value.settings;
+    const rawOptions = value.options ?? value.settings;
     const correctAnswer = value.correctAnswers ?? value.correctAnswer;
 
-    await this.validateSchemas(value.type, settings, correctAnswer);
+    // RATING has no correct answer — skip correctAnswer validation entirely
+    if (value.type === QuestionTypeName.RATING) {
+      await this.validateRatingOptions(rawOptions);
+      return value;
+    }
+
+    if (correctAnswer === undefined || correctAnswer === null) {
+      throw new BadRequestException('correctAnswers must be provided');
+    }
+
+    await this.validateSchemas(value.type, rawOptions, correctAnswer);
     return value;
   }
 
-  private async validateSchemas(typeName: QuestionTypeName, settings: any, correctAnswer: any) {
-    if (!settings || typeof settings !== 'object') {
-      throw new BadRequestException('options (or settings) must be a valid JSON object');
-    }
-    if (!correctAnswer || typeof correctAnswer !== 'object') {
-      throw new BadRequestException('correctAnswers (or correctAnswer) must be a valid JSON object');
+  private async validateRatingOptions(rawOptions: any) {
+    if (
+      !rawOptions ||
+      typeof rawOptions !== 'object' ||
+      Array.isArray(rawOptions)
+    ) {
+      throw new BadRequestException('options must be an object for RATING');
     }
 
-    let settingsClassInstance: any;
-    let answerClassInstance: any;
+    const instance = plainToInstance(RatingOptionsDto, rawOptions);
+    const errors = await validate(instance, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: 'Validation failed for options in type [RATING]',
+        details: this.flattenErrors(errors),
+      });
+    }
+
+    if (instance.min >= instance.max) {
+      throw new BadRequestException(
+        'options.min must be less than options.max',
+      );
+    }
+  }
+
+  private async validateSchemas(
+    typeName: QuestionTypeName,
+    rawOptions: any,
+    correctAnswer: any,
+  ) {
+    if (correctAnswer === undefined || correctAnswer === null) {
+      throw new BadRequestException(
+        'correctAnswers (or correctAnswer) must be provided',
+      );
+    }
+
+    let optionsInstance: any;
+    let answerInstance: any;
 
     switch (typeName) {
+      // --- Array-based types (options sent as flat array) ---
+
       case QuestionTypeName.SINGLE_CHOICE:
-        settingsClassInstance = plainToInstance(SingleChoiceSettingsDto, settings);
-        answerClassInstance = plainToInstance(SingleChoiceAnswerDto, correctAnswer);
+        if (!Array.isArray(rawOptions)) {
+          throw new BadRequestException(
+            'options must be an array for SINGLE_CHOICE',
+          );
+        }
+        optionsInstance = plainToInstance(SingleChoiceOptionsDto, {
+          options: rawOptions,
+        });
+        answerInstance = plainToInstance(SingleChoiceAnswerDto, correctAnswer);
         break;
 
       case QuestionTypeName.MULTIPLE_CHOICE:
-        settingsClassInstance = plainToInstance(MultipleChoiceSettingsDto, settings);
-        answerClassInstance = plainToInstance(MultipleChoiceAnswerDto, correctAnswer);
-        break;
-
-      case QuestionTypeName.TRUE_FALSE:
-        settingsClassInstance = plainToInstance(TrueFalseSettingsDto, settings);
-        answerClassInstance = plainToInstance(TrueFalseAnswerDto, correctAnswer);
+        if (!Array.isArray(rawOptions)) {
+          throw new BadRequestException(
+            'options must be an array for MULTIPLE_CHOICE',
+          );
+        }
+        optionsInstance = plainToInstance(MultipleChoiceOptionsDto, {
+          options: rawOptions,
+        });
+        answerInstance = plainToInstance(
+          MultipleChoiceAnswerDto,
+          correctAnswer,
+        );
         break;
 
       case QuestionTypeName.ORDERING:
-        settingsClassInstance = plainToInstance(OrderingSettingsDto, settings);
-        answerClassInstance = plainToInstance(OrderingAnswerDto, correctAnswer);
+        if (!Array.isArray(rawOptions)) {
+          throw new BadRequestException(
+            'options must be an array for ORDERING',
+          );
+        }
+        optionsInstance = plainToInstance(OrderingOptionsDto, {
+          items: rawOptions,
+        });
+        answerInstance = plainToInstance(OrderingAnswerDto, correctAnswer);
+        break;
+
+      // --- Object-based types (options sent as object) ---
+
+      case QuestionTypeName.TRUE_FALSE:
+        if (
+          !rawOptions ||
+          typeof rawOptions !== 'object' ||
+          Array.isArray(rawOptions)
+        ) {
+          throw new BadRequestException(
+            'options must be an object for TRUE_FALSE',
+          );
+        }
+        optionsInstance = plainToInstance(TrueFalseOptionsDto, rawOptions);
+        answerInstance = plainToInstance(TrueFalseAnswerDto, correctAnswer);
         break;
 
       case QuestionTypeName.FILL_IN_THE_BLANK:
-        settingsClassInstance = plainToInstance(FillBlankSettingsDto, settings);
-        answerClassInstance = plainToInstance(FillBlankAnswerDto, correctAnswer);
+        if (
+          !rawOptions ||
+          typeof rawOptions !== 'object' ||
+          Array.isArray(rawOptions)
+        ) {
+          throw new BadRequestException(
+            'options must be an object for FILL_IN_THE_BLANK',
+          );
+        }
+        optionsInstance = plainToInstance(FillBlankOptionsDto, rawOptions);
+        answerInstance = plainToInstance(FillBlankAnswerDto, correctAnswer);
         break;
 
       case QuestionTypeName.MATCHING:
-        settingsClassInstance = plainToInstance(MatchingSettingsDto, settings);
-        answerClassInstance = plainToInstance(MatchingAnswerDto, correctAnswer);
+        if (
+          !rawOptions ||
+          typeof rawOptions !== 'object' ||
+          Array.isArray(rawOptions)
+        ) {
+          throw new BadRequestException(
+            'options must be an object for MATCHING',
+          );
+        }
+        optionsInstance = plainToInstance(MatchingOptionsDto, rawOptions);
+        answerInstance = plainToInstance(MatchingAnswerDto, correctAnswer);
         break;
 
       case QuestionTypeName.RATING:
-        settingsClassInstance = plainToInstance(RatingSettingsDto, settings);
-        answerClassInstance = plainToInstance(RatingAnswerDto, correctAnswer);
+        if (
+          !rawOptions ||
+          typeof rawOptions !== 'object' ||
+          Array.isArray(rawOptions)
+        ) {
+          throw new BadRequestException('options must be an object for RATING');
+        }
+        optionsInstance = plainToInstance(RatingOptionsDto, rawOptions);
+        answerInstance = null;
         break;
 
       case QuestionTypeName.SHORT_ANSWER:
-        settingsClassInstance = plainToInstance(OpenEndedTextSettingsDto, settings);
-        answerClassInstance = plainToInstance(OpenEndedTextAnswerDto, correctAnswer);
-        break;
-
       case QuestionTypeName.ESSAY:
-        settingsClassInstance = plainToInstance(OpenEndedTextSettingsDto, settings);
-        answerClassInstance = plainToInstance(OpenEndedTextAnswerDto, correctAnswer);
+        if (
+          !rawOptions ||
+          typeof rawOptions !== 'object' ||
+          Array.isArray(rawOptions)
+        ) {
+          throw new BadRequestException(
+            'options must be an object for open-ended types',
+          );
+        }
+        optionsInstance = plainToInstance(OpenEndedTextOptionsDto, rawOptions);
+        answerInstance = plainToInstance(OpenEndedTextAnswerDto, correctAnswer);
         break;
     }
 
-    if (settingsClassInstance) {
-      const settingsErrors = await validate(settingsClassInstance, { whitelist: true, forbidNonWhitelisted: true });
-      if (settingsErrors.length > 0) {
+    if (optionsInstance) {
+      const optionsErrors = await validate(optionsInstance, {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
+      if (optionsErrors.length > 0) {
         throw new BadRequestException({
-          message: `Validation failed inside settings wrapper for type [${typeName}]`,
-          details: this.flattenErrors(settingsErrors),
+          message: `Validation failed for options in type [${typeName}]`,
+          details: this.flattenErrors(optionsErrors),
         });
       }
     }
 
-    if (answerClassInstance) {
-      const answerErrors = await validate(answerClassInstance, { whitelist: true, forbidNonWhitelisted: true });
+    if (answerInstance) {
+      const answerErrors = await validate(answerInstance, {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
       if (answerErrors.length > 0) {
         throw new BadRequestException({
-          message: `Validation failed inside correctAnswer wrapper for type [${typeName}]`,
+          message: `Validation failed for correctAnswers in type [${typeName}]`,
           details: this.flattenErrors(answerErrors),
         });
       }
     }
 
-    this.executeCrossValidationChecks(typeName, settings, correctAnswer);
+    this.crossValidate(typeName, rawOptions, correctAnswer);
   }
 
-  private executeCrossValidationChecks(typeName: QuestionTypeName, settings: any, correctAnswer: any) {
-    if (typeName === QuestionTypeName.SINGLE_CHOICE && settings.options && correctAnswer.optionId) {
-      const match = settings.options.some((opt: any) => opt.id === correctAnswer.optionId);
-      if (!match) throw new BadRequestException('correctAnswer.optionId must match an item inside settings.options');
+  private crossValidate(
+    typeName: QuestionTypeName,
+    rawOptions: any,
+    correctAnswer: any,
+  ): void {
+    // For array-based types, rawOptions IS the array
+    // For object-based types, rawOptions is the object
+
+    if (typeName === QuestionTypeName.SINGLE_CHOICE) {
+      const match = (rawOptions as any[]).some(
+        (opt) => opt.id === correctAnswer.optionId,
+      );
+      if (!match) {
+        throw new BadRequestException(
+          'correctAnswers.optionId must match an id in options',
+        );
+      }
     }
 
-    if (typeName === QuestionTypeName.MULTIPLE_CHOICE && settings.options && correctAnswer.optionIds) {
-      correctAnswer.optionIds.forEach((id: string) => {
-        const match = settings.options.some((opt: any) => opt.id === id);
-        if (!match) throw new BadRequestException(`correctAnswer identity target [${id}] is missing from settings.options`);
+    if (typeName === QuestionTypeName.MULTIPLE_CHOICE) {
+      (correctAnswer.optionIds as string[]).forEach((id) => {
+        const match = (rawOptions as any[]).some((opt) => opt.id === id);
+        if (!match) {
+          throw new BadRequestException(
+            `correctAnswers.optionIds contains [${id}] which is not in options`,
+          );
+        }
       });
+    }
+
+    if (typeName === QuestionTypeName.ORDERING) {
+      const itemIds = (rawOptions as any[]).map((item) => item.id);
+      (correctAnswer.sequence as string[]).forEach((id) => {
+        if (!itemIds.includes(id)) {
+          throw new BadRequestException(
+            `correctAnswers.sequence contains [${id}] which is not in options`,
+          );
+        }
+      });
+    }
+
+    if (typeName === QuestionTypeName.MATCHING) {
+      const leftIds = rawOptions.leftSide.map((item: any) => item.id);
+      const rightIds = rawOptions.rightSide.map((item: any) => item.id);
+      (correctAnswer.pairs as any[]).forEach((pair) => {
+        if (!leftIds.includes(pair.leftId)) {
+          throw new BadRequestException(
+            `correctAnswers pair leftId [${pair.leftId}] not found in options.leftSide`,
+          );
+        }
+        if (!rightIds.includes(pair.rightId)) {
+          throw new BadRequestException(
+            `correctAnswers pair rightId [${pair.rightId}] not found in options.rightSide`,
+          );
+        }
+      });
+    }
+
+    if (typeName === QuestionTypeName.FILL_IN_THE_BLANK) {
+      const template = rawOptions.template as string;
+      const blankCount = (template.match(/\[blank_\d+\]/g) ?? []).length;
+      const answerCount = (correctAnswer.answers as string[][]).length;
+
+      if (answerCount !== blankCount) {
+        throw new BadRequestException(
+          `correctAnswers.answers has ${answerCount} entry(s) but template has ${blankCount} blank(s). They must match.`,
+        );
+      }
     }
   }
 
   private flattenErrors(errors: ValidationError[]): string[] {
     const messages: string[] = [];
     for (const error of errors) {
-      if (error.constraints) messages.push(...Object.values(error.constraints));
-      if (error.children && error.children.length > 0) messages.push(...this.flattenErrors(error.children));
+      if (error.constraints) {
+        messages.push(...Object.values(error.constraints));
+      }
+      if (error.children && error.children.length > 0) {
+        messages.push(...this.flattenErrors(error.children));
+      }
     }
     return messages;
   }

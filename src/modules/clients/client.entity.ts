@@ -1,7 +1,6 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { SystemBaseEntity } from '../../common/base/system-base.entity';
 import { RefreshToken } from '../auth/refresh-token.entity';
-import { Topic } from '../topics/entities/topic.entity';
 
 @Entity()
 export class Client extends SystemBaseEntity {
@@ -31,7 +30,4 @@ export class Client extends SystemBaseEntity {
 
   @OneToMany(() => RefreshToken, (t) => t.client)
   refreshTokens!: RefreshToken[];
-
-  @OneToMany(() => Topic, (topic) => topic.client)
-  topics!: Topic[];
 }

@@ -1,6 +1,6 @@
 import { IsInt, Min, Max, IsArray, IsString, IsNotEmpty } from 'class-validator';
 
-export class OpenEndedTextSettingsDto {
+export class OpenEndedTextOptionsDto {
   @IsInt()
   @Min(0)
   minWords: number = 0; // Set to 0 for short answers if word count isn't strictly enforced

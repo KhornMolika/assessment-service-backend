@@ -93,8 +93,8 @@ export class AssessmentsService {
     // Create default settings
     const setting = new AssessmentSetting();
     setting.assessment = assessment;
-    setting.mode = Mode.EXAM;
-    setting.questionSelection = QuestionSelection.FIXED;
+    setting.mode = Mode.SELF_PACED;
+    setting.questionSelection = QuestionSelection.MANUAL;
     setting.participantIdentity = ParticipantIdentity.AUTHENTICATED;
     setting.numQuestions = 0;
     setting.timeLimit = 30;
@@ -315,8 +315,8 @@ export class AssessmentsService {
     if (!setting) {
       setting = new AssessmentSetting();
       setting.assessment = { id } as any;
-      setting.mode = Mode.EXAM;
-      setting.questionSelection = QuestionSelection.FIXED;
+      setting.mode = Mode.SELF_PACED;
+      setting.questionSelection = QuestionSelection.MANUAL;
       setting.participantIdentity = ParticipantIdentity.AUTHENTICATED;
       setting.numQuestions = 0;
       setting.timeLimit = 30;

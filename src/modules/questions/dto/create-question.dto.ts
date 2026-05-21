@@ -14,7 +14,7 @@ export class CreateQuestionDto {
   type!: QuestionTypeName;
 
   @IsString()
-  text!: string;
+  questionText!: string;
 
   @IsEnum(Difficulty)
   difficulty!: Difficulty;

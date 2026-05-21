@@ -13,6 +13,6 @@ export class Participant extends ClientScopedEntity {
   @Column({ nullable: true })
   phone?: string;
 
-  @OneToMany(() => AssessmentParticipant, (a) => a.participant)
+  @OneToMany(() => AssessmentParticipant, (ap) => ap.participant)
   assessments!: AssessmentParticipant[];
 }

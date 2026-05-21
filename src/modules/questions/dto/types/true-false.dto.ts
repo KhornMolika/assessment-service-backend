@@ -1,6 +1,6 @@
 import { IsString, IsBoolean, IsNotEmpty } from 'class-validator';
 
-export class TrueFalseSettingsDto {
+export class TrueFalseOptionsDto {
   @IsString()
   @IsNotEmpty()
   trueLabel: string = 'True';

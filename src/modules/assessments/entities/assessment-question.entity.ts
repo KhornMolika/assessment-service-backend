@@ -1,22 +1,37 @@
+// -----------------------------------------------------------------------------
+// Join table between Assessment and Question.
+// Stores display order, point override, and a frozen snapshot of the question
+// content at publish time. Runtime reads from snapshot, not the live question.
+// -----------------------------------------------------------------------------
+
 import { Entity, Column, ManyToOne, Index } from 'typeorm';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
 import { Assessment } from './assessment.entity';
 import { Question } from '../../questions/entities/question.entity';
-
+ 
 @Entity()
-@Index(["assessment", "question"], { unique: true })
+@Index(['assessment', 'question'], { unique: true })
 export class AssessmentQuestion extends ClientScopedEntity {
-  @ManyToOne(() => Assessment, (a) => a.questions, { onDelete: "CASCADE" })
+  @ManyToOne(() => Assessment, (a) => a.questions, { onDelete: 'CASCADE' })
   assessment!: Assessment;
-
-  @ManyToOne(() => Question, (q) => q.assessmentQuestions, {
-    onDelete: "CASCADE",
-  })
+ 
+  @Column({ type: 'uuid' })
+  assessmentId!: string;
+ 
+  @ManyToOne(() => Question, (q) => q.assessmentQuestions, { onDelete: 'CASCADE' })
   question!: Question;
-
+ 
+  @Column({ type: 'uuid' })
+  questionId!: string;
+ 
   @Column({ default: 1 })
   order!: number;
-
-  @Column({ type: "jsonb", nullable: true })
-  snapshot?: Record<string, any>;
+ 
+  // Overrides question.defaultPoints for this assessment only
+  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  points!: number;
+ 
+  // Frozen at publish — prevents live edits from affecting active sessions
+  @Column({ type: 'jsonb' })
+  questionSnapshot!: Partial<Question>;
 }

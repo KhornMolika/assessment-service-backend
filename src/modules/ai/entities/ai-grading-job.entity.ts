@@ -2,23 +2,40 @@ import { Entity, Column, ManyToOne } from 'typeorm';
 import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
 import { AnswerEntry } from '../../executions/entities/answer-entry.entity';
 
+export enum AIGradingJobStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}
+
 @Entity()
 export class AIGradingJob extends ClientScopedEntity {
   @ManyToOne(() => AnswerEntry, (e) => e.aiJobs, { onDelete: "CASCADE" })
   answerEntry!: AnswerEntry;
 
-  @Column()
-  status!: string;
+  @Column({ type: 'uuid' })
+  answerEntryId!: string;
 
-  @Column({ nullable: true, type: "float" })
-  score?: number;
+  @Column({
+    type: 'enum',
+    enum: AIGradingJobStatus,
+    default: AIGradingJobStatus.PENDING,
+  })
+  status!: AIGradingJobStatus;
 
-  @Column({ nullable: true, type: "float" })
-  confidence?: number;
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  suggestedScore?: number;
 
-  @Column({ nullable: true, type: "text" })
-  feedback?: string;
+  @Column({ type: 'text', nullable: true })
+  reasoning?: string;       // AI explanation of the score
 
-  @Column({ nullable: true, type: "text" })
-  errorMessage?: string;
+  @Column({ type: 'text', nullable: true })
+  failureReason?: string;   // if FAILED
+
+  @Column({ type: 'int', default: 0 })
+  attemptCount!: number;    // for POST /internal/ai-grading-jobs/:jobId/retry
+
+  @Column({ type: 'timestamp', nullable: true })
+  processedAt?: Date;
 }

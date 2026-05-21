@@ -261,11 +261,14 @@ export class QuestionBanksService {
       const clientId = ClientContextService.getClientId();
 
       const junctions = this.bankQuestionRepo.create(
-        questionIds.map((qid) => ({
-          questionBank: { id: bankId },
-          question: { id: qid },
-          clientId: clientId,
-        } as any)),
+        questionIds.map(
+          (qid) =>
+            ({
+              questionBank: { id: bankId },
+              question: { id: qid },
+              clientId: clientId,
+            }) as any,
+        ),
       );
 
       await this.bankQuestionRepo.save(junctions);
