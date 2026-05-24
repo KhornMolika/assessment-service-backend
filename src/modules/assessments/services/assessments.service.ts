@@ -277,6 +277,81 @@ export class AssessmentsService {
   }
 
   /**
+   * Adds multiple existing questions to a DRAFT assessment.
+   * Performs validation across all questions before performing saves.
+   */
+  async addQuestions(assessmentId: string, dtos: AddAssessmentQuestionDto[]) {
+    await this.assertDraft(assessmentId);
+
+    const settings =
+      await this.assessmentSettings.findByAssessment(assessmentId);
+    if (!settings) {
+      throw new BadRequestException(
+        'Assessment settings not found. Please configure settings before publishing.',
+      );
+    }
+
+    const questionIds = dtos.map((d) => d.questionId);
+    const uniqueIds = new Set(questionIds);
+    if (uniqueIds.size !== questionIds.length) {
+      throw new ConflictException('Duplicate questionIds inside the request');
+    }
+
+    const questionsMap: Record<string, any> = {};
+
+    for (const dto of dtos) {
+      const question = await this.questions.findById(dto.questionId);
+      if (!question) {
+        throw new NotFoundException(`Question [${dto.questionId}] not found`);
+      }
+
+      if (settings.mode === Mode.REAL_TIME) {
+        if (
+          REAL_TIME_BLOCKED_TYPES.includes(
+            question.type as unknown as QuestionTypeName,
+          )
+        ) {
+          throw new BadRequestException(
+            `Question type [${question.type}] is not allowed in REAL_TIME assessments. ` +
+              `Short answer and essay require async grading.`,
+          );
+        }
+      }
+
+      const existing = await this.assessmentQuestions.findOne({
+        assessmentId,
+        questionId: dto.questionId,
+      } as any);
+      if (existing) {
+        throw new ConflictException(
+          `Question [${dto.questionId}] already added to this assessment`,
+        );
+      }
+
+      questionsMap[dto.questionId] = question;
+    }
+
+    const savedQuestions: any[] = [];
+    let maxOrder = await this.assessmentQuestions.findMaxOrder(assessmentId);
+
+    for (const dto of dtos) {
+      const question = questionsMap[dto.questionId];
+      maxOrder += 1;
+      const saved = await this.assessmentQuestions.save({
+        assessmentId,
+        questionId: dto.questionId,
+        order: maxOrder,
+        points: dto.points ?? question.points,
+        questionSnapshot: {},
+      });
+      savedQuestions.push(saved);
+    }
+
+    return savedQuestions;
+  }
+
+
+  /**
    * Replaces the entire question set for a DRAFT assessment.
    * All existing questions removed and replaced with this ordered list.
    * Points default to each question's points.

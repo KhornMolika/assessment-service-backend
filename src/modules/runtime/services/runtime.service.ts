@@ -126,9 +126,14 @@ export class RuntimeService {
           );
 
         if (!assessmentParticipant) {
-          throw new ForbiddenException(
-            'You are not assigned to this assessment',
-          );
+          const participant = await this.participants.findById(dto.participantId);
+          if (!participant) {
+            throw new NotFoundException('Participant not found');
+          }
+          assessmentParticipant = await this.assessmentParticipants.save({
+            assessmentId: dto.assessmentId,
+            participantId: dto.participantId,
+          });
         }
 
         // 5. Enforce one attempt only
@@ -342,12 +347,13 @@ export class RuntimeService {
         } as any,
       );
 
-      // TODO: dispatch grading jobs in grading phase
+      // 5. Evaluate and grade the sheet
+      const graded = await this.gradeAnswerSheet(sessionId);
 
       return {
         sessionId,
-        status: AnswerSheetStatus.SUBMITTED,
-        submittedAt: new Date(),
+        status: graded.status,
+        submittedAt: graded.submittedAt,
         message: 'Assessment submitted successfully',
       };
     } catch (error) {
@@ -588,5 +594,186 @@ export class RuntimeService {
     } catch {
       // Jobs may not exist if timeLimit was not set — safe to ignore
     }
+  }
+
+  /**
+   * Automatically grades all auto-gradable questions, sums the score,
+   * checks if passed, assigns a grade label, and sets status to GRADED or REQUIRES_REVIEW.
+   */
+  private async gradeAnswerSheet(sessionId: string): Promise<AnswerSheet> {
+    const sheet = await this.answerSheets.findOneWithEntries(sessionId);
+    if (!sheet) throw new NotFoundException('Session not found');
+
+    const settings = await this.assessmentSettings.findByAssessment(sheet.assessmentId);
+    if (!settings) throw new BadRequestException('Assessment settings not found');
+
+    let overallRequiresReview = false;
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+
+    for (const entry of sheet.entries) {
+      const aq = entry.assessmentQuestion;
+      if (!aq) continue;
+
+      const snapshot = aq.questionSnapshot || {};
+      const type = snapshot.type;
+      const points = Number(aq.points || 0);
+      maxPossibleScore += points;
+
+      let scoreAwarded = 0;
+      let gradingStatus = GradingStatus.AUTOMATIC;
+
+      const response = entry.response || {};
+      const correctAnswer = snapshot.correctAnswer || {};
+
+      switch (type) {
+        case 'SINGLE_CHOICE': {
+          const userOpt = response.optionId;
+          const correctOpt = correctAnswer.optionId;
+          if (userOpt !== undefined && correctOpt !== undefined && userOpt === correctOpt) {
+            scoreAwarded = points;
+          }
+          break;
+        }
+        case 'MULTIPLE_CHOICE': {
+          const userOpts = response.optionIds || [];
+          const correctOpts = correctAnswer.optionIds || [];
+          const matches =
+            userOpts.length === correctOpts.length &&
+            userOpts.every((id: string) => correctOpts.includes(id));
+          if (matches) {
+            scoreAwarded = points;
+          }
+          break;
+        }
+        case 'TRUE_FALSE': {
+          const userVal = response.value;
+          const correctVal = correctAnswer.value;
+          if (userVal !== undefined && correctVal !== undefined && userVal === correctVal) {
+            scoreAwarded = points;
+          }
+          break;
+        }
+        case 'ORDERING': {
+          const userSeq = response.sequence || [];
+          const correctSeq = correctAnswer.sequence || [];
+          const matches =
+            userSeq.length === correctSeq.length &&
+            userSeq.every((val: any, idx: number) => val === correctSeq[idx]);
+          if (matches) {
+            scoreAwarded = points;
+          }
+          break;
+        }
+        case 'FILL_IN_THE_BLANK': {
+          const userAnswers = response.answers || [];
+          const correctAnswersList = correctAnswer.answers || [];
+          let correctCount = 0;
+          const totalBlanks = correctAnswersList.length;
+
+          for (let i = 0; i < totalBlanks; i++) {
+            const userAns = (userAnswers[i] || '').trim().toLowerCase();
+            const acceptableVariations = (correctAnswersList[i] || []).map((v: string) =>
+              v.trim().toLowerCase(),
+            );
+            if (acceptableVariations.includes(userAns)) {
+              correctCount++;
+            }
+          }
+
+          if (totalBlanks > 0) {
+            scoreAwarded = (correctCount / totalBlanks) * points;
+          }
+          break;
+        }
+        case 'MATCHING': {
+          const userPairs = response.pairs || [];
+          const correctPairs = correctAnswer.pairs || [];
+          let correctCount = 0;
+          const totalPairs = correctPairs.length;
+
+          for (const cp of correctPairs) {
+            const match = userPairs.find(
+              (up: any) => up.leftId === cp.leftId && up.rightId === cp.rightId,
+            );
+            if (match) {
+              correctCount++;
+            }
+          }
+
+          if (totalPairs > 0) {
+            scoreAwarded = (correctCount / totalPairs) * points;
+          }
+          break;
+        }
+        case 'RATING': {
+          if (response.value !== undefined) {
+            scoreAwarded = points;
+          }
+          break;
+        }
+        case 'SHORT_ANSWER':
+        case 'ESSAY': {
+          scoreAwarded = 0;
+          gradingStatus = GradingStatus.PENDING;
+          overallRequiresReview = true;
+          break;
+        }
+        default: {
+          scoreAwarded = 0;
+          break;
+        }
+      }
+
+      const roundedScore = Math.round(scoreAwarded * 100) / 100;
+
+      await this.answerEntries.update(
+        { id: entry.id } as any,
+        {
+          scoreAwarded: roundedScore,
+          maxScore: points,
+          gradingStatus,
+        } as any,
+      );
+
+      totalScore += roundedScore;
+    }
+
+    const pct = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
+    const isPassed =
+      settings.passMark !== null && settings.passMark !== undefined
+        ? pct >= settings.passMark
+        : false;
+
+    let grade: string | null = null;
+    if (settings.gradeLabels && settings.gradeLabels.length > 0) {
+      const sortedLabels = [...settings.gradeLabels].sort(
+        (a, b) => Number(b.min) - Number(a.min),
+      );
+      for (const label of sortedLabels) {
+        if (pct >= Number(label.min)) {
+          grade = label.name;
+          break;
+        }
+      }
+    }
+
+    const finalStatus = overallRequiresReview
+      ? AnswerSheetStatus.REQUIRES_REVIEW
+      : AnswerSheetStatus.GRADED;
+
+    await this.answerSheets.update(
+      { id: sessionId } as any,
+      {
+        totalScore: Math.round(totalScore * 100) / 100,
+        isPassed,
+        grade,
+        status: finalStatus,
+      } as any,
+    );
+
+    const updated = await this.answerSheets.findOneWithEntries(sessionId);
+    if (!updated) throw new NotFoundException('Session not found after grading');
+    return updated;
   }
 }

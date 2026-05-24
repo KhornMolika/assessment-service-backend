@@ -11,7 +11,10 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  BadRequestException,
 } from '@nestjs/common';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { AddAssessmentQuestionDto } from './dto/add-assessment-question.dto';
 import { ReplaceAssessmentQuestionsDto } from './dto/replace-assessment-questions.dto';
@@ -95,11 +98,42 @@ export class AssessmentsController {
   /** POST /assessments/:id/questions — DRAFT only */
   @Post('assessments/:id/questions')
   @HttpCode(HttpStatus.CREATED)
-  addQuestion(
+  async addQuestion(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AddAssessmentQuestionDto,
+    @Body() body: any,
   ) {
-    return this.assessmentService.addQuestion(id, dto);
+    if (Array.isArray(body)) {
+      const dtos = plainToInstance(AddAssessmentQuestionDto, body);
+      const allMessages: string[] = [];
+      for (const dto of dtos) {
+        const errors = await validate(dto);
+        if (errors.length > 0) {
+          allMessages.push(
+            ...errors.flatMap((err) => Object.values(err.constraints || {})),
+          );
+        }
+      }
+      if (allMessages.length > 0) {
+        throw new BadRequestException({
+          message: allMessages,
+          error: 'Bad Request',
+        });
+      }
+      return this.assessmentService.addQuestions(id, dtos);
+    } else {
+      const dto = plainToInstance(AddAssessmentQuestionDto, body);
+      const errors = await validate(dto);
+      if (errors.length > 0) {
+        const messages = errors.flatMap((err) =>
+          Object.values(err.constraints || {}),
+        );
+        throw new BadRequestException({
+          message: messages,
+          error: 'Bad Request',
+        });
+      }
+      return this.assessmentService.addQuestion(id, dto);
+    }
   }
 
   /** PUT /assessments/:id/questions — replace all, DRAFT only */
