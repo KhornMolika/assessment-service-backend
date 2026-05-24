@@ -1,7 +1,8 @@
-import { IsArray, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsUUID } from 'class-validator';
 
 export class ReplaceAssessmentQuestionsDto {
   @IsArray()
-  @IsString({ each: true })
+  @IsUUID('all', { each: true })
+  @ArrayMinSize(1)
   questionIds!: string[];
 }

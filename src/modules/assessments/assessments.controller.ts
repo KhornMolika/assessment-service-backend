@@ -1,137 +1,185 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { AssessmentsService } from './assessments.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Put,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
-import { UpdateAssessmentSettingsDto } from './dto/update-assessment-settings.dto';
 import { AddAssessmentQuestionDto } from './dto/add-assessment-question.dto';
 import { ReplaceAssessmentQuestionsDto } from './dto/replace-assessment-questions.dto';
-import { GenerateAssessmentQuestionsDto } from './dto/generate-assessment-questions.dto';
-import { AddParticipantDto } from './dto/add-participant.dto';
-import { UpdateParticipantDto } from './dto/update-participant.dto';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
+import { AssessmentsService } from './services/assessments.service';
+import { CreateAssessmentDto } from './dto/create-assessment.dto';
+import { GenerateQuestionsDto } from './dto/generate-questions.dto';
+import { UpdateAssessmentSettingDto } from './dto/update-assessment-setting.dto';
+import { AssignParticipantDto } from './dto/assign-participant.dto';
 
-@Controller('assessments')
+@Controller()
 export class AssessmentsController {
-  constructor(private readonly assessmentsService: AssessmentsService) {}
+  constructor(private readonly assessmentService: AssessmentsService) {}
 
-  @Get(':assessmentId')
-  async findById(@Param('assessmentId') assessmentId: string) {
-    return await this.assessmentsService.findById(assessmentId);
+  // CRUD ----------------------------------------------------------------------
+
+  /** GET /topics/:topicId/assessments */
+  @Get('topics/:topicId/assessments')
+  findAll(
+    @Param('topicId', ParseUUIDPipe) topicId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.assessmentService.findAll(topicId, query);
   }
 
-  @Patch(':assessmentId')
-  async updateAssessment(
-    @Param('assessmentId') assessmentId: string,
+  /** POST /topics/:topicId/assessments */
+  @Post('topics/:topicId/assessments')
+  @HttpCode(HttpStatus.CREATED)
+  create(
+    @Param('topicId', ParseUUIDPipe) topicId: string,
+    @Body() dto: CreateAssessmentDto,
+  ) {
+    return this.assessmentService.create(topicId, dto);
+  }
+
+  /** GET /assessments/:id */
+  @Get('assessments/:id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.assessmentService.findOne(id);
+  }
+
+  /** PATCH /assessments/:id — DRAFT only */
+  @Patch('assessments/:id')
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAssessmentDto,
   ) {
-    return await this.assessmentsService.updateAssessment(assessmentId, dto);
+    return this.assessmentService.update(id, dto);
   }
 
-  @Delete(':assessmentId')
-  async deleteAssessment(@Param('assessmentId') assessmentId: string) {
-    return await this.assessmentsService.deleteAssessment(assessmentId);
+  /** DELETE /assessments/:id */
+  @Delete('assessments/:id')
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.assessmentService.remove(id);
   }
 
-  @Post(':assessmentId/publish')
-  async publish(@Param('assessmentId') assessmentId: string) {
-    return await this.assessmentsService.publish(assessmentId);
+  // LIFECYCLE -----------------------------------------------------------------
+
+  /** POST /assessments/:id/publish */
+  @Post('assessments/:id/publish')
+  @HttpCode(HttpStatus.OK)
+  publish(@Param('id', ParseUUIDPipe) id: string) {
+    return this.assessmentService.publish(id);
   }
 
-  @Post(':assessmentId/archive')
-  async archive(@Param('assessmentId') assessmentId: string) {
-    return await this.assessmentsService.archive(assessmentId);
+  /** POST /assessments/:id/archive */
+  @Post('assessments/:id/archive')
+  @HttpCode(HttpStatus.OK)
+  archive(@Param('id', ParseUUIDPipe) id: string) {
+    return this.assessmentService.archive(id);
   }
 
-  @Get(':assessmentId/questions')
-  async getQuestions(
-    @Param('assessmentId') assessmentId: string,
-    @Query() query: PaginationQueryDto,
-  ) {
-    return this.assessmentsService.getQuestions(assessmentId, query);
+  // QUESTIONS -----------------------------------------------------------------
+
+  /** GET /assessments/:id/questions */
+  @Get('assessments/:id/questions')
+  getQuestions(@Param('id', ParseUUIDPipe) id: string) {
+    return this.assessmentService.getQuestions(id);
   }
 
-  @Post(':assessmentId/questions')
-  async addQuestion(
-    @Param('assessmentId') assessmentId: string,
+  /** POST /assessments/:id/questions — DRAFT only */
+  @Post('assessments/:id/questions')
+  @HttpCode(HttpStatus.CREATED)
+  addQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: AddAssessmentQuestionDto,
   ) {
-    return await this.assessmentsService.addQuestion(assessmentId, dto);
+    return this.assessmentService.addQuestion(id, dto);
   }
 
-  @Put(':assessmentId/questions')
-  async replaceQuestions(
-    @Param('assessmentId') assessmentId: string,
+  /** PUT /assessments/:id/questions — replace all, DRAFT only */
+  @Put('assessments/:id/questions')
+  replaceQuestions(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReplaceAssessmentQuestionsDto,
   ) {
-    return await this.assessmentsService.replaceQuestions(assessmentId, dto);
+    return this.assessmentService.replaceQuestions(id, dto);
   }
 
-  @Delete(':assessmentId/questions/:assessmentQuestionId')
-  async removeQuestion(
-    @Param('assessmentId') assessmentId: string,
-    @Param('assessmentQuestionId') assessmentQuestionId: string,
+  /** DELETE /assessments/:id/questions/:assessmentQuestionId — DRAFT only */
+  @Delete('assessments/:id/questions/:assessmentQuestionId')
+  removeQuestion(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('assessmentQuestionId', ParseUUIDPipe) assessmentQuestionId: string,
   ) {
-    return await this.assessmentsService.removeQuestion(assessmentId, assessmentQuestionId);
+    return this.assessmentService.removeQuestion(id, assessmentQuestionId);
   }
 
-  @Post(':assessmentId/questions/generate')
-  async generateQuestions(
-    @Param('assessmentId') assessmentId: string,
-    @Body() dto: GenerateAssessmentQuestionsDto,
+  /** POST /assessments/:id/questions/generate — MANUAL only */
+  // @Post('assessments/:id/questions/generate')
+  // @HttpCode(HttpStatus.CREATED)
+  // generateQuestions(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @Body() dto: GenerateQuestionsDto,
+  // ) {
+  //   return this.assessmentService.generateQuestions(id, dto);
+  // }
+
+  // SETTINGS ------------------------------------------------------------------
+
+  /** GET /assessments/:id/settings */
+  @Get('assessments/:id/settings')
+  getSettings(@Param('id', ParseUUIDPipe) id: string) {
+    return this.assessmentService.getSettings(id);
+  }
+
+  /** PATCH /assessments/:id/settings */
+  @Patch('assessments/:id/settings')
+  updateSettings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateAssessmentSettingDto,
   ) {
-    return await this.assessmentsService.generateQuestions(assessmentId, dto);
+    return this.assessmentService.updateSettings(id, dto);
   }
 
-  @Get(':assessmentId/settings')
-  async getSettings(@Param('assessmentId') assessmentId: string) {
-    return await this.assessmentsService.getSettings(assessmentId);
-  }
+  // PARTICIPANTS --------------------------------------------------------------
 
-  @Patch(':assessmentId/settings')
-  async updateSettings(
-    @Param('assessmentId') assessmentId: string,
-    @Body() dto: UpdateAssessmentSettingsDto,
-  ) {
-    return await this.assessmentsService.updateSettings(assessmentId, dto);
-  }
-
-  @Get(':assessmentId/participants')
-  async getParticipants(
-    @Param('assessmentId') assessmentId: string,
+  /** GET /assessments/:id/participants */
+  @Get('assessments/:id/participants')
+  getParticipants(
+    @Param('id', ParseUUIDPipe) id: string,
     @Query() query: PaginationQueryDto,
   ) {
-    return this.assessmentsService.getParticipants(assessmentId, query);
+    return this.assessmentService.getParticipants(id, query);
   }
 
-  @Post(':assessmentId/participants')
-  async addParticipant(
-    @Param('assessmentId') assessmentId: string,
-    @Body() dto: AddParticipantDto,
+  /**
+   * POST /assessments/:id/participants
+   * Body varies by assessment's participantIdentity:
+   *   AUTHENTICATED: { name, email }
+   *   EXTERNAL:      { name, email, phone? }
+   *   ANONYMOUS:     rejected — handled at session start
+   */
+  @Post('assessments/:id/participants')
+  @HttpCode(HttpStatus.CREATED)
+  assignParticipant(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AssignParticipantDto,
   ) {
-    return await this.assessmentsService.addParticipant(assessmentId, dto);
+    return this.assessmentService.assignParticipant(id, dto);
   }
 
-  @Get(':assessmentId/participants/:participantId')
-  async getParticipant(
-    @Param('assessmentId') assessmentId: string,
-    @Param('participantId') participantId: string,
+  /** DELETE /assessments/:id/participants/:participantId */
+  @Delete('assessments/:id/participants/:participantId')
+  removeParticipant(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('participantId', ParseUUIDPipe) participantId: string,
   ) {
-    return await this.assessmentsService.getParticipant(assessmentId, participantId);
-  }
-
-  @Patch(':assessmentId/participants/:participantId')
-  async updateParticipant(
-    @Param('assessmentId') assessmentId: string,
-    @Param('participantId') participantId: string,
-    @Body() dto: UpdateParticipantDto,
-  ) {
-    return await this.assessmentsService.updateParticipant(assessmentId, participantId, dto);
-  }
-
-  @Delete(':assessmentId/participants/:participantId')
-  async removeParticipant(
-    @Param('assessmentId') assessmentId: string,
-    @Param('participantId') participantId: string,
-  ) {
-    return await this.assessmentsService.removeParticipant(assessmentId, participantId);
+    return this.assessmentService.removeParticipant(id, participantId);
   }
 }

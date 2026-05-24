@@ -1,8 +1,8 @@
 import { Entity, Column, ManyToOne, Index, OneToMany } from 'typeorm';
-import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
-import { Topic } from '../../topics/entities/topic.entity';
-import { QuestionBankQuestion } from '../../question-banks/entities/question-bank-question.entity';
-import { AssessmentQuestion } from '../../assessments/entities/assessment-question.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
+import { Topic } from '@modules/topics/entities/topic.entity';
+import { QuestionBankQuestion } from '@modules/question-banks/entities/question-bank-question.entity';
+import { AssessmentQuestion } from '@modules/assessments/entities/assessment-question.entity';
 
 export enum Difficulty {
   EASY = 'EASY',

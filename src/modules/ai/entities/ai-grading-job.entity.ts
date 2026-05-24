@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
-import { AnswerEntry } from '../../executions/entities/answer-entry.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
+import { AnswerEntry } from '@modules/assessments/entities/answer-entry.entity';
 
 export enum AIGradingJobStatus {
   PENDING = 'PENDING',

@@ -1,5 +1,5 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { SystemBaseEntity } from '../../common/base/system-base.entity';
+import { SystemBaseEntity } from '@common/base/system-base.entity';
 import { RefreshToken } from '../auth/refresh-token.entity';
 
 @Entity()

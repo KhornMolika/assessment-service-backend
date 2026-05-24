@@ -8,18 +8,15 @@ import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { TopicRepository } from '../topics/repositories/topic.repository';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { QuestionBankQuestion } from './entities/question-bank-question.entity';
-import { ClientContextService } from '../../common/context/client-context.service';
+import { QuestionBankQuestionRepository } from './repositories/question-bank-question.repository';
 
 @Injectable()
 export class QuestionBanksService {
   constructor(
     private readonly bankRepository: QuestionBankRepository,
     private readonly topicRepository: TopicRepository,
-    @InjectRepository(QuestionBankQuestion)
-    private readonly bankQuestionRepo: Repository<QuestionBankQuestion>,
+    private readonly bankQuestionRepository: QuestionBankQuestionRepository,
   ) {}
 
   async create(dto: CreateQuestionBankDto) {
@@ -194,26 +191,24 @@ export class QuestionBanksService {
 
   async getBankQuestions(bankId: string, query: PaginationQueryDto) {
     try {
-      // Need to query the junction table
-      const skip = (query.page - 1) * query.limit;
-      const [junctions, total] = await this.bankQuestionRepo.findAndCount({
-        where: { questionBank: { id: bankId } } as any,
-        relations: ['question'],
-        skip,
-        take: query.limit,
-      });
+      const [junctions, total] = await this.bankQuestionRepository.findByBank(
+        bankId,
+        query.page,
+        query.limit,
+      );
 
       return {
-        data: junctions.map((j) => {
-          const q: any = j.question;
-          return {
-            id: j.id, // The junction ID or could be mapped differently based on API
-            text: q.questionText,
-            type: q.type,
-            difficulty: q.difficulty,
-            createdAt: q.createdAt,
-          };
-        }),
+        data: junctions.map((j) => ({
+          id: j.question.id,
+          text: j.question.questionText,
+          type: j.question.type,
+          difficulty: j.question.difficulty,
+          points: j.question.points,
+          options: j.question.options,
+          correctAnswers: j.question.correctAnswer,
+          createdAt: j.question.createdAt,
+          updatedAt: j.question.updatedAt
+        })),
         meta: {
           total,
           page: query.page,
@@ -233,15 +228,19 @@ export class QuestionBanksService {
       const bank = await this.findById(bankId);
       if (!bank) throw new NotFoundException('Bank not found');
 
-      const clientId = ClientContextService.getClientId();
+      // Check not already added
+      const existing =
+        await this.bankQuestionRepository.findOneByBankAndQuestion(
+          bankId,
+          questionId,
+        );
+      if (existing)
+        throw new BadRequestException('Question already in this bank');
 
-      const junction = this.bankQuestionRepo.create({
-        questionBank: { id: bankId },
-        question: { id: questionId },
-        clientId: clientId,
+      await this.bankQuestionRepository.save({
+        bankId,
+        questionId,
       } as any);
-
-      await this.bankQuestionRepo.save(junction);
 
       return {
         bankId,
@@ -258,25 +257,29 @@ export class QuestionBanksService {
       const bank = await this.findById(bankId);
       if (!bank) throw new NotFoundException('Bank not found');
 
-      const clientId = ClientContextService.getClientId();
-
-      const junctions = this.bankQuestionRepo.create(
-        questionIds.map(
-          (qid) =>
-            ({
-              questionBank: { id: bankId },
-              question: { id: qid },
-              clientId: clientId,
-            }) as any,
+      // Filter out already existing ones
+      const existing = await Promise.all(
+        questionIds.map((qid) =>
+          this.bankQuestionRepository.findOneByBankAndQuestion(bankId, qid),
         ),
       );
 
-      await this.bankQuestionRepo.save(junctions);
+      const newIds = questionIds.filter((_, i) => !existing[i]);
+
+      if (newIds.length === 0) {
+        throw new BadRequestException('All questions are already in this bank');
+      }
+
+      await Promise.all(
+        newIds.map((questionId) =>
+          this.bankQuestionRepository.save({ bankId, questionId } as any),
+        ),
+      );
 
       return {
         bankId,
-        questionIds,
-        addedCount: questionIds.length,
+        questionIds: newIds,
+        addedCount: newIds.length,
         addedAt: new Date().toISOString(),
       };
     } catch (error) {
@@ -287,12 +290,19 @@ export class QuestionBanksService {
 
   async removeQuestionFromBank(bankId: string, questionId: string) {
     try {
-      const clientId = ClientContextService.getClientId();
-      await this.bankQuestionRepo.delete({
-        questionBank: { id: bankId },
-        question: { id: questionId },
-        clientId,
-      } as any);
+      // find the junction record first
+      const junction =
+        await this.bankQuestionRepository.findOneByBankAndQuestion(
+          bankId,
+          questionId,
+        );
+
+      if (!junction) {
+        throw new NotFoundException('Question not found in this bank');
+      }
+
+      // soft delete - sets deletedAt, excluded by findByBank
+      await this.bankQuestionRepository.softDelete({ id: junction.id } as any);
 
       return {
         bankId,

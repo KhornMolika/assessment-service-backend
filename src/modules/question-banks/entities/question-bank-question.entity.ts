@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, Index } from 'typeorm';
-import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { QuestionBank } from './question-bank.entity';
-import { Question } from '../../questions/entities/question.entity';
+import { Question } from '@modules/questions/entities/question.entity';
 
 @Entity()
 @Index(["questionBank", "question"], { unique: true })

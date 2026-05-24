@@ -7,7 +7,7 @@ import { TopicRepository } from './repositories/topic.repository';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
 import slugify from 'slugify';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 
 @Injectable()
 export class TopicsService {
@@ -22,7 +22,7 @@ export class TopicsService {
     try {
       const exists = await this.topicRepository.findOne({ name: dto.name } as any);
 
-      if (exists) throw new BadRequestException('Topic name already exists');
+      if (exists) throw new BadRequestException('Topic\'s name already exists');
 
       const slug = this.generateSlug(dto.name);
 

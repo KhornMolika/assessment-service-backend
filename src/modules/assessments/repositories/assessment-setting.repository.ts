@@ -2,23 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AssessmentSetting } from '../entities/assessment-settings.entity';
+import { ClientRepository } from '@common/base/client-repository';
 
 @Injectable()
-export class AssessmentSettingRepository {
+export class AssessmentSettingRepository extends ClientRepository<AssessmentSetting> {
   constructor(
     @InjectRepository(AssessmentSetting)
-    private readonly repository: Repository<AssessmentSetting>,
-  ) {}
-
-  async findByAssessmentId(assessmentId: string): Promise<AssessmentSetting | null> {
-    return this.repository.findOne({ where: { assessment: { id: assessmentId } } });
+    repo: Repository<AssessmentSetting>,
+  ) {
+    super(repo);
   }
 
-  async save(setting: AssessmentSetting): Promise<AssessmentSetting> {
-    return this.repository.save(setting);
-  }
-
-  async update(id: string, data: Partial<AssessmentSetting>): Promise<void> {
-    await this.repository.update(id, data);
+  findByAssessment(assessmentId: string) {
+    return this.qb('s')
+      .andWhere('s.assessmentId = :assessmentId', { assessmentId })
+      .getOne();
   }
 }

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query, Param, ParseUUIDPipe } from '@nestjs/common';
 import { QuestionBanksService } from './question-banks.service';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 
 @Controller('topics/:topicId/banks')
 export class TopicBanksController {

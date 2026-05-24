@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Patch, Delete, Query, Param, ParseUUIDPipe, BadRequestException } from '@nestjs/common';
 import { QuestionBanksService } from './question-banks.service';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { AddQuestionsToBankDto } from './dto/add-questions-to-bank.dto';
 

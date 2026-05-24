@@ -25,7 +25,7 @@ export const AppDataSource = new DataSource({
   migrations: ['src/database/migrations/*{.ts,.js}'],
 
   // NEVER use in production
-  synchronize: false,
+  synchronize: process.env.NODE_ENV !== 'production',
 
   logging: process.env.NODE_ENV !== 'production',
 

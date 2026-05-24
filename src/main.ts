@@ -25,13 +25,8 @@ async function bootstrap() {
   // Global success formatting interceptor
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector)),
-    new TransformInterceptor());
-
-  app.enableCors({
-  origin: '*',
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-client-id'],
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-});
+    new TransformInterceptor(),
+  );
 
   await app.listen(process.env.PORT ?? 3000);
 }

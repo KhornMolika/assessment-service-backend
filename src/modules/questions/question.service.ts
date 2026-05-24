@@ -4,13 +4,12 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { In } from 'typeorm';
 import { QuestionRepository } from './repositories/question.repository';
 import { TopicRepository } from '../topics/repositories/topic.repository';
 import { QuestionBankRepository } from '../question-banks/repositories/question-bank.repository';
 import { QUESTION_TYPES_CONFIG } from './constants/question-types.config';
 import { CreateQuestionDto } from './dto/create-question.dto';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 
 @Injectable()

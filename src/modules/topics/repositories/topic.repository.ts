@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Topic } from '../entities/topic.entity';
-import { ClientRepository } from '../../../common/base/client-repository';
+import { ClientRepository } from '@common/base/client-repository';
 
 @Injectable()
 export class TopicRepository extends ClientRepository<Topic> {
@@ -11,4 +11,5 @@ export class TopicRepository extends ClientRepository<Topic> {
   ) {
     super(repo);
   }
+  
 }

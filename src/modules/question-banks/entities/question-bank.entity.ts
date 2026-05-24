@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
-import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
-import { Topic } from '../../topics/entities/topic.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
+import { Topic } from '@modules/topics/entities/topic.entity';
 import { QuestionBankQuestion } from './question-bank-question.entity';
 
 export enum BankVisibility {
@@ -14,10 +14,10 @@ export class QuestionBank extends ClientScopedEntity {
   @ManyToOne(() => Topic, (topic) => topic.questionBanks, {
     onDelete: "CASCADE",
   })
-  topic: Topic;
+  topic!: Topic;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({
     type: 'enum',
@@ -30,8 +30,8 @@ export class QuestionBank extends ClientScopedEntity {
   description?: string;
 
   @Column("text", { array: true, default: [] })
-  tags: string[];
+  tags!: string[];
 
   @OneToMany(() => QuestionBankQuestion, (bq) => bq.questionBank)
-  questions: QuestionBankQuestion[];
+  questions!: QuestionBankQuestion[];
 }

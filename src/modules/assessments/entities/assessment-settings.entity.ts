@@ -1,11 +1,13 @@
 // -----------------------------------------------------------------------------
-// assessment-setting.entity.ts
-// Configuration for how an assessment runs — mode, timing, grading rules.
+// All configuration for how an assessment runs.
+// mode: SELF_PACED = participant picks own time, REAL_TIME = synchronized.
+// startsAt: assessment only accessible after this time.
+// endsAt: hard deadline — no new sessions after this.
+// timeLimit: minutes participant has once they start.
 // -----------------------------------------------------------------------------
-
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
 import { Assessment } from './assessment.entity';
-import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 
 export enum Mode {
   SELF_PACED = 'SELF_PACED',

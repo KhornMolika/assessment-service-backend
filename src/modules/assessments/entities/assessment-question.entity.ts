@@ -5,9 +5,9 @@
 // -----------------------------------------------------------------------------
 
 import { Entity, Column, ManyToOne, Index } from 'typeorm';
-import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { Assessment } from './assessment.entity';
-import { Question } from '../../questions/entities/question.entity';
+import { Question } from '@modules/questions/entities/question.entity';
  
 @Entity()
 @Index(['assessment', 'question'], { unique: true })

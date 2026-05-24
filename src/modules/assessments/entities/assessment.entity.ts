@@ -3,11 +3,11 @@
 // -----------------------------------------------------------------------------
 
 import { Entity, Column, ManyToOne, OneToOne, OneToMany } from 'typeorm';
-import { ClientScopedEntity } from '../../../common/base/client-scoped.entity';
-import { Topic } from '../../topics/entities/topic.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
+import { Topic } from '@modules/topics/entities/topic.entity';
 import { AssessmentSetting } from './assessment-settings.entity';
 import { AssessmentQuestion } from './assessment-question.entity';
-import { AssessmentParticipant } from '../../executions/entities/assessment-participant.entity';
+import { AssessmentParticipant } from './assessment-participant.entity';
 
 export enum AssessmentType {
   QUIZ = 'QUIZ',
@@ -28,6 +28,9 @@ export class Assessment extends ClientScopedEntity {
     onDelete: "CASCADE",
   })
   topic!: Topic;
+
+  @Column({ type: 'uuid' })
+  topicId!: string;
 
   @Column()
   name!: string;

@@ -12,9 +12,10 @@ import { QuestionsModule } from './modules/questions/questions.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { ExecutionsModule } from './modules/executions/executions.module';
-import { ContextModule } from './common/context/context.module';
 import { QuestionBanksModule } from './modules/question-banks/question-banks.module';
+import { BullModule } from '@nestjs/bull';
+import { ParticipantsModule } from './modules/participants/participants.module';
+import { RuntimeModule } from './modules/runtime/runtime.module';
 
 @Module({
   imports: [
@@ -34,6 +35,13 @@ import { QuestionBanksModule } from './modules/question-banks/question-banks.mod
 
     TypeOrmModule.forRootAsync(databaseConfig),
 
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: Number(process.env.REDIS_PORT) ?? 6379,
+      },
+    }),
+
     TopicsModule,
 
     ClientsModule,
@@ -50,9 +58,9 @@ import { QuestionBanksModule } from './modules/question-banks/question-banks.mod
 
     AnalyticsModule,
 
-    ExecutionsModule,
+    ParticipantsModule,
 
-    ContextModule,
+    RuntimeModule,
   ],
 })
 export class AppModule implements NestModule {

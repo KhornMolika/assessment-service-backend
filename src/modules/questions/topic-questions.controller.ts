@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { QuestionsService } from './question.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { QuestionSchemaValidationPipe } from '../../common/pipes/question-schema-validation.pipe';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
+import { QuestionSchemaValidationPipe } from '@common/pipes/question-schema-validation.pipe';
 
 @Controller('topics/:topicId/questions')
 export class TopicQuestionsController {

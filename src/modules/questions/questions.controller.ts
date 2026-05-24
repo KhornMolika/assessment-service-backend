@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { QuestionsService } from './question.service';
-import { QuestionSchemaValidationPipe } from '../../common/pipes/question-schema-validation.pipe';
+import { QuestionSchemaValidationPipe } from '@common/pipes/question-schema-validation.pipe';
 
 @Controller('questions')
 export class QuestionsController {

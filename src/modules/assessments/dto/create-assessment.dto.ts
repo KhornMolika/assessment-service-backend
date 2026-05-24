@@ -1,15 +1,19 @@
-import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
+// -----------------------------------------------------------------------------
+// Payload to create a new assessment under a topic.
+// -----------------------------------------------------------------------------
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { AssessmentStatus, AssessmentType } from '../entities/assessment.entity';
 
 export class CreateAssessmentDto {
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   name!: string;
 
-  @IsOptional()
-  @IsString()
-  type?: string;
+  @IsEnum(AssessmentType)
+  type!: AssessmentType;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   description?: string;
+
 }

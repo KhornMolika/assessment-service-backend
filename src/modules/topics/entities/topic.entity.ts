@@ -1,9 +1,8 @@
 import { Column, Entity, Index, ManyToOne, OneToMany } from "typeorm";
-import { ClientScopedEntity } from "../../../common/base/client-scoped.entity";
-import { Client } from "../../clients/client.entity";
-import { QuestionBank } from "../../question-banks/entities/question-bank.entity";
-import { Assessment } from "../../assessments/entities/assessment.entity";
-import { Question } from "../../questions/entities/question.entity";
+import { ClientScopedEntity } from "@common/base/client-scoped.entity";
+import { QuestionBank } from "@modules/question-banks/entities/question-bank.entity";
+import { Assessment } from "@modules/assessments/entities/assessment.entity";
+import { Question } from "@modules/questions/entities/question.entity";
 
 export enum TopicVisibility {
   PUBLIC = "PUBLIC",
