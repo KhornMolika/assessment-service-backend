@@ -1,8 +1,8 @@
-import { Repository } from "typeorm";
-import { ClientRepository } from "../../../common/base/client-repository";
-import { QuestionBankQuestion } from "../entities/question-bank-question.entity";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Injectable } from "@nestjs/common";
+import { Repository } from 'typeorm';
+import { ClientRepository } from '../../../common/base/client-repository';
+import { QuestionBankQuestion } from '../entities/question-bank-question.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class QuestionBankQuestionRepository extends ClientRepository<QuestionBankQuestion> {
@@ -17,7 +17,7 @@ export class QuestionBankQuestionRepository extends ClientRepository<QuestionBan
     return this.qb('bq')
       .leftJoinAndSelect('bq.question', 'question')
       .andWhere('bq.questionBankId = :bankId', { bankId })
-      .andWhere('bq.deletedAt IS NULL')        // exclude soft deleted
+      .andWhere('bq.deletedAt IS NULL') // exclude soft deleted
       .orderBy('bq.createdAt', 'ASC')
       .skip((page - 1) * limit)
       .take(limit)

@@ -729,6 +729,20 @@
               "path": ["assessments", "{{assessmentId}}"]
             }
           }
+        },
+        {
+          "name": "Recalculate Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assessments/{{sessionId}}/recalculate",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessments", "{{sessionId}}", "recalculate"]
+            }
+          }
         }
       ]
     },
@@ -887,6 +901,77 @@
           }
         }
       ]
+    },
+    {
+      "name": "AI Grading Test Flow",
+      "item": [
+        {
+          "name": "Save SHORT_ANSWER AI Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assessmentQuestionId\": \"{{shortAnswerAssessmentQuestionId}}\",\n  \"response\": {\n    \"text\": \"CLI stands for Command Line Interface.\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
+              "host": ["{{baseUrl}}"],
+              "path": ["runtime", "sessions", "{{sessionId}}", "answers"]
+            }
+          }
+        },
+        {
+          "name": "Save ESSAY AI Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assessmentQuestionId\": \"{{essayAssessmentQuestionId}}\",\n  \"response\": {\n    \"text\": \"NestJS uses a modular architecture that keeps features organized into modules, controllers, and providers. This makes backend code easier to maintain, easier to test with dependency injection, and familiar for teams that know Angular patterns.\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
+              "host": ["{{baseUrl}}"],
+              "path": ["runtime", "sessions", "{{sessionId}}", "answers"]
+            }
+          }
+        },
+        {
+          "name": "Submit Session - Run AI Grading",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["runtime", "sessions", "{{sessionId}}", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Get AI-Graded Session Result",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
+              "host": ["{{baseUrl}}"],
+              "path": ["runtime", "sessions", "{{sessionId}}", "result"]
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [
@@ -905,7 +990,10 @@
     { "key": "bankId", "value": "", "type": "string" },
     { "key": "assessmentId", "value": "", "type": "string" },
     { "key": "assessmentQuestionId", "value": "", "type": "string" },
+    { "key": "shortAnswerAssessmentQuestionId", "value": "", "type": "string" },
+    { "key": "essayAssessmentQuestionId", "value": "", "type": "string" },
     { "key": "participantId", "value": "", "type": "string" },
-    { "key": "sessionId", "value": "", "type": "string" }
+    { "key": "sessionId", "value": "", "type": "string" },
+    { "key": "jobId", "value": "", "type": "string" }
   ]
 }

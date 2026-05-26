@@ -34,7 +34,10 @@ export class TopicsController {
   }
 
   @Patch(':id')
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTopicDto) {
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTopicDto,
+  ) {
     return await this.topicService.update(id, dto);
   }
 

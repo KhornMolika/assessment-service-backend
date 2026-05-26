@@ -8,29 +8,31 @@ import { Entity, Column, ManyToOne, Index } from 'typeorm';
 import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { Assessment } from './assessment.entity';
 import { Question } from '@modules/questions/entities/question.entity';
- 
+
 @Entity()
 @Index(['assessment', 'question'], { unique: true })
 export class AssessmentQuestion extends ClientScopedEntity {
   @ManyToOne(() => Assessment, (a) => a.questions, { onDelete: 'CASCADE' })
   assessment!: Assessment;
- 
+
   @Column({ type: 'uuid' })
   assessmentId!: string;
- 
-  @ManyToOne(() => Question, (q) => q.assessmentQuestions, { onDelete: 'CASCADE' })
+
+  @ManyToOne(() => Question, (q) => q.assessmentQuestions, {
+    onDelete: 'CASCADE',
+  })
   question!: Question;
- 
+
   @Column({ type: 'uuid' })
   questionId!: string;
- 
+
   @Column({ default: 1 })
   order!: number;
- 
+
   // Overrides question.defaultPoints for this assessment only
   @Column({ type: 'decimal', precision: 5, scale: 2 })
   points!: number;
- 
+
   // Frozen at publish — prevents live edits from affecting active sessions
   @Column({ type: 'jsonb' })
   questionSnapshot!: Partial<Question>;

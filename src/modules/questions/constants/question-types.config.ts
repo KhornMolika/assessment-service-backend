@@ -1,4 +1,3 @@
-
 export enum GradingStrategy {
   BINARY = 'BINARY',
   DEDUCTIVE = 'DEDUCTIVE',
@@ -25,14 +24,62 @@ export interface QuestionTypeConfig {
   defaultMaxScore: number;
 }
 
-export const QUESTION_TYPES_CONFIG: Record<QuestionTypeName, QuestionTypeConfig> = {
-  [QuestionTypeName.SINGLE_CHOICE]: { gradingStrategy: GradingStrategy.BINARY, hasOptions: true, supportsAi: false, defaultMaxScore: 1 },
-  [QuestionTypeName.MULTIPLE_CHOICE]: { gradingStrategy: GradingStrategy.DEDUCTIVE, hasOptions: true, supportsAi: false, defaultMaxScore: 4 },
-  [QuestionTypeName.TRUE_FALSE]: { gradingStrategy: GradingStrategy.BINARY, hasOptions: true, supportsAi: false, defaultMaxScore: 1 },
-  [QuestionTypeName.ORDERING]: { gradingStrategy: GradingStrategy.BINARY, hasOptions: true, supportsAi: false, defaultMaxScore: 5 },
-  [QuestionTypeName.FILL_IN_THE_BLANK]: { gradingStrategy: GradingStrategy.DEDUCTIVE, hasOptions: false, supportsAi: false, defaultMaxScore: 5 },
-  [QuestionTypeName.MATCHING]: { gradingStrategy: GradingStrategy.DEDUCTIVE, hasOptions: false, supportsAi: false, defaultMaxScore: 5 },
-  [QuestionTypeName.RATING]: { gradingStrategy: GradingStrategy.SCALED, hasOptions: false, supportsAi: false, defaultMaxScore: 5 },
-  [QuestionTypeName.SHORT_ANSWER]: { gradingStrategy: GradingStrategy.AI, hasOptions: false, supportsAi: true, defaultMaxScore: 10 },
-  [QuestionTypeName.ESSAY]: { gradingStrategy: GradingStrategy.AI, hasOptions: false, supportsAi: true, defaultMaxScore: 20 },
+export const QUESTION_TYPES_CONFIG: Record<
+  QuestionTypeName,
+  QuestionTypeConfig
+> = {
+  [QuestionTypeName.SINGLE_CHOICE]: {
+    gradingStrategy: GradingStrategy.BINARY,
+    hasOptions: true,
+    supportsAi: false,
+    defaultMaxScore: 1,
+  },
+  [QuestionTypeName.MULTIPLE_CHOICE]: {
+    gradingStrategy: GradingStrategy.DEDUCTIVE,
+    hasOptions: true,
+    supportsAi: false,
+    defaultMaxScore: 4,
+  },
+  [QuestionTypeName.TRUE_FALSE]: {
+    gradingStrategy: GradingStrategy.BINARY,
+    hasOptions: true,
+    supportsAi: false,
+    defaultMaxScore: 1,
+  },
+  [QuestionTypeName.ORDERING]: {
+    gradingStrategy: GradingStrategy.BINARY,
+    hasOptions: true,
+    supportsAi: false,
+    defaultMaxScore: 5,
+  },
+  [QuestionTypeName.FILL_IN_THE_BLANK]: {
+    gradingStrategy: GradingStrategy.DEDUCTIVE,
+    hasOptions: false,
+    supportsAi: false,
+    defaultMaxScore: 5,
+  },
+  [QuestionTypeName.MATCHING]: {
+    gradingStrategy: GradingStrategy.DEDUCTIVE,
+    hasOptions: false,
+    supportsAi: false,
+    defaultMaxScore: 5,
+  },
+  [QuestionTypeName.RATING]: {
+    gradingStrategy: GradingStrategy.SCALED,
+    hasOptions: false,
+    supportsAi: false,
+    defaultMaxScore: 5,
+  },
+  [QuestionTypeName.SHORT_ANSWER]: {
+    gradingStrategy: GradingStrategy.AI,
+    hasOptions: false,
+    supportsAi: true,
+    defaultMaxScore: 10,
+  },
+  [QuestionTypeName.ESSAY]: {
+    gradingStrategy: GradingStrategy.AI,
+    hasOptions: false,
+    supportsAi: true,
+    defaultMaxScore: 20,
+  },
 };

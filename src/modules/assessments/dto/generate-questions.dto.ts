@@ -8,9 +8,12 @@ export class GenerateQuestionsDto {
   @IsUUID()
   bankId!: string;
 
-  @IsInt() @Min(1) @Max(100)
+  @IsInt()
+  @Min(1)
+  @Max(100)
   count!: number;
 
-  @IsEnum(Difficulty) @IsOptional()
+  @IsEnum(Difficulty)
+  @IsOptional()
   difficulty?: Difficulty;
 }

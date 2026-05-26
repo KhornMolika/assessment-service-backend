@@ -20,9 +20,11 @@ export class TopicsService {
   */
   async create(dto: CreateTopicDto) {
     try {
-      const exists = await this.topicRepository.findOne({ name: dto.name } as any);
+      const exists = await this.topicRepository.findOne({
+        name: dto.name,
+      });
 
-      if (exists) throw new BadRequestException('Topic\'s name already exists');
+      if (exists) throw new BadRequestException("Topic's name already exists");
 
       const slug = this.generateSlug(dto.name);
 
@@ -33,7 +35,6 @@ export class TopicsService {
       });
 
       return topic;
-
     } catch (error) {
       console.log('Error creating topic:', error);
       if (error instanceof BadRequestException) throw error;
@@ -74,7 +75,11 @@ export class TopicsService {
   */
   async findById(id: string) {
     try {
-      const topic = await this.topicRepository.findById(id, ['questionBanks', 'assessments', 'questions']);
+      const topic = await this.topicRepository.findById(id, [
+        'questionBanks',
+        'assessments',
+        'questions',
+      ]);
 
       if (!topic) {
         throw new NotFoundException('Topic not found');
@@ -89,24 +94,23 @@ export class TopicsService {
 
       // Do not return all questions raw in the response per API doc
       delete mapped.questions;
-      
+
       // Map question counts for nested banks/assessments if necessary
-      if(mapped.questionBanks) {
+      if (mapped.questionBanks) {
         mapped.questionBanks = mapped.questionBanks.map((b: any) => ({
           ...b,
-          questionCount: b.questions?.length || 0 // assuming relation loaded or just mock for now
+          questionCount: b.questions?.length || 0, // assuming relation loaded or just mock for now
         }));
       }
 
-      if(mapped.assessments) {
+      if (mapped.assessments) {
         mapped.assessments = mapped.assessments.map((a: any) => ({
           ...a,
-          questionCount: a.assessmentQuestions?.length || 0
+          questionCount: a.assessmentQuestions?.length || 0,
         }));
       }
 
       return mapped;
-
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new BadRequestException('Topic not found');
@@ -130,7 +134,7 @@ export class TopicsService {
         const slug = this.generateSlug(dto.name);
 
         // Ensure new slug is not taken by another topic record
-        const exists = await this.topicRepository.findOne({ slug } as any);
+        const exists = await this.topicRepository.findOne({ slug });
 
         if (exists && exists.id !== id)
           throw new BadRequestException('The new name is already taken');
@@ -138,10 +142,9 @@ export class TopicsService {
         updateData.slug = slug;
       }
 
-      await this.topicRepository.update({ id } as any, updateData);
+      await this.topicRepository.update({ id }, updateData);
 
       return this.findById(id);
-
     } catch (error) {
       console.log(error);
       if (
@@ -157,7 +160,7 @@ export class TopicsService {
     try {
       await this.findById(id);
 
-      await this.topicRepository.softDelete({ id } as any);
+      await this.topicRepository.softDelete({ id });
 
       return;
     } catch (error) {

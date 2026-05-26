@@ -4,15 +4,15 @@ import { QuestionBank } from './question-bank.entity';
 import { Question } from '@modules/questions/entities/question.entity';
 
 @Entity()
-@Index(["questionBank", "question"], { unique: true })
+@Index(['questionBank', 'question'], { unique: true })
 export class QuestionBankQuestion extends ClientScopedEntity {
   @ManyToOne(() => QuestionBank, (bank) => bank.questions, {
-    onDelete: "CASCADE",
+    onDelete: 'CASCADE',
   })
   questionBank!: QuestionBank;
 
   @ManyToOne(() => Question, (question) => question.bankQuestions, {
-    onDelete: "CASCADE",
+    onDelete: 'CASCADE',
   })
   question!: Question;
 

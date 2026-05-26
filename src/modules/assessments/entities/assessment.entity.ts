@@ -25,7 +25,7 @@ export enum AssessmentStatus {
 @Entity()
 export class Assessment extends ClientScopedEntity {
   @ManyToOne(() => Topic, (topic) => topic.assessments, {
-    onDelete: "CASCADE",
+    onDelete: 'CASCADE',
   })
   topic!: Topic;
 
@@ -38,11 +38,11 @@ export class Assessment extends ClientScopedEntity {
   @Column({ type: 'enum', enum: AssessmentType, default: AssessmentType.QUIZ })
   type!: AssessmentStatus;
 
-  @Column({ nullable: true, type: "text" })
+  @Column({ nullable: true, type: 'text' })
   description?: string;
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: AssessmentStatus,
     default: AssessmentStatus.DRAFT,
   })

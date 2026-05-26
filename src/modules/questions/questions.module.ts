@@ -12,11 +12,10 @@ import { QuestionBanksModule } from '../question-banks/question-banks.module';
   imports: [
     TypeOrmModule.forFeature([Question]),
     TopicsModule,
-    QuestionBanksModule
+    QuestionBanksModule,
   ],
   controllers: [QuestionsController, TopicQuestionsController],
   providers: [QuestionsService, QuestionRepository],
   exports: [QuestionsService, QuestionRepository],
 })
 export class QuestionsModule {}
-

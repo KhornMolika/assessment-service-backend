@@ -98,7 +98,7 @@ export class AssessmentsService {
     await this.assessmentSettings.save({
       assessmentId: assessment.id,
       ...this.defaultSettings(),
-    } as any);
+    });
 
     // ✅ non-null assertion — safe here because we just created it
     return this.assessments.findOneWithDetails(
@@ -112,7 +112,7 @@ export class AssessmentsService {
    */
   async update(id: string, dto: UpdateAssessmentDto): Promise<Assessment> {
     await this.assertDraft(id);
-    await this.assessments.update({ id } as any, dto as any);
+    await this.assessments.update({ id }, dto as any);
     return this.assessments.findOneWithDetails(id) as Promise<Assessment>;
   }
 
@@ -123,7 +123,7 @@ export class AssessmentsService {
   async remove(id: string): Promise<{ id: string; deletedAt: Date }> {
     const assessment = await this.assessments.findById(id);
     if (!assessment) throw new NotFoundException('Assessment not found');
-    await this.assessments.softDelete({ id } as any);
+    await this.assessments.softDelete({ id });
     return { id, deletedAt: new Date() };
   }
 
@@ -180,8 +180,8 @@ export class AssessmentsService {
     }
 
     await this.assessments.update(
-      { id } as any,
-      { status: AssessmentStatus.PUBLISHED } as Partial<Assessment>,
+      { id },
+      { status: AssessmentStatus.PUBLISHED },
     );
 
     return this.assessments.findOneWithDetails(id) as Promise<Assessment>;
@@ -203,8 +203,8 @@ export class AssessmentsService {
     }
 
     await this.assessments.update(
-      { id } as any,
-      { status: AssessmentStatus.ARCHIVED } as Partial<Assessment>,
+      { id },
+      { status: AssessmentStatus.ARCHIVED },
     );
 
     return this.assessments.findOneWithDetails(id) as Promise<Assessment>;
@@ -260,7 +260,7 @@ export class AssessmentsService {
     const existing = await this.assessmentQuestions.findOne({
       assessmentId,
       questionId: dto.questionId,
-    } as any);
+    });
     if (existing) {
       throw new ConflictException('Question already added to this assessment');
     }
@@ -321,7 +321,7 @@ export class AssessmentsService {
       const existing = await this.assessmentQuestions.findOne({
         assessmentId,
         questionId: dto.questionId,
-      } as any);
+      });
       if (existing) {
         throw new ConflictException(
           `Question [${dto.questionId}] already added to this assessment`,
@@ -349,7 +349,6 @@ export class AssessmentsService {
 
     return savedQuestions;
   }
-
 
   /**
    * Replaces the entire question set for a DRAFT assessment.
@@ -393,12 +392,12 @@ export class AssessmentsService {
     const aq = await this.assessmentQuestions.findOne({
       id: assessmentQuestionId,
       assessmentId,
-    } as any);
+    });
     if (!aq) throw new NotFoundException('Assessment question not found');
 
     await this.assessmentQuestions.softDelete({
       id: assessmentQuestionId,
-    } as any);
+    });
     return { assessmentQuestionId, removedAt: new Date() };
   }
 
@@ -555,7 +554,7 @@ export class AssessmentsService {
 
       if (source === SelectionSource.BANK && bankId) {
         const assessment = await this.assessments.findById(assessmentId);
-        const bank = await this.questionBanks.findOne({ id: bankId } as any);
+        const bank = await this.questionBanks.findOne({ id: bankId });
         if (!bank || (bank as any).topicId !== assessment!.topicId) {
           throw new BadRequestException(
             'selectionRules.bankId must belong to the same topic as this assessment',
@@ -564,7 +563,7 @@ export class AssessmentsService {
       }
     }
 
-    await this.assessmentSettings.update({ id: current.id } as any, dto);
+    await this.assessmentSettings.update({ id: current.id }, dto);
     return this.assessmentSettings.findByAssessment(assessmentId);
   }
 
@@ -644,7 +643,7 @@ export class AssessmentsService {
     // Avoids duplicate records for the same person across multiple assessments
     let participant = await this.participants.findOne({
       email: dto.email,
-    } as any);
+    });
 
     if (!participant) {
       participant = await this.participants.save({
@@ -658,7 +657,7 @@ export class AssessmentsService {
     const existing = await this.assessmentParticipants.findOne({
       assessmentId,
       participantId: participant.id,
-    } as any);
+    });
 
     if (existing) {
       throw new ConflictException(
@@ -681,12 +680,12 @@ export class AssessmentsService {
     const ap = await this.assessmentParticipants.findOne({
       assessmentId,
       participantId,
-    } as any);
+    });
     if (!ap) {
       throw new NotFoundException('Participant not found in this assessment');
     }
 
-    await this.assessmentParticipants.softDelete({ id: ap.id } as any);
+    await this.assessmentParticipants.softDelete({ id: ap.id });
     return { id: ap.id, removedAt: new Date() };
   }
 

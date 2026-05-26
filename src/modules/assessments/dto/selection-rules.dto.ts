@@ -4,7 +4,15 @@
 // distribution must sum to total.
 // -----------------------------------------------------------------------------
 
-import { IsEnum, IsUUID, IsInt, IsOptional, Min, ValidateIf, ValidateNested } from 'class-validator';
+import {
+  IsEnum,
+  IsUUID,
+  IsInt,
+  IsOptional,
+  Min,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum SelectionSource {

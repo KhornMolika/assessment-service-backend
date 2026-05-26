@@ -5,7 +5,10 @@ import {
   ConflictException,
   ForbiddenException,
   InternalServerErrorException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
+import { GradingEngineService } from '../../grading/services/grading-engine.service';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { AnswerSheetRepository } from '../repositories/answer-sheet.repository';
@@ -16,7 +19,10 @@ import { AssessmentParticipantRepository } from '../../assessments/repositories/
 import { AssessmentQuestionRepository } from '../../assessments/repositories/assessment-question.repository';
 import { ParticipantRepository } from '../../participants/repositories/participant.repository';
 import { QuestionRepository } from '../../questions/repositories/question.repository';
-import { AnswerSheet, AnswerSheetStatus } from '../../assessments/entities/answer-sheet.entity';
+import {
+  AnswerSheet,
+  AnswerSheetStatus,
+} from '../../assessments/entities/answer-sheet.entity';
 import { AssessmentStatus } from '../../assessments/entities/assessment.entity';
 import {
   Mode,
@@ -25,7 +31,10 @@ import {
   ShowResults,
 } from '../../assessments/entities/assessment-settings.entity';
 import { GradingStatus } from '../../assessments/entities/answer-entry.entity';
-import { SESSION_EXPIRY_QUEUE, SessionExpiryJobData } from '../jobs/session-expiry.processor';
+import {
+  SESSION_EXPIRY_QUEUE,
+  SessionExpiryJobData,
+} from '../jobs/session-expiry.processor';
 import { StartSessionDto } from '../dto/start-session.dto';
 import { SaveAnswerDto } from '../dto/save-answer.dto';
 import { ClientContextService } from '../../../common/context/client-context.service';
@@ -44,6 +53,8 @@ export class RuntimeService {
     private readonly questions: QuestionRepository,
     @InjectQueue(SESSION_EXPIRY_QUEUE)
     private readonly expiryQueue: Queue<SessionExpiryJobData>,
+    @Inject(forwardRef(() => GradingEngineService))
+    private readonly gradingEngine: GradingEngineService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -126,7 +137,9 @@ export class RuntimeService {
           );
 
         if (!assessmentParticipant) {
-          const participant = await this.participants.findById(dto.participantId);
+          const participant = await this.participants.findById(
+            dto.participantId,
+          );
           if (!participant) {
             throw new NotFoundException('Participant not found');
           }
@@ -150,8 +163,9 @@ export class RuntimeService {
 
       if (settings.questionSelection === QuestionSelection.MANUAL) {
         // MANUAL — use pre-set ordered questions from snapshots
-        const aqs =
-          await this.assessmentQuestions.findByAssessment(dto.assessmentId);
+        const aqs = await this.assessmentQuestions.findByAssessment(
+          dto.assessmentId,
+        );
         sessionQuestions = aqs;
       } else {
         // DYNAMIC — randomly select per selectionRules
@@ -170,7 +184,7 @@ export class RuntimeService {
         status: AnswerSheetStatus.IN_PROGRESS,
         startedAt: now,
         selectedQuestionIds,
-      } as any);
+      });
 
       // 8. Schedule expiry jobs if timeLimit is set
       if (settings.timeLimit) {
@@ -200,7 +214,8 @@ export class RuntimeService {
         error instanceof BadRequestException ||
         error instanceof ConflictException ||
         error instanceof ForbiddenException
-      ) throw error;
+      )
+        throw error;
       throw new InternalServerErrorException('Failed to start session');
     }
   }
@@ -242,9 +257,7 @@ export class RuntimeService {
           new Date(sheet.startedAt).getTime() + settings.timeLimit * 60 * 1000,
         );
         if (new Date() > expiresAt) {
-          throw new BadRequestException(
-            'Session time limit has expired',
-          );
+          throw new BadRequestException('Session time limit has expired');
         }
       }
 
@@ -252,12 +265,10 @@ export class RuntimeService {
       const aq = await this.assessmentQuestions.findOne({
         id: dto.assessmentQuestionId,
         assessmentId: sheet.assessmentId,
-      } as any);
+      });
 
       if (!aq) {
-        throw new NotFoundException(
-          'Question not found in this assessment',
-        );
+        throw new NotFoundException('Question not found in this assessment');
       }
 
       // 4. Create or update AnswerEntry
@@ -268,8 +279,8 @@ export class RuntimeService {
 
       if (existing) {
         await this.answerEntries.update(
-          { id: existing.id } as any,
-          { response: dto.response } as any,
+          { id: existing.id },
+          { response: dto.response },
         );
         return this.answerEntries.findById(existing.id);
       }
@@ -279,12 +290,13 @@ export class RuntimeService {
         assessmentQuestionId: dto.assessmentQuestionId,
         response: dto.response,
         gradingStatus: GradingStatus.PENDING,
-      } as any);
+      });
     } catch (error) {
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException
-      ) throw error;
+      )
+        throw error;
       throw new InternalServerErrorException('Failed to save answer');
     }
   }
@@ -311,22 +323,19 @@ export class RuntimeService {
       if (!sheet) throw new NotFoundException('Session not found');
 
       if (sheet.status !== AnswerSheetStatus.IN_PROGRESS) {
-        throw new BadRequestException(
-          `Session is already ${sheet.status}`,
-        );
+        throw new BadRequestException(`Session is already ${sheet.status}`);
       }
 
       // 2. Validate all questions answered
-      const allQuestions =
-        await this.assessmentQuestions.findByAssessment(sheet.assessmentId);
+      const allQuestions = await this.assessmentQuestions.findByAssessment(
+        sheet.assessmentId,
+      );
 
       const answeredIds = new Set(
         sheet.entries.map((e) => e.assessmentQuestionId),
       );
 
-      const unanswered = allQuestions.filter(
-        (aq) => !answeredIds.has(aq.id),
-      );
+      const unanswered = allQuestions.filter((aq) => !answeredIds.has(aq.id));
 
       if (unanswered.length > 0) {
         throw new BadRequestException(
@@ -340,27 +349,34 @@ export class RuntimeService {
 
       // 4. Mark as submitted
       await this.answerSheets.update(
-        { id: sessionId } as any,
+        { id: sessionId },
         {
           status: AnswerSheetStatus.SUBMITTED,
           submittedAt: new Date(),
-        } as any,
+        },
       );
 
-      // 5. Evaluate and grade the sheet
-      const graded = await this.gradeAnswerSheet(sessionId);
+      // 5. Evaluate and grade the sheet using the new Grading Engine
+      await this.gradingEngine.gradeSession(sessionId);
+
+      // Return the updated sheet after grading
+      const gradedSheet = await this.answerSheets.findById(sessionId);
 
       return {
         sessionId,
-        status: graded.status,
-        submittedAt: graded.submittedAt,
-        message: 'Assessment submitted successfully',
+        status: gradedSheet?.status,
+        submittedAt: gradedSheet?.submittedAt,
+        totalScore: gradedSheet?.totalScore ?? null,
+        grade: gradedSheet?.grade ?? null,
+        isPassed: gradedSheet?.isPassed ?? false,
+        message: 'Assessment submitted and graded successfully',
       };
     } catch (error) {
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException
-      ) throw error;
+      )
+        throw error;
       throw new InternalServerErrorException('Failed to submit session');
     }
   }
@@ -391,9 +407,7 @@ export class RuntimeService {
       if (!sheet) throw new NotFoundException('Session not found');
 
       if (sheet.status === AnswerSheetStatus.IN_PROGRESS) {
-        throw new BadRequestException(
-          'Session has not been submitted yet',
-        );
+        throw new BadRequestException('Session has not been submitted yet');
       }
 
       const settings = sheet.assessment?.settings;
@@ -431,16 +445,15 @@ export class RuntimeService {
         isPassed: sheet.isPassed,
         startedAt: sheet.startedAt,
         submittedAt: sheet.submittedAt,
-        gradingComplete:
-          sheet.status === AnswerSheetStatus.GRADED,
-        requiresReview:
-          sheet.status === AnswerSheetStatus.REQUIRES_REVIEW,
+        gradingComplete: sheet.status === AnswerSheetStatus.GRADED,
+        requiresReview: sheet.status === AnswerSheetStatus.REQUIRES_REVIEW,
       };
     } catch (error) {
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException
-      ) throw error;
+      )
+        throw error;
       throw new InternalServerErrorException('Failed to get result');
     }
   }
@@ -519,8 +532,8 @@ export class RuntimeService {
     let list = questions.map((q, index) => {
       const source =
         selectionMode === QuestionSelection.MANUAL
-          ? q.questionSnapshot  // frozen at publish time
-          : q;                   // live question for DYNAMIC
+          ? q.questionSnapshot // frozen at publish time
+          : q; // live question for DYNAMIC
 
       return {
         order: index + 1,
@@ -594,186 +607,5 @@ export class RuntimeService {
     } catch {
       // Jobs may not exist if timeLimit was not set — safe to ignore
     }
-  }
-
-  /**
-   * Automatically grades all auto-gradable questions, sums the score,
-   * checks if passed, assigns a grade label, and sets status to GRADED or REQUIRES_REVIEW.
-   */
-  private async gradeAnswerSheet(sessionId: string): Promise<AnswerSheet> {
-    const sheet = await this.answerSheets.findOneWithEntries(sessionId);
-    if (!sheet) throw new NotFoundException('Session not found');
-
-    const settings = await this.assessmentSettings.findByAssessment(sheet.assessmentId);
-    if (!settings) throw new BadRequestException('Assessment settings not found');
-
-    let overallRequiresReview = false;
-    let totalScore = 0;
-    let maxPossibleScore = 0;
-
-    for (const entry of sheet.entries) {
-      const aq = entry.assessmentQuestion;
-      if (!aq) continue;
-
-      const snapshot = aq.questionSnapshot || {};
-      const type = snapshot.type;
-      const points = Number(aq.points || 0);
-      maxPossibleScore += points;
-
-      let scoreAwarded = 0;
-      let gradingStatus = GradingStatus.AUTOMATIC;
-
-      const response = entry.response || {};
-      const correctAnswer = snapshot.correctAnswer || {};
-
-      switch (type) {
-        case 'SINGLE_CHOICE': {
-          const userOpt = response.optionId;
-          const correctOpt = correctAnswer.optionId;
-          if (userOpt !== undefined && correctOpt !== undefined && userOpt === correctOpt) {
-            scoreAwarded = points;
-          }
-          break;
-        }
-        case 'MULTIPLE_CHOICE': {
-          const userOpts = response.optionIds || [];
-          const correctOpts = correctAnswer.optionIds || [];
-          const matches =
-            userOpts.length === correctOpts.length &&
-            userOpts.every((id: string) => correctOpts.includes(id));
-          if (matches) {
-            scoreAwarded = points;
-          }
-          break;
-        }
-        case 'TRUE_FALSE': {
-          const userVal = response.value;
-          const correctVal = correctAnswer.value;
-          if (userVal !== undefined && correctVal !== undefined && userVal === correctVal) {
-            scoreAwarded = points;
-          }
-          break;
-        }
-        case 'ORDERING': {
-          const userSeq = response.sequence || [];
-          const correctSeq = correctAnswer.sequence || [];
-          const matches =
-            userSeq.length === correctSeq.length &&
-            userSeq.every((val: any, idx: number) => val === correctSeq[idx]);
-          if (matches) {
-            scoreAwarded = points;
-          }
-          break;
-        }
-        case 'FILL_IN_THE_BLANK': {
-          const userAnswers = response.answers || [];
-          const correctAnswersList = correctAnswer.answers || [];
-          let correctCount = 0;
-          const totalBlanks = correctAnswersList.length;
-
-          for (let i = 0; i < totalBlanks; i++) {
-            const userAns = (userAnswers[i] || '').trim().toLowerCase();
-            const acceptableVariations = (correctAnswersList[i] || []).map((v: string) =>
-              v.trim().toLowerCase(),
-            );
-            if (acceptableVariations.includes(userAns)) {
-              correctCount++;
-            }
-          }
-
-          if (totalBlanks > 0) {
-            scoreAwarded = (correctCount / totalBlanks) * points;
-          }
-          break;
-        }
-        case 'MATCHING': {
-          const userPairs = response.pairs || [];
-          const correctPairs = correctAnswer.pairs || [];
-          let correctCount = 0;
-          const totalPairs = correctPairs.length;
-
-          for (const cp of correctPairs) {
-            const match = userPairs.find(
-              (up: any) => up.leftId === cp.leftId && up.rightId === cp.rightId,
-            );
-            if (match) {
-              correctCount++;
-            }
-          }
-
-          if (totalPairs > 0) {
-            scoreAwarded = (correctCount / totalPairs) * points;
-          }
-          break;
-        }
-        case 'RATING': {
-          if (response.value !== undefined) {
-            scoreAwarded = points;
-          }
-          break;
-        }
-        case 'SHORT_ANSWER':
-        case 'ESSAY': {
-          scoreAwarded = 0;
-          gradingStatus = GradingStatus.PENDING;
-          overallRequiresReview = true;
-          break;
-        }
-        default: {
-          scoreAwarded = 0;
-          break;
-        }
-      }
-
-      const roundedScore = Math.round(scoreAwarded * 100) / 100;
-
-      await this.answerEntries.update(
-        { id: entry.id } as any,
-        {
-          scoreAwarded: roundedScore,
-          maxScore: points,
-          gradingStatus,
-        } as any,
-      );
-
-      totalScore += roundedScore;
-    }
-
-    const pct = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
-    const isPassed =
-      settings.passMark !== null && settings.passMark !== undefined
-        ? pct >= settings.passMark
-        : false;
-
-    let grade: string | null = null;
-    if (settings.gradeLabels && settings.gradeLabels.length > 0) {
-      const sortedLabels = [...settings.gradeLabels].sort(
-        (a, b) => Number(b.min) - Number(a.min),
-      );
-      for (const label of sortedLabels) {
-        if (pct >= Number(label.min)) {
-          grade = label.name;
-          break;
-        }
-      }
-    }
-
-    const finalStatus = overallRequiresReview
-      ? AnswerSheetStatus.REQUIRES_REVIEW
-      : AnswerSheetStatus.GRADED;
-
-    await this.answerSheets.update(
-      { id: sessionId } as any,
-      {
-        totalScore: Math.round(totalScore * 100) / 100,
-        isPassed,
-        grade,
-        status: finalStatus,
-      } as any,
-    );
-
-    const updated = await this.answerSheets.findOneWithEntries(sessionId);
-    if (!updated) throw new NotFoundException('Session not found after grading');
-    return updated;
   }
 }

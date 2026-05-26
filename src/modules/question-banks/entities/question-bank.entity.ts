@@ -12,7 +12,7 @@ export enum BankVisibility {
 @Entity()
 export class QuestionBank extends ClientScopedEntity {
   @ManyToOne(() => Topic, (topic) => topic.questionBanks, {
-    onDelete: "CASCADE",
+    onDelete: 'CASCADE',
   })
   topic!: Topic;
 
@@ -22,14 +22,14 @@ export class QuestionBank extends ClientScopedEntity {
   @Column({
     type: 'enum',
     enum: BankVisibility,
-    default: BankVisibility.PRIVATE
+    default: BankVisibility.PRIVATE,
   })
   visibility!: BankVisibility;
 
-  @Column({ nullable: true, type: "text" })
+  @Column({ nullable: true, type: 'text' })
   description?: string;
 
-  @Column("text", { array: true, default: [] })
+  @Column('text', { array: true, default: [] })
   tags!: string[];
 
   @OneToMany(() => QuestionBankQuestion, (bq) => bq.questionBank)

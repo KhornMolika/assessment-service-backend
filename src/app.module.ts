@@ -16,10 +16,11 @@ import { QuestionBanksModule } from './modules/question-banks/question-banks.mod
 import { BullModule } from '@nestjs/bull';
 import { ParticipantsModule } from './modules/participants/participants.module';
 import { RuntimeModule } from './modules/runtime/runtime.module';
+import { GradingModule } from './modules/grading/grading.module';
 
 @Module({
   imports: [
-     ConfigModule.forRoot({
+    ConfigModule.forRoot({
       isGlobal: true,
 
       load: [appConfig],
@@ -61,6 +62,8 @@ import { RuntimeModule } from './modules/runtime/runtime.module';
     ParticipantsModule,
 
     RuntimeModule,
+
+    GradingModule,
   ],
 })
 export class AppModule implements NestModule {

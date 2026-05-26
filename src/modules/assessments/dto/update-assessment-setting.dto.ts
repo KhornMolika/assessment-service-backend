@@ -4,20 +4,33 @@
 // DYNAMIC requires selectionRules.
 // -----------------------------------------------------------------------------
 import {
-  IsBoolean, IsEnum, IsInt, IsOptional,
-  IsArray, Min, ValidateNested,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsArray,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { SelectionRulesDto } from './selection-rules.dto';
 import { GradeLabelDto } from './grade-label.dto';
-import { Mode, ParticipantIdentity, QuestionSelection, ShowResults } from '../entities/assessment-settings.entity';
+import {
+  Mode,
+  ParticipantIdentity,
+  QuestionSelection,
+  ShowResults,
+} from '../entities/assessment-settings.entity';
 
 export class UpdateAssessmentSettingDto {
-  
   @IsEnum(Mode) @IsOptional() mode?: Mode;
-  @IsEnum(QuestionSelection) @IsOptional() questionSelection?: QuestionSelection;
-  @IsEnum(ParticipantIdentity) @IsOptional() participantIdentity?: ParticipantIdentity;
+  @IsEnum(QuestionSelection)
+  @IsOptional()
+  questionSelection?: QuestionSelection;
+  @IsEnum(ParticipantIdentity)
+  @IsOptional()
+  participantIdentity?: ParticipantIdentity;
   @IsInt() @Min(1) @IsOptional() numQuestions?: number;
 
   @ValidateNested()
@@ -40,4 +53,5 @@ export class UpdateAssessmentSettingDto {
 
   @IsBoolean() @IsOptional() isAllowShare?: boolean;
   @IsBoolean() @IsOptional() allowReview?: boolean;
+  @IsBoolean() @IsOptional() manualGradingAIQues?: boolean;
 }

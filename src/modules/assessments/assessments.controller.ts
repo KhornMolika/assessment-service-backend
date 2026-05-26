@@ -12,6 +12,8 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
@@ -21,13 +23,17 @@ import { ReplaceAssessmentQuestionsDto } from './dto/replace-assessment-question
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { AssessmentsService } from './services/assessments.service';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
-import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { UpdateAssessmentSettingDto } from './dto/update-assessment-setting.dto';
 import { AssignParticipantDto } from './dto/assign-participant.dto';
+import { GradingEngineService } from '../grading/services/grading-engine.service';
 
 @Controller()
 export class AssessmentsController {
-  constructor(private readonly assessmentService: AssessmentsService) {}
+  constructor(
+    private readonly assessmentService: AssessmentsService,
+    @Inject(forwardRef(() => GradingEngineService))
+    private readonly gradingEngine: GradingEngineService,
+  ) {}
 
   // CRUD ----------------------------------------------------------------------
 
@@ -98,10 +104,7 @@ export class AssessmentsController {
   /** POST /assessments/:id/questions — DRAFT only */
   @Post('assessments/:id/questions')
   @HttpCode(HttpStatus.CREATED)
-  async addQuestion(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: any,
-  ) {
+  async addQuestion(@Param('id', ParseUUIDPipe) id: string, @Body() body: any) {
     if (Array.isArray(body)) {
       const dtos = plainToInstance(AddAssessmentQuestionDto, body);
       const allMessages: string[] = [];
@@ -215,5 +218,13 @@ export class AssessmentsController {
     @Param('participantId', ParseUUIDPipe) participantId: string,
   ) {
     return this.assessmentService.removeParticipant(id, participantId);
+  }
+
+  /** POST /assessments/:sessionId/recalculate — finalize manual grading or override */
+  @Post('assessments/:sessionId/recalculate')
+  @HttpCode(HttpStatus.OK)
+  async recalculate(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
+    await this.gradingEngine.recalculateSession(sessionId);
+    return { sessionId, recalculatedAt: new Date() };
   }
 }

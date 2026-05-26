@@ -23,7 +23,7 @@ export class QuestionBanksService {
     try {
       const exists = await this.bankRepository.findOne({
         name: dto.name,
-      } as any);
+      });
       if (exists)
         throw new BadRequestException(
           'A question bank with this name already exists',
@@ -31,7 +31,7 @@ export class QuestionBanksService {
 
       const savedBank = await this.bankRepository.create({
         ...dto,
-      } as any);
+      });
 
       return {
         ...savedBank,
@@ -76,7 +76,7 @@ export class QuestionBanksService {
     try {
       const exists = await this.bankRepository.findOne({
         name: dto.name,
-      } as any);
+      });
       if (exists)
         throw new BadRequestException(
           'A question bank with this name already exists',
@@ -88,7 +88,7 @@ export class QuestionBanksService {
       const savedBank = await this.bankRepository.create({
         ...dto,
         topic: { id: topic.id },
-      } as any);
+      });
 
       return {
         ...savedBank,
@@ -158,7 +158,7 @@ export class QuestionBanksService {
       if (dto.name) {
         const exists = await this.bankRepository.findOne({
           name: dto.name,
-        } as any);
+        });
         if (exists && exists.id !== id) {
           throw new BadRequestException(
             'This question bank name is already taken',
@@ -166,7 +166,7 @@ export class QuestionBanksService {
         }
       }
 
-      await this.bankRepository.update({ id } as any, { ...dto } as any);
+      await this.bankRepository.update({ id }, { ...dto });
       return await this.findById(id);
     } catch (error) {
       if (
@@ -181,7 +181,7 @@ export class QuestionBanksService {
   async delete(id: string) {
     try {
       await this.findById(id);
-      await this.bankRepository.softDelete({ id } as any);
+      await this.bankRepository.softDelete({ id });
       return;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -207,7 +207,7 @@ export class QuestionBanksService {
           options: j.question.options,
           correctAnswers: j.question.correctAnswer,
           createdAt: j.question.createdAt,
-          updatedAt: j.question.updatedAt
+          updatedAt: j.question.updatedAt,
         })),
         meta: {
           total,
@@ -302,7 +302,7 @@ export class QuestionBanksService {
       }
 
       // soft delete - sets deletedAt, excluded by findByBank
-      await this.bankQuestionRepository.softDelete({ id: junction.id } as any);
+      await this.bankQuestionRepository.softDelete({ id: junction.id });
 
       return {
         bankId,

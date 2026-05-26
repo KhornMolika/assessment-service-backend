@@ -75,7 +75,7 @@ export class ParticipantsService {
       if (dto.email) {
         const existing = await this.participantRepository.findOne({
           email: dto.email,
-        } as any);
+        });
         if (existing) {
           throw new ConflictException(
             'A participant with this email already exists',
@@ -103,7 +103,7 @@ export class ParticipantsService {
       if (dto.email && dto.email !== participant.email) {
         const existing = await this.participantRepository.findOne({
           email: dto.email,
-        } as any);
+        });
         if (existing) {
           throw new ConflictException(
             'A participant with this email already exists',
@@ -111,7 +111,7 @@ export class ParticipantsService {
         }
       }
 
-      await this.participantRepository.update({ id } as any, dto);
+      await this.participantRepository.update({ id }, dto);
       return this.findOne(id);
     } catch (error) {
       console.log('Error update participant: ', error);
@@ -126,7 +126,7 @@ export class ParticipantsService {
   async remove(id: string) {
     try {
       await this.findOne(id);
-      await this.participantRepository.softDelete({ id } as any);
+      await this.participantRepository.softDelete({ id });
       return { id, deletedAt: new Date() };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

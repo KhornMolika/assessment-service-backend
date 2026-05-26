@@ -3,7 +3,15 @@
 // answerSheet is null until participant actually starts.
 // Unique constraint prevents same participant being assigned twice.
 // -----------------------------------------------------------------------------
-import { Entity, Column, ManyToOne, OneToMany, Index, CreateDateColumn, OneToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  Index,
+  CreateDateColumn,
+  OneToOne,
+} from 'typeorm';
 import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { Assessment } from '@modules/assessments/entities/assessment.entity';
 import { AnswerSheet } from './answer-sheet.entity';

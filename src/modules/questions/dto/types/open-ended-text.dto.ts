@@ -1,4 +1,11 @@
-import { IsInt, Min, Max, IsArray, IsString, IsNotEmpty } from 'class-validator';
+import {
+  IsInt,
+  Min,
+  Max,
+  IsArray,
+  IsString,
+  IsNotEmpty,
+} from 'class-validator';
 
 export class OpenEndedTextOptionsDto {
   @IsInt()

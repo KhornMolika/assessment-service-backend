@@ -22,7 +22,7 @@ export enum QuestionSelection {
 export enum ParticipantIdentity {
   ANONYMOUS = 'ANONYMOUS',
   AUTHENTICATED = 'AUTHENTICATED',
-  EXTERNAL = 'EXTERNAL'
+  EXTERNAL = 'EXTERNAL',
 }
 
 export enum ShowResults {
@@ -33,30 +33,29 @@ export enum ShowResults {
 
 @Entity()
 export class AssessmentSetting extends ClientScopedEntity {
-
-  @OneToOne(() => Assessment, (a) => a.settings, { onDelete: "CASCADE" })
+  @OneToOne(() => Assessment, (a) => a.settings, { onDelete: 'CASCADE' })
   @JoinColumn()
   assessment!: Assessment;
 
   @Column({ type: 'uuid' })
   assessmentId!: string;
 
-  @Column({ type: "enum", enum: Mode })
+  @Column({ type: 'enum', enum: Mode })
   mode!: Mode;
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: QuestionSelection,
   })
   questionSelection!: QuestionSelection;
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: ParticipantIdentity,
   })
   participantIdentity!: ParticipantIdentity;
 
-  @Column({ type: "int" })
+  @Column({ type: 'int' })
   numQuestions!: number;
 
   // DYNAMIC mode only — { source, bankId?, total, distribution: { easy, medium, hard } }
@@ -64,25 +63,25 @@ export class AssessmentSetting extends ClientScopedEntity {
   selectionRules?: Record<string, any>;
 
   // Minutes a participant has to complete once they start
-  @Column({ type: "int", nullable: true })
+  @Column({ type: 'int', nullable: true })
   timeLimit?: number;
 
   // Assessment becomes assesible at this timestamp
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   startsAt?: Date;
 
   // Hard deadline - No new sessions accespted after this
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   endsAt?: Date;
 
   // Minimun score to pass - null mean no pass/fail tracking
-  @Column({ type: "int", nullable: true })
+  @Column({ type: 'int', nullable: true })
   passMark!: number;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ type: 'boolean', default: false })
   isShuffle!: boolean;
 
-  @Column({ type: "enum", enum: ShowResults, nullable: true })
+  @Column({ type: 'enum', enum: ShowResults, nullable: true })
   showResults!: ShowResults;
 
   // [{ name: 'A', min: 90 }, { name: 'B', min: 75 }]
@@ -94,4 +93,7 @@ export class AssessmentSetting extends ClientScopedEntity {
 
   @Column({ default: false })
   allowReview!: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  manualGradingAIQues!: boolean;
 }

@@ -115,10 +115,27 @@ When a session is submitted (manually or automatically via expiry), the grading 
 | **`FILL_IN_THE_BLANK`**| `{ answers: string[][] }` | Supports variations. Compares each index (case-insensitive, trimmed). **Supports partial credit** `(correctCount / totalBlanks) * points`. |
 | **`MATCHING`** | `{ pairs: { leftId, rightId }[] }` | Checks matching pairs. **Supports partial credit** `(correctPairsCount / totalPairs) * points`. |
 | **`RATING`** | None (Survey) | Awarded full points as long as a value is chosen. |
-| **`SHORT_ANSWER`** | `{ keyPointsExpected: string[] }` | Blocked from auto-grading. `scoreAwarded = 0`, `status = PENDING`. |
-| **`ESSAY`** | `{ keyPointsExpected: string[] }` | Blocked from auto-grading. `scoreAwarded = 0`, `status = PENDING`. |
+| **`SHORT_ANSWER`** | `{ keyPointsExpected: string[] }` | Evaluated by Gemini AI worker asynchronously (returns score/reasoning) unless manual grading override is set. |
+| **`ESSAY`** | `{ keyPointsExpected: string[] }` | Evaluated by Gemini AI worker asynchronously (returns score/reasoning) unless manual grading override is set. |
 
-### 4.2. Session Aggregation Formulas
+### 4.2. AI-Assisted and Manual-only Evaluation
+
+The platform supports two evaluation paths for subjective questions (`SHORT_ANSWER` and `ESSAY`):
+
+1. **Asynchronous AI-Assisted Grading**:
+   - By default, submitting an assessment session queues a background grading job on the `'ai-grading'` Bull queue.
+   - The queue processor runs within the corresponding tenant client context, fetches the entry response, and calls the Google Gemini API (model `gemini-2.5-flash`).
+   - The AI evaluates the answer against the criteria and key points, returns a JSON object containing a `score` and `reasoning`, updates the entry status to `AI_EVALUATED`, and triggers session score recalculation.
+
+2. **Manual-only Grading Override**:
+   - If the assessment setting `manualGradingAIQues` is set to `true`, the background AI queue is bypassed.
+   - The subjective answer entry's status is set directly to `PENDING` (awaiting human grader review).
+
+3. **Recalculation**:
+   - Graders can submit updates to the subjective scores in the database.
+   - Calling the public endpoint `POST /api/v1/assessments/:sessionId/recalculate` recalculates the total scores, applies passing score evaluations, computes grade labels, and updates the answer sheet status to `GRADED`.
+
+### 4.3. Session Aggregation Formulas
 Once all individual answer entries have been graded, the grading engine performs the following calculations:
 
 1. **Total Score**: Sums up the scored points from all entries:
@@ -132,3 +149,4 @@ Once all individual answer entries have been graded, the grading engine performs
      * Session status ➔ **`REQUIRES_REVIEW`**
    * Otherwise:
      * Session status ➔ **`GRADED`**
+

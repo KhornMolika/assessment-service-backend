@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Assessment } from './entities/assessment.entity';
 import { AssessmentSetting } from './entities/assessment-settings.entity';
@@ -15,6 +15,7 @@ import { AssessmentsService } from './services/assessments.service';
 import { AssessmentQuestionRepository } from './repositories/assessment-question.repository';
 import { AssessmentSettingRepository } from './repositories/assessment-setting.repository';
 import { AssessmentParticipantRepository } from './repositories/assessment-participant.repository';
+import { GradingModule } from '../grading/grading.module';
 
 @Module({
   imports: [
@@ -26,9 +27,10 @@ import { AssessmentParticipantRepository } from './repositories/assessment-parti
       AssessmentQuestion,
       AssessmentParticipant,
     ]),
-    QuestionsModule,        // QuestionRepository
-    QuestionBanksModule,    // QuestionBankRepository for DYNAMIC bank validation
-    ParticipantsModule,     // ParticipantRepository for assignParticipant
+    QuestionsModule, // QuestionRepository
+    QuestionBanksModule, // QuestionBankRepository for DYNAMIC bank validation
+    ParticipantsModule, // ParticipantRepository for assignParticipant
+    forwardRef(() => GradingModule),
   ],
   controllers: [AssessmentsController],
   providers: [

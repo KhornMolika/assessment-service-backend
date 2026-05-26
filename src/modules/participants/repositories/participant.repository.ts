@@ -21,8 +21,9 @@ export class ParticipantRepository extends ClientRepository<Participant> {
   findPaginated(query: PaginationQueryDto) {
     const { page, limit, search, sortBy = 'createdAt', order = 'desc' } = query;
 
-    const builder = this.qb('participant')
-      .andWhere('participant.deletedAt IS NULL');
+    const builder = this.qb('participant').andWhere(
+      'participant.deletedAt IS NULL',
+    );
 
     if (search?.trim()) {
       builder.andWhere(

@@ -19,7 +19,13 @@ export class AssessmentParticipantRepository extends ClientRepository<Assessment
    * Joins Participant record. Supports search by name or email.
    */
   findPaginatedByAssessment(assessmentId: string, query: PaginationQueryDto) {
-    const { page, limit, search, sortBy = 'assignedAt', order = 'desc' } = query;
+    const {
+      page,
+      limit,
+      search,
+      sortBy = 'assignedAt',
+      order = 'desc',
+    } = query;
 
     const builder = this.qb('ap')
       .leftJoinAndSelect('ap.participant', 'participant')

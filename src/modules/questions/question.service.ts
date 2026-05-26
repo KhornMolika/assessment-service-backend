@@ -18,7 +18,7 @@ export class QuestionsService {
     private readonly questionRepository: QuestionRepository,
     private readonly topicRepository: TopicRepository,
     private readonly bankRepository: QuestionBankRepository,
-  ) { }
+  ) {}
 
   private transformResponse(question: any) {
     if (!question) return question;
@@ -47,7 +47,9 @@ export class QuestionsService {
       console.log('createTopicQuestion DTO:', JSON.stringify(dto, null, 2));
       const typeConfig = QUESTION_TYPES_CONFIG[dto.type];
       if (!typeConfig) {
-        throw new BadRequestException(`Invalid question type specified: [${dto.type}]`);
+        throw new BadRequestException(
+          `Invalid question type specified: [${dto.type}]`,
+        );
       }
 
       // Verify topic exists
@@ -67,7 +69,11 @@ export class QuestionsService {
       return this.transformResponse(saved);
     } catch (error) {
       console.error('createTopicQuestion error:', error);
-      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      )
+        throw error;
       throw new BadRequestException('Failed to create question');
     }
   }
@@ -79,7 +85,7 @@ export class QuestionsService {
 
       const [questions, total] = await this.questionRepository.findPaginated(
         query,
-        ['questionText']
+        ['questionText'],
       );
 
       return {
@@ -89,7 +95,7 @@ export class QuestionsService {
           page: query.page,
           limit: query.limit,
           pageCount: Math.ceil(total / query.limit),
-          topicId
+          topicId,
         },
       };
     } catch (error) {
@@ -115,18 +121,24 @@ export class QuestionsService {
       if (!question) throw new NotFoundException('Question not found');
 
       const updateData: any = {};
-      if (dto.questionText !== undefined) updateData.questionText = dto.questionText;
+      if (dto.questionText !== undefined)
+        updateData.questionText = dto.questionText;
       if (dto.type !== undefined) updateData.type = dto.type;
       if (dto.difficulty !== undefined) updateData.difficulty = dto.difficulty;
       if (dto.points !== undefined) updateData.points = dto.points;
       if (dto.options !== undefined) updateData.options = dto.options;
-      if (dto.correctAnswers !== undefined) updateData.correctAnswer = dto.correctAnswers;
+      if (dto.correctAnswers !== undefined)
+        updateData.correctAnswer = dto.correctAnswers;
 
-      await this.questionRepository.update({ id } as any, updateData);
+      await this.questionRepository.update({ id }, updateData);
       return this.findById(id);
     } catch (error) {
       console.error('Update question error:', error);
-      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      )
+        throw error;
       throw new BadRequestException('Update failed');
     }
   }
@@ -134,12 +146,11 @@ export class QuestionsService {
   async delete(id: string) {
     try {
       await this.findById(id);
-      await this.questionRepository.softDelete({ id } as any);
+      await this.questionRepository.softDelete({ id });
       return;
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new BadRequestException('Delete failed');
     }
   }
-
 }

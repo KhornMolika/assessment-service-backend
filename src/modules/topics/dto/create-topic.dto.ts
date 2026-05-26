@@ -16,5 +16,4 @@ export class CreateTopicDto {
   @IsString()
   @MaxLength(500)
   description?: string;
-
 }

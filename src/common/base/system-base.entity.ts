@@ -13,10 +13,10 @@ export abstract class SystemBaseEntity {
   @CreateDateColumn({ type: 'timestamp' })
   createdAt!: Date;
 
-  @UpdateDateColumn({  type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt!: Date;
 
-  @DeleteDateColumn({  type: 'timestamp' })
+  @DeleteDateColumn({ type: 'timestamp' })
   @Exclude()
   deletedAt!: Date;
 }

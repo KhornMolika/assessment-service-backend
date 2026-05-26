@@ -16,7 +16,8 @@ export class FillBlankOptionsDto {
 export class FillBlankAnswerDto {
   @IsArray()
   @IsArrayOfStringArrays({
-    message: 'answers must be an array of string arrays — one inner array per blank',
+    message:
+      'answers must be an array of string arrays — one inner array per blank',
   })
   answers!: string[][]; // index 0 = blank_1, index 1 = blank_2
 }

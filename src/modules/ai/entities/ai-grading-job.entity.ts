@@ -11,7 +11,7 @@ export enum AIGradingJobStatus {
 
 @Entity()
 export class AIGradingJob extends ClientScopedEntity {
-  @ManyToOne(() => AnswerEntry, (e) => e.aiJobs, { onDelete: "CASCADE" })
+  @ManyToOne(() => AnswerEntry, (e) => e.aiJobs, { onDelete: 'CASCADE' })
   answerEntry!: AnswerEntry;
 
   @Column({ type: 'uuid' })
@@ -28,13 +28,13 @@ export class AIGradingJob extends ClientScopedEntity {
   suggestedScore?: number;
 
   @Column({ type: 'text', nullable: true })
-  reasoning?: string;       // AI explanation of the score
+  reasoning?: string; // AI explanation of the score
 
   @Column({ type: 'text', nullable: true })
-  failureReason?: string;   // if FAILED
+  failureReason?: string; // if FAILED
 
   @Column({ type: 'int', default: 0 })
-  attemptCount!: number;    // for POST /internal/ai-grading-jobs/:jobId/retry
+  attemptCount!: number; // for POST /internal/ai-grading-jobs/:jobId/retry
 
   @Column({ type: 'timestamp', nullable: true })
   processedAt?: Date;

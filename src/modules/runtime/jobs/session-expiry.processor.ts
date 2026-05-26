@@ -2,7 +2,7 @@ import { Processor, Process } from '@nestjs/bull';
 import type { Job } from 'bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { AnswerSheetRepository } from '../repositories/answer-sheet.repository';
-import { AnswerSheetStatus } from '../../assessments/entities/answer-sheet.entity';
+import { AnswerSheetStatus } from '@modules/assessments/entities/answer-sheet.entity';
 
 export const SESSION_EXPIRY_QUEUE = 'session-expiry';
 
@@ -16,9 +16,7 @@ export interface SessionExpiryJobData {
 export class SessionExpiryProcessor {
   private readonly logger = new Logger(SessionExpiryProcessor.name);
 
-  constructor(
-    private readonly answerSheets: AnswerSheetRepository,
-  ) {}
+  constructor(private readonly answerSheets: AnswerSheetRepository) {}
 
   /**
    * Fires 5 minutes before time limit expires.
@@ -57,11 +55,11 @@ export class SessionExpiryProcessor {
       }
 
       await this.answerSheets.update(
-        { id: sessionId } as any,
+        { id: sessionId },
         {
           status: AnswerSheetStatus.SUBMITTED,
           submittedAt: new Date(),
-        } as any,
+        },
       );
 
       this.logger.log(`Session ${sessionId} auto-submitted due to time limit`);

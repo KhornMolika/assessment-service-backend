@@ -17,11 +17,13 @@ export class ClientRepository<T extends ClientScopedEntity> {
     return ClientContextService.getClientId();
   }
 
-  protected clientWhere(where: FindOptionsWhere<T> | FindOptionsWhere<T>[]): FindOptionsWhere<T> | FindOptionsWhere<T>[] {
+  protected clientWhere(
+    where: FindOptionsWhere<T> | FindOptionsWhere<T>[],
+  ): FindOptionsWhere<T> | FindOptionsWhere<T>[] {
     if (Array.isArray(where)) {
-      return where.map(w => ({ ...w, clientId: this.clientId } as FindOptionsWhere<T>));
+      return where.map((w) => ({ ...w, clientId: this.clientId }));
     }
-    return { ...where, clientId: this.clientId } as FindOptionsWhere<T>;
+    return { ...where, clientId: this.clientId };
   }
 
   // Alias for clientWhere to avoid breaking existing services calling scope
@@ -40,7 +42,7 @@ export class ClientRepository<T extends ClientScopedEntity> {
   findById(id: string, relations: string[] = []): Promise<T | null> {
     return this.repo.findOne({
       where: this.clientWhere({ id } as FindOptionsWhere<T>),
-      relations
+      relations,
     });
   }
 
@@ -53,16 +55,42 @@ export class ClientRepository<T extends ClientScopedEntity> {
     searchFields: (keyof T)[],
     relations: string[] = [],
   ) {
-    const { page = 1, limit = 10, search, sortBy = 'createdAt', order = 'DESC', visibility, tag, topicId, assessmentId } = query;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy = 'createdAt',
+      order = 'DESC',
+      visibility,
+      tag,
+      topicId,
+      assessmentId,
+    } = query;
     const skip = (page - 1) * limit;
 
     const explicitFilters: any = {};
-    if (visibility && this.repo.metadata.columns.some(c => c.propertyName === 'visibility')) explicitFilters.visibility = visibility;
-    if (tag && this.repo.metadata.columns.some(c => c.propertyName === 'tags')) explicitFilters.tags = tag;
-    if (topicId && this.repo.metadata.relations.some(r => r.propertyName === 'topic')) explicitFilters.topic = { id: topicId };
-    if (assessmentId && this.repo.metadata.relations.some(r => r.propertyName === 'assessment')) explicitFilters.assessment = { id: assessmentId };
+    if (
+      visibility &&
+      this.repo.metadata.columns.some((c) => c.propertyName === 'visibility')
+    )
+      explicitFilters.visibility = visibility;
+    if (
+      tag &&
+      this.repo.metadata.columns.some((c) => c.propertyName === 'tags')
+    )
+      explicitFilters.tags = tag;
+    if (
+      topicId &&
+      this.repo.metadata.relations.some((r) => r.propertyName === 'topic')
+    )
+      explicitFilters.topic = { id: topicId };
+    if (
+      assessmentId &&
+      this.repo.metadata.relations.some((r) => r.propertyName === 'assessment')
+    )
+      explicitFilters.assessment = { id: assessmentId };
 
-    let baseWhere = this.clientWhere(explicitFilters);
+    const baseWhere = this.clientWhere(explicitFilters);
     let whereConditions: any = baseWhere;
 
     if (search && search.trim() !== '' && searchFields.length > 0) {
@@ -75,7 +103,7 @@ export class ClientRepository<T extends ClientScopedEntity> {
     return this.repo.findAndCount({
       where: whereConditions,
       relations,
-      order: { [sortBy]: order.toUpperCase() } as any,
+      order: { [sortBy]: order.toUpperCase() },
       skip,
       take: limit,
     });
@@ -88,7 +116,10 @@ export class ClientRepository<T extends ClientScopedEntity> {
     } as T);
   }
 
-  update(where: FindOptionsWhere<T>, data: DeepPartial<T>): Promise<UpdateResult> {
+  update(
+    where: FindOptionsWhere<T>,
+    data: DeepPartial<T>,
+  ): Promise<UpdateResult> {
     return this.repo.update(this.clientWhere(where), data as any);
   }
 

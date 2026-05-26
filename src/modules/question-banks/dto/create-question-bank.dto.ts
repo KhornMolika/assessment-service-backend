@@ -1,4 +1,11 @@
-import { IsString, Length, IsOptional, IsArray, IsEnum, IsUUID } from 'class-validator';
+import {
+  IsString,
+  Length,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsUUID,
+} from 'class-validator';
 import { BankVisibility } from '../entities/question-bank.entity';
 
 export class CreateQuestionBankDto {

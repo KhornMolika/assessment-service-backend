@@ -4,7 +4,7 @@ import { RefreshToken } from '../auth/refresh-token.entity';
 
 @Entity()
 export class Client extends SystemBaseEntity {
-  @Column({ type: 'varchar'})
+  @Column({ type: 'varchar' })
   name!: string;
 
   @Column({ type: 'varchar', unique: true })

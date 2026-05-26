@@ -17,9 +17,11 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
 
   // Entities (compiled-safe for CI/CD)
-  entities: [process.env.NODE_ENV === 'production'
-    ? 'dist/modules/**/*.entity.js'
-    : 'src/modules/**/*.entity.ts'],
+  entities: [
+    process.env.NODE_ENV === 'production'
+      ? 'dist/modules/**/*.entity.js'
+      : 'src/modules/**/*.entity.ts',
+  ],
 
   // Migrations (important: always included)
   migrations: ['src/database/migrations/*{.ts,.js}'],
@@ -30,7 +32,7 @@ export const AppDataSource = new DataSource({
   logging: process.env.NODE_ENV !== 'production',
 
   // safer in Docker/K8s environments
-  ssl: false
+  ssl: false,
   // process.env.NODE_ENV === 'production'
   //   ? { rejectUnauthorized: false }
   //   : false,

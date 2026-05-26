@@ -6,9 +6,7 @@ import { ClientRepository } from '@common/base/client-repository';
 
 @Injectable()
 export class QuestionRepository extends ClientRepository<Question> {
-  constructor(
-    @InjectRepository(Question) repo: Repository<Question>
-  ) {
+  constructor(@InjectRepository(Question) repo: Repository<Question>) {
     super(repo);
   }
 

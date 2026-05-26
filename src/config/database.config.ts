@@ -23,11 +23,11 @@ export const databaseConfig: TypeOrmModuleAsyncOptions = {
 
     logging: false,
 
-    ssl: false
-      // configService.get<string>('NODE_ENV') === 'production'
-      //   ? {
-      //       rejectUnauthorized: false,
-      //     }
-      //   : false,
+    ssl: false,
+    // configService.get<string>('NODE_ENV') === 'production'
+    //   ? {
+    //       rejectUnauthorized: false,
+    //     }
+    //   : false,
   }),
-}; 
+};
