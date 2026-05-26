@@ -1,30 +1,43 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+// -----------------------------------------------------------------------------
+// All configuration for how an assessment runs.
+// mode: SELF_PACED = participant picks own time, REAL_TIME = synchronized.
+// startsAt: assessment only accessible after this time.
+// endsAt: hard deadline — no new sessions after this.
+// timeLimit: minutes participant has once they start.
+// -----------------------------------------------------------------------------
+import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Assessment } from './assessment.entity';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 
 export enum Mode {
   SELF_PACED = 'SELF_PACED',
   REAL_TIME = 'REAL_TIME',
 }
 
-export enum ParticipantIdentity {
-  INTERNAL = 'INTERNAL',
-  EXTERNAL = 'EXTERNAL',
-  ANONYMOUS = 'ANONYMOUS',
-}
-
 export enum QuestionSelection {
   MANUAL = 'MANUAL',
-  DYNAMIC_FROM_BANK = 'DYNAMIC_FROM_BANK',
+  DYNAMIC = 'DYNAMIC',
+}
+
+export enum ParticipantIdentity {
+  ANONYMOUS = 'ANONYMOUS',
+  AUTHENTICATED = 'AUTHENTICATED',
+  EXTERNAL = 'EXTERNAL',
 }
 
 export enum ShowResults {
-  IMMEDIATE = 'IMMEDIATE',
+  IMMEDIATELY = 'IMMEDIATELY',
   MANUAL = 'MANUAL',
-  HIDDEN = 'HIDDEN',
+  NEVER = 'NEVER',
 }
 
 @Entity()
-export class AssessmentSettings {
-  @PrimaryColumn('uuid')
+export class AssessmentSetting extends ClientScopedEntity {
+  @OneToOne(() => Assessment, (a) => a.settings, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  assessment!: Assessment;
+
+  @Column({ type: 'uuid' })
   assessmentId!: string;
 
   @Column({ type: 'enum', enum: Mode })
@@ -33,25 +46,35 @@ export class AssessmentSettings {
   @Column({
     type: 'enum',
     enum: QuestionSelection,
-    nullable: false,
   })
   questionSelection!: QuestionSelection;
 
-  @Column({ type: 'int'})
+  @Column({
+    type: 'enum',
+    enum: ParticipantIdentity,
+  })
+  participantIdentity!: ParticipantIdentity;
+
+  @Column({ type: 'int' })
   numQuestions!: number;
 
+  // DYNAMIC mode only — { source, bankId?, total, distribution: { easy, medium, hard } }
   @Column({ type: 'jsonb', nullable: true })
-  selectionRules?: any; // { easy: 3, medium: 4, hard: 3 }
+  selectionRules?: Record<string, any>;
 
+  // Minutes a participant has to complete once they start
   @Column({ type: 'int', nullable: true })
   timeLimit?: number;
 
+  // Assessment becomes assesible at this timestamp
   @Column({ type: 'timestamp', nullable: true })
   startsAt?: Date;
 
+  // Hard deadline - No new sessions accespted after this
   @Column({ type: 'timestamp', nullable: true })
   endsAt?: Date;
 
+  // Minimun score to pass - null mean no pass/fail tracking
   @Column({ type: 'int', nullable: true })
   passMark!: number;
 
@@ -61,15 +84,16 @@ export class AssessmentSettings {
   @Column({ type: 'enum', enum: ShowResults, nullable: true })
   showResults!: ShowResults;
 
+  // [{ name: 'A', min: 90 }, { name: 'B', min: 75 }]
   @Column({ type: 'jsonb', nullable: true })
-  gradeLabels: any; // [{ name: 'A', min: 90 }]
+  gradeLabels?: Record<string, any>[];
 
   @Column({ default: false })
   isAllowShare!: boolean;
 
-  @Column({
-    type: 'enum',
-    enum: ParticipantIdentity,
-  })
-  participantIdentity!: ParticipantIdentity;
+  @Column({ default: false })
+  allowReview!: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  manualGradingAIQues!: boolean;
 }

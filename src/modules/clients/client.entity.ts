@@ -1,16 +1,16 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { SystemBaseEntity } from '../../common/base/system-base.entity';
+import { SystemBaseEntity } from '@common/base/system-base.entity';
 import { RefreshToken } from '../auth/refresh-token.entity';
 
 @Entity()
 export class Client extends SystemBaseEntity {
-  @Column({ type: 'varchar'})
+  @Column({ type: 'varchar' })
   name!: string;
 
   @Column({ type: 'varchar', unique: true })
   slug!: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'uuid', unique: true })
   clientId!: string;
 
   @Column({ type: 'varchar' })

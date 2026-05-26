@@ -1,7 +1,6 @@
 import { Entity, Column, ManyToOne, Index } from 'typeorm';
-import { SystemBaseEntity } from '../../common/base/system-base.entity';
+import { SystemBaseEntity } from '@common/base/system-base.entity';
 import { Client } from '../clients/client.entity';
-
 
 @Entity()
 export class RefreshToken extends SystemBaseEntity {

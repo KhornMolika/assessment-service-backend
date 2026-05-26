@@ -6,18 +6,21 @@ import appConfig from './config/app.config';
 import { envValidationSchema } from './config/env.validation';
 import { databaseConfig } from './config/database.config';
 import { ClientsModule } from './modules/clients/clients.module';
+import { ClientMiddleware } from './common/middleware/client.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { QuestionsModule } from './modules/questions/questions.module';
-import { QuestionBanksModule } from './modules/question-banks/banks.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { ExecutionsModule } from './modules/executions/executions.module';
-import { ContextModule } from './common/context/context.module';
+import { QuestionBanksModule } from './modules/question-banks/question-banks.module';
+import { BullModule } from '@nestjs/bull';
+import { ParticipantsModule } from './modules/participants/participants.module';
+import { RuntimeModule } from './modules/runtime/runtime.module';
+import { GradingModule } from './modules/grading/grading.module';
 
 @Module({
   imports: [
-     ConfigModule.forRoot({
+    ConfigModule.forRoot({
       isGlobal: true,
 
       load: [appConfig],
@@ -32,6 +35,13 @@ import { ContextModule } from './common/context/context.module';
     }),
 
     TypeOrmModule.forRootAsync(databaseConfig),
+
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST ?? 'localhost',
+        port: Number(process.env.REDIS_PORT) ?? 6379,
+      },
+    }),
 
     TopicsModule,
 
@@ -49,9 +59,15 @@ import { ContextModule } from './common/context/context.module';
 
     AnalyticsModule,
 
-    ExecutionsModule,
+    ParticipantsModule,
 
-    ContextModule,
+    RuntimeModule,
+
+    GradingModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ClientMiddleware).forRoutes('*');
+  }
+}

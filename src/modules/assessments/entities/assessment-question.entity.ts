@@ -1,22 +1,39 @@
-import { Entity, Column, Index } from 'typeorm';
-import { SystemBaseEntity } from '../../../common/base/system-base.entity';
+// -----------------------------------------------------------------------------
+// Join table between Assessment and Question.
+// Stores display order, point override, and a frozen snapshot of the question
+// content at publish time. Runtime reads from snapshot, not the live question.
+// -----------------------------------------------------------------------------
 
-@Entity('assessments_questions')
-export class AssessmentQuestion extends SystemBaseEntity {
-  @Index()
-  @Column({ type: 'varchar'})
+import { Entity, Column, ManyToOne, Index } from 'typeorm';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
+import { Assessment } from './assessment.entity';
+import { Question } from '@modules/questions/entities/question.entity';
+
+@Entity()
+@Index(['assessment', 'question'], { unique: true })
+export class AssessmentQuestion extends ClientScopedEntity {
+  @ManyToOne(() => Assessment, (a) => a.questions, { onDelete: 'CASCADE' })
+  assessment!: Assessment;
+
+  @Column({ type: 'uuid' })
   assessmentId!: string;
 
-  @Index()
-  @Column({ type: 'varchar'})
+  @ManyToOne(() => Question, (q) => q.assessmentQuestions, {
+    onDelete: 'CASCADE',
+  })
+  question!: Question;
+
+  @Column({ type: 'uuid' })
   questionId!: string;
 
-  @Column({ type: 'int'})
+  @Column({ default: 1 })
   order!: number;
 
-  @Column({ type: 'float', nullable: true })
-  pointsOverride!: number;
+  // Overrides question.defaultPoints for this assessment only
+  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  points!: number;
 
-  @Column({ type: 'jsonb', nullable: true })
-  snapshot: any;
+  // Frozen at publish — prevents live edits from affecting active sessions
+  @Column({ type: 'jsonb' })
+  questionSnapshot!: Partial<Question>;
 }

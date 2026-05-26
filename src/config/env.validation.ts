@@ -14,4 +14,8 @@ export const envValidationSchema = Joi.object({
   DB_USERNAME: Joi.string().required(),
   DB_PASSWORD: Joi.string().required(),
   DB_NAME: Joi.string().required(),
+
+  GEMINI_API_KEY: Joi.string().optional(),
+  GEMINI_MODEL: Joi.string().default('gemini-2.0-flash'),
+  GEMINI_TIMEOUT_MS: Joi.number().default(30000),
 });

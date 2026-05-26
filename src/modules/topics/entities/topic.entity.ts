@@ -1,11 +1,20 @@
-import { Column, Entity, Index } from "typeorm";
-import { ClientScopedEntity } from "../../../common/base/client-scoped.entity";
+import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import { ClientScopedEntity } from '@common/base/client-scoped.entity';
+import { QuestionBank } from '@modules/question-banks/entities/question-bank.entity';
+import { Assessment } from '@modules/assessments/entities/assessment.entity';
+import { Question } from '@modules/questions/entities/question.entity';
+
+export enum TopicVisibility {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+}
 
 @Entity()
-export class Topic extends ClientScopedEntity  {
+@Index(['clientId', 'name'], { unique: true })
+export class Topic extends ClientScopedEntity {
   @Column({
     type: 'varchar',
-    length: 256
+    length: 256,
   })
   name!: string;
 
@@ -20,4 +29,13 @@ export class Topic extends ClientScopedEntity  {
     nullable: true,
   })
   description?: string;
+
+  @OneToMany(() => Question, (question) => question.topic)
+  questions!: Question[];
+
+  @OneToMany(() => QuestionBank, (bank) => bank.topic)
+  questionBanks!: QuestionBank[];
+
+  @OneToMany(() => Assessment, (assessment) => assessment.topic)
+  assessments!: Assessment[];
 }
