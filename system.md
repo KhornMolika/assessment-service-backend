@@ -6,7 +6,7 @@ This document describes the core features of the Assessment Service Backend and 
 
 ## 1. System Overview
 
-The Assessment Service Backend is a NestJS application designed to create, configure, distribute, and grade educational and certification assessments. It handles multi-tenant clients, question banking, flexible settings, and runtime assessment sessions (self-paced mode) using a Postgres database for configuration and a Redis/Bull queue for session timing.
+The Assessment Service Backend is a NestJS application designed to create, configure, distribute, and grade educational and certification assessments. It handles multi-tenant clients, question banking, flexible settings, and runtime assessment sessions (both self-paced and instructor-led real-time modes) using a Postgres database for configuration, a Redis/Bull queue for session timing, and Socket.IO WebSockets for live session sync.
 
 ```mermaid
 graph TD
@@ -100,11 +100,50 @@ If an assessment has a `timeLimit` configured, starting a session registers two 
 
 ---
 
-## 4. The Grading Engine
+## 4. Real-Time Layer (Instructor-Led Mode)
+
+The Real-Time layer handles live, synchronized assessment sessions where a host (instructor) controls the flow of questions.
+
+```mermaid
+sequenceDiagram
+    participant H as Host
+    participant P as Participants
+    participant API as Real-Time Gateway (WebSocket)
+    participant DB as Postgres & Redis
+
+    H->>API: POST /runtime/real-time/:assessmentId/start (REST)
+    API->>DB: Initialize SessionState in Redis (Status: waiting)
+    H->>API: WS Emit: JOIN_ROOM (Role: host)
+    P->>API: WS Emit: JOIN_ROOM (Role: participant)
+    API->>H: WS Broadcast: ROOM_UPDATE (Participant Count)
+
+    H->>API: WS Emit: START_Q
+    API->>DB: Fetch Question & Set questionEndTime
+    API->>P: WS Broadcast: NEW_QUESTION (Options, time limit)
+
+    P->>API: WS Emit: SUBMIT_ANS (Choice & Time)
+    API->>DB: Store Answer in Redis (First-answer wins)
+    API->>H: WS Emit: ROOM_UPDATE (Answer received)
+
+    H->>API: WS Emit: START_Q (Or time expires)
+    API->>DB: Calculate Scores (Time bonus applied)
+    API->>P: WS Broadcast: Q_RESULTS & SHOW_RANK
+```
+
+### 4.1. Resilience and Disconnections
+The platform supports connection resilience. A participant's socket ID is tracked against their identity in the Redis Hash. If a participant drops connection and rejoins during an active question, the Gateway instantly retrieves the `questionEndTime` from Redis and re-emits a targeted `NEW_QUESTION` event so they can seamlessly continue without waiting for the next question.
+
+### 4.2. Instant Auto-Grading & Time Bonus
+During Real-Time sessions, answers are evaluated instantly at the end of each question using the same Grading Engine strategies (`SINGLE_CHOICE`, `MULTIPLE_CHOICE`, `TRUE_FALSE`, `ORDERING`, `MATCHING`). 
+A unique `timeTaken` parameter allows the system to award a dynamic **Time Bonus** scaling up to 500 extra points for fast responses, which applies directly to the live leaderboard.
+
+---
+
+## 5. The Grading Engine
 
 When a session is submitted (manually or automatically via expiry), the grading engine processes the entries and updates the overall session results.
 
-### 4.1. Question Evaluation Strategies
+### 5.1. Question Evaluation Strategies
 
 | Question Type | Correct Answer Schema | Evaluation Strategy |
 | :--- | :--- | :--- |
@@ -118,7 +157,7 @@ When a session is submitted (manually or automatically via expiry), the grading 
 | **`SHORT_ANSWER`** | `{ keyPointsExpected: string[] }` | Evaluated by Gemini AI worker asynchronously (returns score/reasoning) unless manual grading override is set. |
 | **`ESSAY`** | `{ keyPointsExpected: string[] }` | Evaluated by Gemini AI worker asynchronously (returns score/reasoning) unless manual grading override is set. |
 
-### 4.2. AI-Assisted and Manual-only Evaluation
+### 5.2. AI-Assisted and Manual-only Evaluation
 
 The platform supports two evaluation paths for subjective questions (`SHORT_ANSWER` and `ESSAY`):
 
@@ -135,7 +174,7 @@ The platform supports two evaluation paths for subjective questions (`SHORT_ANSW
    - Graders can submit updates to the subjective scores in the database.
    - Calling the public endpoint `POST /api/v1/assessments/:sessionId/recalculate` recalculates the total scores, applies passing score evaluations, computes grade labels, and updates the answer sheet status to `GRADED`.
 
-### 4.3. Session Aggregation Formulas
+### 5.3. Session Aggregation Formulas
 Once all individual answer entries have been graded, the grading engine performs the following calculations:
 
 1. **Total Score**: Sums up the scored points from all entries:

@@ -970,6 +970,18 @@
               "path": ["runtime", "sessions", "{{sessionId}}", "result"]
             }
           }
+        },
+        {
+          "name": "Start Real-Time Assessment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/runtime/real-time/{{assessmentId}}/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["runtime", "real-time", "{{assessmentId}}", "start"]
+            }
+          }
         }
       ]
     }

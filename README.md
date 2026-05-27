@@ -1,6 +1,6 @@
 # Assessment Service Backend
 
-A high-performance NestJS application built for configuring, distributing, and grading educational and certification assessments. It handles multi-tenant tenant contexts, question banking, timing configurations, and runtime assessment sessions (self-paced mode) using PostgreSQL and a Redis-backed Bull Queue.
+A high-performance NestJS application built for configuring, distributing, and grading educational and certification assessments. It handles multi-tenant tenant contexts, question banking, timing configurations, and runtime assessment sessions (both **self-paced** and **instructor-led real-time** modes) using PostgreSQL, Redis, and WebSockets (Socket.IO).
 
 ---
 
@@ -10,7 +10,8 @@ A high-performance NestJS application built for configuring, distributing, and g
 * **Multi-Tenant Scoping**: Client context isolation implemented via TypeORM base repositories and NestJS interceptors.
 * **Auto-Grading & AI Evaluation**: Auto-grades choices, blanks, and matching questions synchronously. Open-ended questions are asynchronously evaluated by Google's Gemini API (defaults to `gemini-2.5-flash`) via Redis-backed Bull Queues.
 * **Manual Grading Config**: Toggle `manualGradingAIQues: true` in assessment settings to bypass AI queues and hold subjective answers for human evaluation.
-* **relocated Recalculation Endpoint**: Trigger overall session score updates using a public endpoint `POST /api/v1/assessments/:sessionId/recalculate` after human scoring overrides.
+* **Relocated Recalculation Endpoint**: Trigger overall session score updates using a public endpoint `POST /api/v1/assessments/:sessionId/recalculate` after human scoring overrides.
+* **Real-Time Instructor-Led Assessments**: A fully synchronized WebSocket and Redis-backed session engine for live, host-controlled exams. Features instant auto-grading for single/multiple choice, true/false, ordering, and matching questions. Includes dynamic connection resilience for participants joining late or recovering from dropped connections.
 
 ---
 

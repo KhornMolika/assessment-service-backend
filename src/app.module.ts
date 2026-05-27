@@ -17,6 +17,8 @@ import { BullModule } from '@nestjs/bull';
 import { ParticipantsModule } from './modules/participants/participants.module';
 import { RuntimeModule } from './modules/runtime/runtime.module';
 import { GradingModule } from './modules/grading/grading.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 
 @Module({
   imports: [
@@ -42,6 +44,13 @@ import { GradingModule } from './modules/grading/grading.module';
         port: Number(process.env.REDIS_PORT) ?? 6379,
       },
     }),
+
+    RedisModule.forRoot({
+      type: 'single',
+      url: `redis://${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? 6379}`,
+    }),
+
+    RealtimeModule,
 
     TopicsModule,
 
