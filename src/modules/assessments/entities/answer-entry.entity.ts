@@ -5,7 +5,7 @@
 // gradingStatus tracks the grading pipeline per entry.
 // -----------------------------------------------------------------------------
 
-import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, Index } from 'typeorm';
 import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { AnswerSheet } from './answer-sheet.entity';
 import { AssessmentQuestion } from '@modules/assessments/entities/assessment-question.entity';
@@ -19,6 +19,9 @@ export enum GradingStatus {
 }
 
 @Entity()
+@Index(['answerSheetId', 'assessmentQuestionId'], {
+  where: '"deletedAt" IS NULL',
+})
 export class AnswerEntry extends ClientScopedEntity {
   @ManyToOne(() => AnswerSheet, (s) => s.entries, { onDelete: 'CASCADE' })
   answerSheet!: AnswerSheet;

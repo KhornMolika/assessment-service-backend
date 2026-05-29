@@ -759,6 +759,7 @@ export class AssessmentsService {
         this.assessmentQuestions.update(
           { id: aq.id } as any,
           {
+            questionType: aq.question.type,
             questionSnapshot: {
               id: aq.question.id,
               type: aq.question.type,

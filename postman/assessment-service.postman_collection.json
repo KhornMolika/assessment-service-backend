@@ -984,6 +984,57 @@
           }
         }
       ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Session Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/sessions/{{sessionId}}/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessments", "{{assessmentId}}", "sessions", "{{sessionId}}", "report"]
+            }
+          }
+        },
+        {
+          "name": "Get Assessment Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/report?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["assessments", "{{assessmentId}}", "report"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Participant Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/participants/{{participantId}}/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["participants", "{{participantId}}", "report"]
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [

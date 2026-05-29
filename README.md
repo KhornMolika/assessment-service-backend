@@ -12,6 +12,13 @@ A high-performance NestJS application built for configuring, distributing, and g
 * **Manual Grading Config**: Toggle `manualGradingAIQues: true` in assessment settings to bypass AI queues and hold subjective answers for human evaluation.
 * **Relocated Recalculation Endpoint**: Trigger overall session score updates using a public endpoint `POST /api/v1/assessments/:sessionId/recalculate` after human scoring overrides.
 * **Real-Time Instructor-Led Assessments**: A fully synchronized WebSocket and Redis-backed session engine for live, host-controlled exams. Features instant auto-grading for single/multiple choice, true/false, ordering, and matching questions. Includes dynamic connection resilience for participants joining late or recovering from dropped connections.
+* **Reports & Aggregated Analytics**: Generates detailed, structure-aware reports.
+  * **Session Report** (`GET /api/v1/assessments/:assessmentId/sessions/:sessionId/report`): Deep dive into a single attempt, including AI grading feedback and correctness details.
+  * **Assessment Report** (`GET /api/v1/assessments/:assessmentId/report`): Aggregated statistics, score distributions (bucketed into ranges), correct/incorrect answer counts, and a paginated list of top-performing participants. Adapts dynamically for scored tests and survey metrics.
+  * **Participant Report** (`GET /api/v1/participants/:participantId/report`): Cross-assessment participant transcript history, overall pass/fail rates, averages, and durations.
+* **Database & Query Performance Optimizations**: 
+  * Promoted `type` column mapping from JSONB (`questionSnapshot`) to first-class, indexed `questionType` column on `AssessmentQuestion` to use standard B-Tree indexes.
+  * Optimized index layout with composite partial indexes on junction/transaction tables (`answer_sheet`, `answer_entry`) to prevent query degradation as dataset scales.
 
 ---
 

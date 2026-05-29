@@ -25,6 +25,7 @@ export enum AnswerSheetStatus {
 }
 
 @Entity()
+@Index(['assessmentId', 'clientId'], { where: '"deletedAt" IS NULL' })
 export class AnswerSheet extends ClientScopedEntity {
   @OneToOne(() => AssessmentParticipant, (ap) => ap.answerSheet, {
     onDelete: 'CASCADE',

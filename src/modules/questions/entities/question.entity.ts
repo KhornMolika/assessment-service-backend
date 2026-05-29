@@ -3,23 +3,12 @@ import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { Topic } from '@modules/topics/entities/topic.entity';
 import { QuestionBankQuestion } from '@modules/question-banks/entities/question-bank-question.entity';
 import { AssessmentQuestion } from '@modules/assessments/entities/assessment-question.entity';
+import { QuestionType } from '../enums/question-type.enum';
 
 export enum Difficulty {
   EASY = 'EASY',
   MEDIUM = 'MEDIUM',
   HARD = 'HARD',
-}
-
-export enum QuestionType {
-  SINGLE_CHOICE = 'SINGLE_CHOICE',
-  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
-  TRUE_FALSE = 'TRUE_FALSE',
-  ORDERING = 'ORDERING',
-  FILL_IN_THE_BLANK = 'FILL_IN_THE_BLANK',
-  MATCHING = 'MATCHING',
-  RATING = 'RATING',
-  SHORT_ANSWER = 'SHORT_ANSWER',
-  ESSAY = 'ESSAY',
 }
 
 @Entity()

@@ -11,7 +11,6 @@ import { AuthModule } from './modules/auth/auth.module';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { AiModule } from './modules/ai/ai.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { QuestionBanksModule } from './modules/question-banks/question-banks.module';
 import { BullModule } from '@nestjs/bull';
 import { ParticipantsModule } from './modules/participants/participants.module';
@@ -19,6 +18,7 @@ import { RuntimeModule } from './modules/runtime/runtime.module';
 import { GradingModule } from './modules/grading/grading.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -66,13 +66,13 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 
     AiModule,
 
-    AnalyticsModule,
-
     ParticipantsModule,
 
     RuntimeModule,
 
     GradingModule,
+
+    ReportsModule,
   ],
 })
 export class AppModule implements NestModule {
