@@ -6,6 +6,52 @@
   },
   "item": [
     {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Get Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set(\"accessToken\", jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{clientId}}\",\n  \"clientSecret\": \"{{clientSecret}}\",\n  \"grant_type\": \"client_credentials\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "token"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Topics",
       "item": [
         {
@@ -13,8 +59,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -22,8 +76,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics"
+              ]
             }
           }
         },
@@ -32,17 +90,37 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/topics?page=1&limit=10&sortBy=createdAt&order=DESC",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" },
-                { "key": "sortBy", "value": "createdAt" },
-                { "key": "order", "value": "DESC" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "order",
+                  "value": "DESC"
+                }
               ]
             }
           }
@@ -52,12 +130,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}"
+              ]
             }
           }
         },
@@ -66,8 +153,16 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -75,8 +170,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}"
+              ]
             }
           }
         },
@@ -85,12 +185,21 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}"
+              ]
             }
           }
         }
@@ -104,8 +213,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -113,8 +230,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -123,8 +246,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -132,8 +263,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -142,8 +279,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -151,8 +296,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -161,8 +312,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -170,8 +329,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -180,8 +345,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -189,8 +362,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -199,8 +378,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -208,8 +395,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -218,8 +411,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -227,8 +428,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -237,8 +444,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -246,8 +461,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -256,8 +477,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -265,8 +494,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -275,15 +510,31 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "questions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "questions"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           }
@@ -293,12 +544,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/questions/{{questionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["questions", "{{questionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "questions",
+                "{{questionId}}"
+              ]
             }
           }
         },
@@ -307,8 +567,16 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -316,8 +584,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/questions/{{questionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["questions", "{{questionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "questions",
+                "{{questionId}}"
+              ]
             }
           }
         },
@@ -326,12 +599,21 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/questions/{{questionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["questions", "{{questionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "questions",
+                "{{questionId}}"
+              ]
             }
           }
         }
@@ -345,8 +627,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -354,8 +644,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/banks",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "banks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "banks"
+              ]
             }
           }
         },
@@ -364,12 +660,22 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/banks",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "banks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "banks"
+              ]
             }
           }
         },
@@ -378,12 +684,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["banks", "{{bankId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "banks",
+                "{{bankId}}"
+              ]
             }
           }
         },
@@ -392,8 +707,16 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -401,8 +724,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["banks", "{{bankId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "banks",
+                "{{bankId}}"
+              ]
             }
           }
         },
@@ -411,15 +739,31 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}/questions?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["banks", "{{bankId}}", "questions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "banks",
+                "{{bankId}}",
+                "questions"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           }
@@ -429,8 +773,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -438,8 +790,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["banks", "{{bankId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "banks",
+                "{{bankId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -448,12 +806,23 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}/questions/{{questionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["banks", "{{bankId}}", "questions", "{{questionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "banks",
+                "{{bankId}}",
+                "questions",
+                "{{questionId}}"
+              ]
             }
           }
         },
@@ -462,12 +831,21 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["banks", "{{bankId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "banks",
+                "{{bankId}}"
+              ]
             }
           }
         }
@@ -481,8 +859,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -490,8 +876,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "assessments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "assessments"
+              ]
             }
           }
         },
@@ -500,12 +892,22 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
-              "host": ["{{baseUrl}}"],
-              "path": ["topics", "{{topicId}}", "assessments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "topics",
+                "{{topicId}}",
+                "assessments"
+              ]
             }
           }
         },
@@ -514,12 +916,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}"
+              ]
             }
           }
         },
@@ -528,8 +939,16 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -537,8 +956,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}"
+              ]
             }
           }
         },
@@ -547,8 +971,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -556,8 +988,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -566,12 +1004,22 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -580,8 +1028,16 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -589,8 +1045,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "questions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "questions"
+              ]
             }
           }
         },
@@ -599,12 +1061,23 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions/{{assessmentQuestionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "questions", "{{assessmentQuestionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "questions",
+                "{{assessmentQuestionId}}"
+              ]
             }
           }
         },
@@ -613,12 +1086,22 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "settings"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "settings"
+              ]
             }
           }
         },
@@ -627,8 +1110,16 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -636,8 +1127,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "settings"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "settings"
+              ]
             }
           }
         },
@@ -646,8 +1143,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -655,8 +1160,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "participants"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "participants"
+              ]
             }
           }
         },
@@ -665,12 +1176,22 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "participants"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "participants"
+              ]
             }
           }
         },
@@ -679,12 +1200,23 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants/{{participantId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "participants", "{{participantId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "participants",
+                "{{participantId}}"
+              ]
             }
           }
         },
@@ -693,12 +1225,22 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/publish",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "publish"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "publish"
+              ]
             }
           }
         },
@@ -707,12 +1249,22 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/archive",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "archive"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "archive"
+              ]
             }
           }
         },
@@ -721,12 +1273,21 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}"
+              ]
             }
           }
         },
@@ -735,12 +1296,22 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{sessionId}}/recalculate",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{sessionId}}", "recalculate"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{sessionId}}",
+                "recalculate"
+              ]
             }
           }
         }
@@ -754,8 +1325,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -763,8 +1342,12 @@
             },
             "url": {
               "raw": "{{baseUrl}}/participants",
-              "host": ["{{baseUrl}}"],
-              "path": ["participants"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participants"
+              ]
             }
           }
         },
@@ -773,12 +1356,20 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/participants",
-              "host": ["{{baseUrl}}"],
-              "path": ["participants"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participants"
+              ]
             }
           }
         },
@@ -787,12 +1378,21 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["participants", "{{participantId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participants",
+                "{{participantId}}"
+              ]
             }
           }
         },
@@ -801,8 +1401,16 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -810,8 +1418,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["participants", "{{participantId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participants",
+                "{{participantId}}"
+              ]
             }
           }
         },
@@ -820,12 +1433,21 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["participants", "{{participantId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participants",
+                "{{participantId}}"
+              ]
             }
           }
         }
@@ -839,8 +1461,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -848,8 +1478,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/start",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "start"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "start"
+              ]
             }
           }
         },
@@ -858,8 +1494,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -867,8 +1511,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "{{sessionId}}", "answers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "{{sessionId}}",
+                "answers"
+              ]
             }
           }
         },
@@ -877,12 +1528,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "{{sessionId}}", "submit"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "{{sessionId}}",
+                "submit"
+              ]
             }
           }
         },
@@ -891,12 +1553,23 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "{{sessionId}}", "result"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "{{sessionId}}",
+                "result"
+              ]
             }
           }
         }
@@ -910,8 +1583,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -919,8 +1600,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "{{sessionId}}", "answers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "{{sessionId}}",
+                "answers"
+              ]
             }
           }
         },
@@ -929,8 +1617,16 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -938,8 +1634,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "{{sessionId}}", "answers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "{{sessionId}}",
+                "answers"
+              ]
             }
           }
         },
@@ -948,12 +1651,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "{{sessionId}}", "submit"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "{{sessionId}}",
+                "submit"
+              ]
             }
           }
         },
@@ -962,12 +1676,23 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "sessions", "{{sessionId}}", "result"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "sessions",
+                "{{sessionId}}",
+                "result"
+              ]
             }
           }
         },
@@ -975,11 +1700,24 @@
           "name": "Start Real-Time Assessment",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/runtime/real-time/{{assessmentId}}/start",
-              "host": ["{{baseUrl}}"],
-              "path": ["runtime", "real-time", "{{assessmentId}}", "start"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "runtime",
+                "real-time",
+                "{{assessmentId}}",
+                "start"
+              ]
             }
           }
         }
@@ -993,12 +1731,24 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/sessions/{{sessionId}}/report",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "sessions", "{{sessionId}}", "report"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "sessions",
+                "{{sessionId}}",
+                "report"
+              ]
             }
           }
         },
@@ -1007,15 +1757,31 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/report?page=1&limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["assessments", "{{assessmentId}}", "report"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assessments",
+                "{{assessmentId}}",
+                "report"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             }
           }
@@ -1025,12 +1791,104 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "x-client-id", "value": "{{clientId}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}/report",
-              "host": ["{{baseUrl}}"],
-              "path": ["participants", "{{participantId}}", "report"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "participants",
+                "{{participantId}}",
+                "report"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corp\",\n  \"slug\": \"acme-corp\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rotate Secret",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/{{clientId}}/rotate-secret",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients",
+                "{{clientId}}",
+                "rotate-secret"
+              ]
             }
           }
         }
@@ -1048,15 +1906,65 @@
       "value": "f0f1cb24-c031-4097-a186-0f23995ac62a",
       "type": "string"
     },
-    { "key": "topicId", "value": "", "type": "string" },
-    { "key": "questionId", "value": "", "type": "string" },
-    { "key": "bankId", "value": "", "type": "string" },
-    { "key": "assessmentId", "value": "", "type": "string" },
-    { "key": "assessmentQuestionId", "value": "", "type": "string" },
-    { "key": "shortAnswerAssessmentQuestionId", "value": "", "type": "string" },
-    { "key": "essayAssessmentQuestionId", "value": "", "type": "string" },
-    { "key": "participantId", "value": "", "type": "string" },
-    { "key": "sessionId", "value": "", "type": "string" },
-    { "key": "jobId", "value": "", "type": "string" }
+    {
+      "key": "topicId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "questionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bankId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assessmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assessmentQuestionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "shortAnswerAssessmentQuestionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "essayAssessmentQuestionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "participantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jobId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clientSecret",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
   ]
 }

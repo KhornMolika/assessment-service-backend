@@ -1,4 +1,5 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TopicsModule } from './modules/topics/topics.module';
@@ -8,6 +9,7 @@ import { databaseConfig } from './config/database.config';
 import { ClientsModule } from './modules/clients/clients.module';
 import { ClientMiddleware } from './common/middleware/client.middleware';
 import { AuthModule } from './modules/auth/auth.module';
+import { ClientAuthGuard } from './modules/auth/guards/client-auth.guard';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { AiModule } from './modules/ai/ai.module';
@@ -74,9 +76,11 @@ import { ReportsModule } from './modules/reports/reports.module';
 
     ReportsModule,
   ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ClientAuthGuard,
+    },
+  ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ClientMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

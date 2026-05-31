@@ -1,6 +1,5 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { SystemBaseEntity } from '@common/base/system-base.entity';
-import { RefreshToken } from '../auth/refresh-token.entity';
 
 @Entity()
 export class Client extends SystemBaseEntity {
@@ -16,6 +15,9 @@ export class Client extends SystemBaseEntity {
   @Column({ type: 'varchar' })
   clientSecretHash!: string;
 
+  @Column({ type: 'boolean', default: true })
+  isActive!: boolean;
+
   @Column('text', { array: true, nullable: true })
   allowedOrigins!: string[];
 
@@ -27,7 +29,4 @@ export class Client extends SystemBaseEntity {
 
   @Column({ type: 'varchar', nullable: true })
   webhookSecret!: string;
-
-  @OneToMany(() => RefreshToken, (t) => t.client)
-  refreshTokens!: RefreshToken[];
 }

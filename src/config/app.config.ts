@@ -12,4 +12,9 @@ export default registerAs('app', () => ({
     model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
     timeoutMs: parseInt(process.env.GEMINI_TIMEOUT_MS || '30000', 10),
   },
+
+  auth: {
+    jwtSecret: process.env.JWT_SECRET,
+    accessTokenTtl: parseInt(process.env.ACCESS_TOKEN_TTL ?? '3600', 10),
+  },
 }));

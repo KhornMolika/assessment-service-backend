@@ -18,4 +18,7 @@ export const envValidationSchema = Joi.object({
   GEMINI_API_KEY: Joi.string().optional(),
   GEMINI_MODEL: Joi.string().default('gemini-2.0-flash'),
   GEMINI_TIMEOUT_MS: Joi.number().default(30000),
+
+  JWT_SECRET: Joi.string().required(),
+  ACCESS_TOKEN_TTL: Joi.number().default(3600),
 });
