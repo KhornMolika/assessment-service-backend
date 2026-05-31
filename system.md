@@ -182,13 +182,22 @@ erDiagram
 
 ## 2. Core Feature Modules
 
-### 2.1. Topics Module
+### 2.1. Authentication (Clients & Auth Modules)
+
+The platform is secured by a robust **OAuth2 Client Credentials Grant** architecture, designed for machine-to-machine integrations.
+
+- **Client Provisioning**: Clients (tenants) are provisioned via `POST /api/v1/clients`. The system generates a UUID `clientId` and a 64-character cryptographically secure `clientSecret`. The raw secret is returned **exactly once** in the response and is never stored in plaintext.
+- **Secure Storage**: Client secrets are hashed securely using **Argon2id** (configured for 64MB memory cost and 3 iterations to exceed OWASP recommendations) before being stored in PostgreSQL.
+- **Token Exchange**: Clients exchange their credentials for a short-lived JSON Web Token (JWT) via the `POST /api/v1/auth/token` endpoint. The endpoint verifies the Argon2id hash and the client's `isActive` status.
+- **Global Protection & Context Injection**: All endpoints (except explicitly marked `@Public()` routes) are guarded by `ClientAuthGuard`, which validates the JWT signature and expiration. Valid requests automatically inject the resolved `Client` entity into the route handler via the `@CurrentClient()` decorator, ensuring strict tenant data isolation.
+
+### 2.2. Topics Module
 
 Topics serve as the root organizational unit for questions and assessments (e.g., "TypeScript & NestJS").
 
 - **Key Behavior**: Every question and assessment must be linked to a parent topic. Question banks also belong to a topic.
 
-### 2.2. Questions Module
+### 2.3. Questions Module
 
 Supports a rich set of 9 distinct question types designed for automated or manual evaluation.
 
@@ -204,14 +213,14 @@ Supports a rich set of 9 distinct question types designed for automated or manua
   9. `ESSAY`: Subjective long text (requires manual review).
 - **Storage**: Options and correct answer formulas are stored dynamically inside TypeORM `jsonb` columns (`options` and `correctAnswer`) to prevent database schema explosion.
 
-### 2.3. Question Banks Module
+### 2.4. Question Banks Module
 
 Reusable repositories of questions that can be categorized, searched, and pulled into assessments.
 
 - **Visibility**: Question banks can be marked `PUBLIC` (shared across the client tenant) or `PRIVATE` (restricted creator access).
 - **Tags**: Used for searching and grouping (e.g. `['typescript', 'junior']`).
 
-### 2.4. Assessments Module
+### 2.5. Assessments Module
 
 Defines the parameters, rules, and configurations for test sessions.
 

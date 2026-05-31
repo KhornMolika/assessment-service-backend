@@ -6,7 +6,7 @@ import { ClientRepository } from '../../clients/client.repository';
 import { Client } from '../../clients/client.entity';
 
 export interface JwtPayload {
-  sub: string;       // clientId (UUID)
+  sub: string; // clientId (UUID)
   slug: string;
   scopes: string[];
 }
@@ -31,6 +31,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!client || !client.isActive) {
       throw new UnauthorizedException('Client is inactive or does not exist');
     }
-    return client; // becomes request.user
+    return client; // becomes request.client
   }
 }

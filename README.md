@@ -22,6 +22,17 @@ A high-performance NestJS application built for configuring, distributing, and g
 
 ---
 
+## 🔒 Authentication (OAuth2)
+
+The system is secured using a strict **OAuth2 Client Credentials Grant** architecture for server-to-server machine interactions.
+
+* **Client Provisioning**: Clients are provisioned via `POST /api/v1/clients`. The system returns a cryptographically secure `clientSecret` exactly once.
+* **Secret Storage**: Client secrets are hashed securely using **Argon2id** (OWASP recommended parameters) before being stored in PostgreSQL.
+* **Token Issuance**: Clients authenticate via `POST /api/v1/auth/token` using `grant_type=client_credentials`. The system validates the hash and issues a stateless JWT access token.
+* **Global Protection**: All endpoints are protected globally by a custom `ClientAuthGuard`. Valid tokens effortlessly inject the active tenant context via the `@CurrentClient()` decorator.
+
+---
+
 ## 🛠️ Project Setup
 
 Ensure you have **PostgreSQL** and **Redis** running (can be started via Docker Compose).

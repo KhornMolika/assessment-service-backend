@@ -1,4 +1,5 @@
 # Auth Scenario — OAuth2 Client Credentials Grant
+
 ## NBFSA Assessment Service
 
 ---
@@ -30,7 +31,7 @@ Client Platform                 Assessment Service API
       │ ─────────────────────────────────>│
       │                                   │  5. JwtStrategy.validate()
       │                                   │  6. Re-fetch Client (isActive check)
-      │                                   │  7. Attach to request.user
+      │                                   │  7. Attach to request.client
       │  200 { data }                     │
       │ <─────────────────────────────────│
 ```
@@ -133,28 +134,44 @@ export class Client extends SystemBaseEntity {
 
 ```typescript
 // client/dto/create-client.dto.ts
-import { IsString, IsArray, IsOptional, IsUrl, ArrayUnique, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsOptional,
+  IsUrl,
+  ArrayUnique,
+  IsNotEmpty,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateClientDto {
   @ApiProperty({ example: 'Acme E-Learning Platform' })
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   name!: string;
 
   @ApiProperty({ example: 'acme-elearning' })
-  @IsString() @IsNotEmpty()
+  @IsString()
+  @IsNotEmpty()
   slug!: string;
 
   @ApiPropertyOptional({ example: ['https://acme.com'] })
-  @IsArray() @IsUrl({}, { each: true }) @ArrayUnique() @IsOptional()
+  @IsArray()
+  @IsUrl({}, { each: true })
+  @ArrayUnique()
+  @IsOptional()
   allowedOrigins?: string[];
 
   @ApiPropertyOptional({ example: ['assessments:read', 'assessments:write'] })
-  @IsArray() @IsString({ each: true }) @ArrayUnique() @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayUnique()
+  @IsOptional()
   scopes?: string[];
 
   @ApiPropertyOptional()
-  @IsUrl() @IsOptional()
+  @IsUrl()
+  @IsOptional()
   webhookUrl?: string;
 }
 ```
@@ -191,7 +208,8 @@ export class ClientResponseDto {
 
 // Returned ONCE at creation and at secret rotation — never again
 export class ClientCreatedResponseDto extends ClientResponseDto {
-  @Expose() @ApiProperty({ description: 'Raw secret — shown once, store securely' })
+  @Expose()
+  @ApiProperty({ description: 'Raw secret — shown once, store securely' })
   clientSecret!: string;
 }
 ```
@@ -228,7 +246,11 @@ export class ClientRepository extends Repository<Client> {
 
 ```typescript
 // client/client.service.ts
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
 import { ClientRepository } from './client.repository';
@@ -256,7 +278,8 @@ export class ClientService {
 
   async create(dto: CreateClientDto): Promise<CreatedClientResult> {
     const existing = await this.clientRepo.findBySlug(dto.slug);
-    if (existing) throw new ConflictException(`Slug "${dto.slug}" is already taken`);
+    if (existing)
+      throw new ConflictException(`Slug "${dto.slug}" is already taken`);
 
     const rawSecret = this.generateSecret();
     const clientSecretHash = await argon2.hash(rawSecret, this.argon2Options);
@@ -301,10 +324,17 @@ export class ClientService {
   }
 
   // Used by AuthService.token() — single source of truth for credential validation
-  async verifySecret(clientId: string, rawSecret: string): Promise<Client | null> {
+  async verifySecret(
+    clientId: string,
+    rawSecret: string,
+  ): Promise<Client | null> {
     const client = await this.clientRepo.findByClientId(clientId);
     if (!client || !client.isActive) return null;
-    const valid = await argon2.verify(client.clientSecretHash, rawSecret, this.argon2Options);
+    const valid = await argon2.verify(
+      client.clientSecretHash,
+      rawSecret,
+      this.argon2Options,
+    );
     return valid ? client : null;
     // Note: do NOT distinguish "inactive" from "wrong secret" — both return null
     // This prevents information leakage about whether a clientId exists
@@ -324,15 +354,25 @@ export class ClientService {
 ```typescript
 // client/client.controller.ts
 import {
-  Body, Controller, Get, HttpCode, HttpStatus,
-  Param, ParseUUIDPipe, Patch, Post,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { ClientService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { ClientCreatedResponseDto, ClientResponseDto } from './dto/client-response.dto';
+import {
+  ClientCreatedResponseDto,
+  ClientResponseDto,
+} from './dto/client-response.dto';
 
 @ApiTags('Clients')
 @ApiBearerAuth()
@@ -344,7 +384,9 @@ export class ClientController {
 
   @Post()
   @ApiOperation({ summary: 'Provision new client — secret shown once' })
-  async create(@Body() dto: CreateClientDto): Promise<ClientCreatedResponseDto> {
+  async create(
+    @Body() dto: CreateClientDto,
+  ): Promise<ClientCreatedResponseDto> {
     const { client, rawSecret } = await this.clientService.create(dto);
     return plainToInstance(
       ClientCreatedResponseDto,
@@ -356,13 +398,19 @@ export class ClientController {
   @Get()
   async findAll(): Promise<ClientResponseDto[]> {
     const clients = await this.clientService.findAll();
-    return plainToInstance(ClientResponseDto, clients, { excludeExtraneousValues: true });
+    return plainToInstance(ClientResponseDto, clients, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ClientResponseDto> {
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ClientResponseDto> {
     const client = await this.clientService.findOne(id);
-    return plainToInstance(ClientResponseDto, client, { excludeExtraneousValues: true });
+    return plainToInstance(ClientResponseDto, client, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(':id')
@@ -371,13 +419,19 @@ export class ClientController {
     @Body() dto: UpdateClientDto,
   ): Promise<ClientResponseDto> {
     const client = await this.clientService.update(id, dto);
-    return plainToInstance(ClientResponseDto, client, { excludeExtraneousValues: true });
+    return plainToInstance(ClientResponseDto, client, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Post(':id/rotate-secret')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rotate secret — new secret shown once, old immediately invalid' })
-  async rotateSecret(@Param('id', ParseUUIDPipe) id: string): Promise<ClientCreatedResponseDto> {
+  @ApiOperation({
+    summary: 'Rotate secret — new secret shown once, old immediately invalid',
+  })
+  async rotateSecret(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ClientCreatedResponseDto> {
     const { client, rawSecret } = await this.clientService.rotateSecret(id);
     return plainToInstance(
       ClientCreatedResponseDto,
@@ -387,16 +441,26 @@ export class ClientController {
   }
 
   @Patch(':id/suspend')
-  @ApiOperation({ summary: 'Suspend client — blocks all token issuance immediately' })
-  async suspend(@Param('id', ParseUUIDPipe) id: string): Promise<ClientResponseDto> {
+  @ApiOperation({
+    summary: 'Suspend client — blocks all token issuance immediately',
+  })
+  async suspend(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ClientResponseDto> {
     const client = await this.clientService.setActive(id, false);
-    return plainToInstance(ClientResponseDto, client, { excludeExtraneousValues: true });
+    return plainToInstance(ClientResponseDto, client, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(':id/activate')
-  async activate(@Param('id', ParseUUIDPipe) id: string): Promise<ClientResponseDto> {
+  async activate(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ClientResponseDto> {
     const client = await this.clientService.setActive(id, true);
-    return plainToInstance(ClientResponseDto, client, { excludeExtraneousValues: true });
+    return plainToInstance(ClientResponseDto, client, {
+      excludeExtraneousValues: true,
+    });
   }
 }
 ```
@@ -470,7 +534,7 @@ import { ClientRepository } from '../../client/client.repository';
 import { Client } from '../../client/entities/client.entity';
 
 export interface JwtPayload {
-  sub: string;       // clientId (UUID)
+  sub: string; // clientId (UUID)
   slug: string;
   scopes: string[];
 }
@@ -495,7 +559,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!client || !client.isActive) {
       throw new UnauthorizedException('Client is inactive or does not exist');
     }
-    return client; // becomes request.user
+    return client; // becomes request.client
   }
 }
 ```
@@ -506,7 +570,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 ```typescript
 // auth/auth.service.ts
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ClientService } from '../client/client.service';
@@ -529,7 +597,10 @@ export class AuthService {
 
     // verifySecret() returns null for wrong secret AND for inactive clients
     // — no distinction to prevent information leakage
-    const client = await this.clientService.verifySecret(dto.clientId, dto.clientSecret);
+    const client = await this.clientService.verifySecret(
+      dto.clientId,
+      dto.clientSecret,
+    );
     if (!client) {
       throw new UnauthorizedException('invalid_client');
     }
@@ -542,7 +613,9 @@ export class AuthService {
       scopes: client.scopes ?? [],
     };
 
-    const access_token = await this.jwtService.signAsync(payload, { expiresIn });
+    const access_token = await this.jwtService.signAsync(payload, {
+      expiresIn,
+    });
 
     return { access_token, token_type: 'Bearer', expires_in: expiresIn };
   }
@@ -570,7 +643,9 @@ export class AuthController {
   @Public() // exempt from global ClientAuthGuard
   @Post('token')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'OAuth2 client credentials grant — returns Bearer token' })
+  @ApiOperation({
+    summary: 'OAuth2 client credentials grant — returns Bearer token',
+  })
   async token(@Body() dto: TokenRequestDto): Promise<TokenResponseDto> {
     return this.authService.token(dto);
   }
@@ -739,7 +814,7 @@ GET /any-protected-route
   │     ├─ passport-jwt verifies signature + expiry
   │     ├─ ClientRepository.findByClientId(payload.sub)
   │     └─ isActive re-check (catches post-issue suspension)
-  └─ request.user = Client entity
+  └─ request.client = Client entity
 ```
 
 ---
@@ -753,4 +828,4 @@ GET /any-protected-route
 - **`ClientCreatedResponseDto.clientSecret` is shown exactly once** — at creation and rotation. Your API docs must say this explicitly. There is no recovery endpoint; rotation is the only option.
 - **`ClientController` has no scope guard yet** — add `@RequireScope('clients:manage')` once super admin is implemented. Currently any valid Bearer token can call it.
 - **Rate-limit `POST /auth/token`** — argon2id is slow by design but a flood of requests still wastes CPU. Add `@nestjs/throttler` on this endpoint.
-- **`AsyncLocalStorage` client context** — populate it from `request.user.clientId` inside a middleware that runs *after* the guard, not from the request body.
+- **`AsyncLocalStorage` client context** — populate it from `request.client.clientId` inside a middleware that runs _after_ the guard, not from the request body.
