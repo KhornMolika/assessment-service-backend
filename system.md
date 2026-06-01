@@ -345,6 +345,22 @@ The platform supports connection resilience. A participant's socket ID is tracke
 During Real-Time sessions, answers are evaluated instantly at the end of each question using the same Grading Engine strategies (`SINGLE_CHOICE`, `MULTIPLE_CHOICE`, `TRUE_FALSE`, `ORDERING`, `MATCHING`).
 A unique `timeTaken` parameter allows the system to award a dynamic **Time Bonus** scaling up to 500 extra points for fast responses, which applies directly to the live leaderboard.
 
+### 4.3. WebSocket Event Dictionary
+
+The RealtimeGateway (`/realtime` namespace) listens to and emits the following highly-typed events:
+
+**Client ➔ Server (Emitted by participants/hosts)**
+- `JOIN_ROOM`: Connects the socket to the `assessmentId` room. Payload requires `{ roomId, role, userId? }`.
+- `START_Q`: Emitted by the **host** to advance to the next question. Payload: `{ roomId, questionId? }`.
+- `SUBMIT_ANS`: Emitted by **participants** to lock in their answer before time expires. Payload: `{ roomId, assessmentQuestionId, choice?, response?, timeTaken }`.
+
+**Server ➔ Client (Broadcasted to the room)**
+- `ROOM_UPDATE`: Broadcasted when participants join/leave or an answer is received. Payload: `{ count, users, totalAnswered?, totalParticipants? }`.
+- `NEW_QUESTION`: Broadcasted when the host starts a question. Contains stripped question data and the absolute `endTime` timestamp.
+- `Q_RESULTS`: Broadcasted when a question ends (by host or timeout). Reveals the `correctAnswer` and aggregated `stats` to the room.
+- `SHOW_RANK`: Sent to individual participants with their exact leaderboard standing `myRank` and the room's `top5`.
+- `SHOW_FINAL_RANK`: Broadcasted when the session completely concludes, revealing the final podium leaderboard.
+
 ---
 
 ## 5. The Grading Engine
