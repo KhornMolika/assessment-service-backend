@@ -18,10 +18,10 @@ export class ClientAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext, status?: any) {
-    if (err || !user) {
+  handleRequest(err: any, client: any, info: any, context: ExecutionContext, status?: any) {
+    if (err || !client) {
       throw err || new UnauthorizedException('Authentication failed: Invalid or missing client token');
     }
-    return user;
+    return client;
   }
 }

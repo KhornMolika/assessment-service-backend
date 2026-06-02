@@ -10,12 +10,14 @@ import { RealtimeGateway } from './gateways/realtime.gateway';
 import { RealtimeController } from './controllers/realtime.controller';
 import { AssessmentsModule } from '../assessments/assessments.module';
 import { GradingModule } from '../grading/grading.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([AnswerSheet, AnswerEntry]),
     AssessmentsModule,
     forwardRef(() => GradingModule),
+    WebhooksModule,
   ],
   providers: [
     AnswerSheetRepository,

@@ -20,6 +20,7 @@ import { GradingModule } from './modules/grading/grading.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import Redis from 'ioredis';
@@ -107,6 +108,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     GradingModule,
 
     ReportsModule,
+    
+    WebhooksModule,
   ],
   providers: [
     {

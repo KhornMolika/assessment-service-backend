@@ -1,9 +1,9 @@
-import { IsString } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class TokenRequestDto {
   @ApiProperty({ example: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' })
-  @IsString()
+  @IsUUID()
   clientId!: string;
 
   @ApiProperty({ example: 'abc123...64hexchars' })

@@ -364,6 +364,15 @@ The RealtimeGateway (`/realtime` namespace) listens to and emits the following h
 - `SHOW_RANK`: Sent to individual participants with their exact leaderboard standing `{ top5, myRank }`.
 - `SHOW_FINAL_RANK`: Broadcasted when the session completely concludes, revealing the final `{ id, name, score, rank }` podium leaderboard strictly bounded to the **Top 3** participants.
 
+### 4.4. Persistence and Reporting
+Because the Real-Time engine uses Redis to handle high-throughput WebSocket traffic, answers and time-bonus scores are initially stored entirely in-memory. However, when the host successfully ends a session, the backend performs an atomic flush to the database:
+- An `AnswerSheet` is generated for every active participant.
+- The precise live `totalScore` (including the Kahoot-style time-bonuses) is locked into the sheet.
+- Individual `AnswerEntry` records are generated for every submitted response.
+- The standard `GradingEngine` is intentionally bypassed to prevent time-bonuses from being overwritten.
+
+This architectural bridge ensures that **ephemeral real-time sessions are fully integrated and compatible with the historical Reports & Analytics module**.
+
 ---
 
 ## 5. The Grading Engine
@@ -454,7 +463,7 @@ The Reports module provides read-only, aggregated analytics views across three a
 
 | Report | Endpoint | Description |
 | :--- | :--- | :--- |
-| **Session Report** | `GET /assessments/:assessmentId/sessions/:sessionId/report` | Deep dive into a single participant's attempt. Returns per-question detail (correctness, score awarded, correct answer, options), AI grading notes (key points addressed/missed, confidence, flagForReview), and human override data. |
+| **Session Report** | `GET /assessments/:assessmentId/sessions/:sessionId/report` | Deep dive into a single participant's attempt (fully supporting both self-paced and real-time sessions). Returns per-question detail (correctness, score awarded, correct answer, options), AI grading notes (key points addressed/missed, confidence, flagForReview), and human override data. |
 | **Assessment Report** | `GET /assessments/:assessmentId/report?page=1&limit=20` | Aggregate report for all participants. For **scored** assessments: stats (average/highest/lowest scores, pass rate, avg duration), per-question breakdown (correct/incorrect counts, answer distribution), score distribution buckets (90-100, 80-89, etc.), and paginated participant list. For **surveys**: rating distributions per question, average ratings, and open text responses. |
 | **Participant Report** | `GET /participants/:participantId/report` | Cross-assessment transcript. Shows all assessments a participant has taken, scores, grades, pass/fail status, and durations. |
 

@@ -66,7 +66,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
       this.server.to(assessmentId).emit(RealtimeEvents.ROOM_UPDATE, {
         count: result.count,
-        participants: result.users,
+        participants: result.participants,
       });
 
       this.logger.log(`${dto.role} ${socket.id} joined room ${assessmentId}`);
@@ -282,7 +282,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
       this.server.to(assessmentId).emit(RealtimeEvents.ROOM_UPDATE, {
         count: result.count,
-        participants: result.users,
+        participants: result.participants,
       });
 
       this.socketRooms.delete(socket.id);

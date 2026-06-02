@@ -12,7 +12,7 @@ import { Client } from '../../modules/clients/client.entity';
 export class ClientContextInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    const client: Client | undefined = request.user; // populated by ClientAuthGuard
+    const client: Client | undefined = request.client; // populated by ClientAuthGuard
 
     if (client && client.clientId) {
       return new Observable((subscriber) => {

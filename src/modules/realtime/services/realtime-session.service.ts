@@ -13,12 +13,16 @@ import { AssessmentParticipantRepository } from '../../assessments/repositories/
 import { AssessmentStatus } from '../../assessments/entities/assessment.entity';
 import { GradingEngineService } from '../../grading/services/grading-engine.service';
 import { AnswerSheetRepository } from '../../runtime/repositories/answer-sheet.repository';
+import { AnswerEntryRepository } from '../../runtime/repositories/answer-entry.repository';
+import { AssessmentSettingRepository } from '../../assessments/repositories/assessment-setting.repository';
 import { AnswerSheetStatus } from '../../assessments/entities/answer-sheet.entity';
+import { GradingStatus } from '../../assessments/entities/answer-entry.entity';
 import { SingleChoiceStrategy } from '../../grading/strategies/single-choice.strategy';
 import { MultipleChoiceStrategy } from '../../grading/strategies/multiple-choice.strategy';
 import { TrueFalseStrategy } from '../../grading/strategies/true-false.strategy';
 import { OrderingStrategy } from '../../grading/strategies/ordering.strategy';
 import { MatchingStrategy } from '../../grading/strategies/matching.strategy';
+import { WebhookService } from '../../webhooks/webhook.service';
 
 // Points awarded per correct answer — time bonus applied on top
 const BASE_POINTS = 1000;
@@ -43,7 +47,10 @@ export class RealtimeSessionService {
     private readonly assessmentQuestions: AssessmentQuestionRepository,
     private readonly assessmentParticipants: AssessmentParticipantRepository,
     private readonly answerSheets: AnswerSheetRepository,
+    private readonly answerEntries: AnswerEntryRepository,
+    private readonly assessmentSettings: AssessmentSettingRepository,
     private readonly gradingEngine: GradingEngineService,
+    private readonly webhooks: WebhookService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -103,7 +110,7 @@ export class RealtimeSessionService {
     name: string | null,
   ): Promise<{
     count: number;
-    users: {
+    participants: {
       id: string | null;
       name: string | null;
       status: string;
@@ -132,7 +139,7 @@ export class RealtimeSessionService {
 
     return {
       count: participants.length,
-      users: participants.map((m) => ({
+      participants: participants.map((m) => ({
         id: m.participantId,
         name: m.name,
         status: 'CONNECTED',
@@ -373,23 +380,91 @@ export class RealtimeSessionService {
       })),
     );
 
-    const sheets = await this.answerSheets.findByAssessment(assessmentId);
-    for (const sheet of sheets) {
-      try {
-        await this.answerSheets.update(
-          { id: sheet.id },
-          {
-            status: AnswerSheetStatus.SUBMITTED,
-            submittedAt: new Date(),
-          },
-        );
-        await this.gradingEngine.gradeSession(sheet.id);
-      } catch (error) {
-        this.logger.error(
-          `Failed to grade sheet ${sheet.id} after session end`,
-          error,
-        );
+    // FLUSH REDIS TO POSTGRESQL FOR REPORTS
+    try {
+      const assessment = await this.assessments.findById(assessmentId);
+      const settings = await this.assessmentSettings.findByAssessment(assessmentId);
+      const questions = await this.assessmentQuestions.findByAssessment(assessmentId);
+      
+      const clientId = assessment?.clientId;
+      const passMark = settings?.passMark ?? null;
+      const gradeLabels = (settings?.gradeLabels as any[]) ?? [];
+
+      const totalMaxScore = questions.reduce((acc, q) => acc + Number(q.points ?? 0), 0);
+
+      // Pre-fetch all answers for all questions in this session
+      const answersByQuestion: Record<string, Record<string, any>> = {};
+      for (const q of questions) {
+        answersByQuestion[q.id] = await this.redis.getAnswers(assessmentId, q.id);
       }
+
+      for (const entry of allScores) {
+        if (!entry.participantId) continue;
+        const participantId = entry.participantId;
+        const totalScore = entry.score;
+        
+        const scorePercent = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
+        const isPassed = passMark !== null ? scorePercent >= passMark : false;
+
+        let gradeLabel = null;
+        if (gradeLabels.length > 0) {
+          const sorted = [...gradeLabels].sort((a, b) => b.min - a.min);
+          const matched = sorted.find((g) => scorePercent >= g.min);
+          if (matched) gradeLabel = matched.name;
+        }
+
+        // Create the AnswerSheet
+        const sheet = await this.answerSheets.save({
+          clientId,
+          assessmentId,
+          assessmentParticipantId: participantId, // Expects valid UUID from db
+          status: AnswerSheetStatus.GRADED,
+          totalScore,
+          isPassed,
+          grade: gradeLabel,
+          startedAt: new Date(),
+          submittedAt: new Date(),
+        } as any);
+
+        // Create AnswerEntries for this participant
+        for (const q of questions) {
+          const pAnswer = answersByQuestion[q.id]?.[participantId];
+          if (!pAnswer) continue; // participant didn't answer this question
+
+          let responsePayload: Record<string, any> = {};
+          if (q.questionSnapshot?.type === 'SINGLE_CHOICE') {
+            responsePayload = { optionId: pAnswer.choice };
+          } else if (q.questionSnapshot?.type === 'TRUE_FALSE') {
+            responsePayload = { value: pAnswer.choice === 'true' };
+          } else {
+            responsePayload = pAnswer.response ?? {};
+          }
+
+          // We must calculate purely what portion of points they earned for report display
+          const scoreMultiplier = this.getScoreMultiplier(q.questionSnapshot?.type ?? '', pAnswer, q.questionSnapshot?.correctAnswer);
+          const timeBonus = pAnswer.timeTaken ? Math.max(0, TIME_BONUS_MAX - Math.floor(pAnswer.timeTaken / 100)) : 0;
+          const entryScore = scoreMultiplier > 0 ? Math.floor((BASE_POINTS + timeBonus) * scoreMultiplier) : 0;
+
+          await this.answerEntries.save({
+            clientId,
+            answerSheetId: sheet.id,
+            assessmentQuestionId: q.id,
+            response: responsePayload,
+            gradingStatus: GradingStatus.AUTOMATIC,
+            maxScore: Number(q.points),
+            scoreAwarded: entryScore,
+          } as any);
+        }
+      }
+      this.logger.log(`Successfully flushed Real-time session ${assessmentId} to Postgres`);
+      
+      // Dispatch webhook
+      await this.webhooks.dispatch(clientId, 'assessment.completed', {
+        assessmentId,
+        leaderboard,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to flush Real-time session ${assessmentId} to Postgres`, error);
     }
 
     setTimeout(
@@ -409,14 +484,14 @@ export class RealtimeSessionService {
   async handleDisconnect(
     socketId: string,
     assessmentId: string,
-  ): Promise<{ count: number; users: any[] }> {
+  ): Promise<{ count: number; participants: any[] }> {
     await this.redis.removeMember(assessmentId, socketId);
     const members = await this.redis.getMembers(assessmentId);
     const participants = members.filter((m) => m.role === 'participant');
 
     return {
       count: participants.length,
-      users: participants.map((m) => ({
+      participants: participants.map((m) => ({
         id: m.participantId,
         name: m.name,
         status: 'CONNECTED',
