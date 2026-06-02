@@ -12,7 +12,7 @@ export class JoinRoomDto {
 
   @IsString()
   @IsOptional()
-  userId?: string; // participantId — optional for anonymous
+  participantId?: string; // optional for host
 
   @IsEnum(RoomRole)
   role!: RoomRole;

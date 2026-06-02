@@ -15,7 +15,10 @@ import { RealtimeEvents } from '../constants/realtime.events';
 import { JoinRoomDto, RoomRole } from '../dto/join-room.dto';
 import { StartQuestionDto } from '../dto/start-question.dto';
 import { SubmitAnswerDto } from '../dto/submit-answer.dto';
+import { UseInterceptors } from '@nestjs/common';
+import { WsClientContextInterceptor } from '../../../common/interceptors/ws-client-context.interceptor';
 
+@UseInterceptors(WsClientContextInterceptor)
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -56,14 +59,14 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
       const result = await this.sessionService.joinRoom(
         assessmentId,
         socket.id,
-        dto.userId ?? null,
+        dto.participantId ?? null,
         dto.role,
         null,
       );
 
       this.server.to(assessmentId).emit(RealtimeEvents.ROOM_UPDATE, {
         count: result.count,
-        users: result.users,
+        participants: result.users,
       });
 
       this.logger.log(`${dto.role} ${socket.id} joined room ${assessmentId}`);
@@ -138,7 +141,8 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     @MessageBody() dto: StartQuestionDto,
   ) {
     try {
-      const assessmentId = dto.roomId;
+      const assessmentId = this.socketRooms.get(socket.id);
+      if (!assessmentId) throw new Error('Not in a room');
 
       const session =
         await this.sessionService['redis'].getSession(assessmentId);
@@ -176,6 +180,32 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
   }
 
   // ---------------------------------------------------------------------------
+  // REVEAL_ANSWERS
+  // ---------------------------------------------------------------------------
+
+  @SubscribeMessage(RealtimeEvents.REVEAL_ANSWERS)
+  async handleRevealAnswers(@ConnectedSocket() socket: Socket) {
+    try {
+      const assessmentId = this.socketRooms.get(socket.id);
+      if (!assessmentId) throw new Error('Not in a room');
+
+      const session = await this.sessionService['redis'].getSession(assessmentId);
+      if (session?.hostSocketId !== socket.id) {
+        throw new Error('Only the host can reveal answers');
+      }
+
+      if (session?.status === 'active' && session.currentQuestionId) {
+        await this.endCurrentQuestion(assessmentId);
+      }
+    } catch (error) {
+      socket.emit(RealtimeEvents.ERROR, {
+        event: RealtimeEvents.REVEAL_ANSWERS,
+        message: (error as Error).message,
+      });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // SUBMIT_ANS
   // ---------------------------------------------------------------------------
 
@@ -185,7 +215,8 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     @MessageBody() dto: SubmitAnswerDto,
   ) {
     try {
-      const assessmentId = dto.roomId;
+      const assessmentId = this.socketRooms.get(socket.id);
+      if (!assessmentId) throw new Error('Not in a room');
 
       const members =
         await this.sessionService['redis'].getMembers(assessmentId);
@@ -198,10 +229,13 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         return;
       }
 
+      const session = await this.sessionService['redis'].getSession(assessmentId);
+      if (!session || !session.currentQuestionId) throw new Error('No active question');
+
       const result = await this.sessionService.submitAnswer(
         assessmentId,
         member.participantId,
-        dto.assessmentQuestionId,
+        session.currentQuestionId,
         dto.choice,
         dto.response,
         dto.timeTaken,
@@ -211,10 +245,10 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         return;
       }
 
-      const session =
+      const hostSession =
         await this.sessionService['redis'].getSession(assessmentId);
-      if (session?.hostSocketId) {
-        this.server.to(session.hostSocketId).emit(RealtimeEvents.ROOM_UPDATE, {
+      if (hostSession?.hostSocketId) {
+        this.server.to(hostSession.hostSocketId).emit(RealtimeEvents.ROOM_UPDATE, {
           event: 'answer:received',
           totalAnswered: result.totalAnswered,
           totalParticipants: result.totalParticipants,
@@ -248,7 +282,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
       this.server.to(assessmentId).emit(RealtimeEvents.ROOM_UPDATE, {
         count: result.count,
-        users: result.users,
+        participants: result.users,
       });
 
       this.socketRooms.delete(socket.id);
@@ -265,9 +299,16 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     try {
       const results = await this.sessionService.endQuestion(assessmentId);
 
+      let correctStr = '';
+      if (results.correctAnswer) {
+        correctStr =
+          results.correctAnswer.optionId ||
+          results.correctAnswer.value?.toString() ||
+          JSON.stringify(results.correctAnswer);
+      }
+
       this.server.to(assessmentId).emit(RealtimeEvents.Q_RESULTS, {
-        questionNumber: results.questionNumber,
-        correctAnswer: results.correctAnswer,
+        correct: correctStr,
         stats: results.stats,
       });
 

@@ -24,6 +24,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import Redis from 'ioredis';
 import { CacheModule } from './common/cache/cache.module';
+import { ClientContextInterceptor } from './common/interceptors/client-context.interceptor';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -114,6 +116,10 @@ import { CacheModule } from './common/cache/cache.module';
     {
       provide: APP_GUARD,
       useClass: ClientAuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClientContextInterceptor,
     },
   ],
 })

@@ -13,8 +13,6 @@ import { ClientCreatedResponseDto, ClientResponseDto } from './dto/client-respon
 @ApiTags('Clients')
 @ApiBearerAuth()
 @Controller('clients')
-// Add a super-admin scope guard here once super admin is implemented:
-// @UseGuards(ScopeGuard)  @RequireScope('clients:manage')
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}
 

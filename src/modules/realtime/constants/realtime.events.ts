@@ -3,6 +3,7 @@ export const RealtimeEvents = {
   JOIN_ROOM: 'JOIN_ROOM',
   START_Q: 'START_Q',
   SUBMIT_ANS: 'SUBMIT_ANS',
+  REVEAL_ANSWERS: 'REVEAL_ANSWERS',
 
   // Server → Room (all connected clients)
   ROOM_UPDATE: 'ROOM_UPDATE',
@@ -10,14 +11,14 @@ export const RealtimeEvents = {
   Q_RESULTS: 'Q_RESULTS',
   SHOW_RANK: 'SHOW_RANK',
   SHOW_FINAL_RANK: 'SHOW_FINAL_RANK',
-  SESSION_STARTED: 'session:started',
-  SESSION_ENDED: 'session:ended',
+  SESSION_STARTED: 'SESSION_STARTED',
+  SESSION_ENDED: 'SESSION_ENDED',
 
   // Server → Individual participant
-  SESSION_RESULT: 'session:result',
+  SESSION_RESULT: 'SESSION_RESULT',
 
   // Server → Individual (errors)
-  ERROR: 'error',
+  ERROR: 'ERROR',
 } as const;
 
 export type RealtimeEvent =

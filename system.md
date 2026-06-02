@@ -312,29 +312,30 @@ sequenceDiagram
     API->>RS: initSession()
     RS->>Redis: Store full session state (status: waiting)
 
-    H->>API: WS Emit: JOIN_ROOM
-    P->>API: WS Emit: JOIN_ROOM
+    H->>API: WS Emit: JOIN_ROOM { roomId, role: 'host' }
+    P->>API: WS Emit: JOIN_ROOM { roomId, role: 'participant', participantId }
     API->>Redis: Store socket-to-identity mapping
-    API-->>H: WS Broadcast: ROOM_UPDATE
+    API-->>H: WS Broadcast: ROOM_UPDATE { count, participants: [{id, name, status}] }
 
-    H->>API: WS Emit: START_Q
+    H->>API: WS Emit: START_Q { questionId? }
     API->>RS: advanceQuestion()
     RS->>Redis: Set questionEndTime, increment index
     RS-->>API: Question Data
-    API-->>P: WS Broadcast: NEW_QUESTION
+    API-->>P: WS Broadcast: NEW_QUESTION { q: {id, text, type}, options, endTime }
 
-    P->>API: WS Emit: SUBMIT_ANS
+    P->>API: WS Emit: SUBMIT_ANS { choice, timeTaken }
     API->>RS: submitAnswer()
     RS->>Redis: Validate time, Store answer (first-wins)
     API-->>H: WS Emit: ROOM_UPDATE (Answer received)
 
-    H->>API: WS Emit: START_Q (or Time Expires)
+    H->>API: WS Emit: REVEAL_ANSWERS (or Time Expires)
     API->>RS: endQuestion()
     RS->>GE: gradeEntry() for each answer
     RS->>RS: Calculate Time Bonus (up to 500pts)
     RS->>RS: Calculate Leaderboard Rankings
     RS-->>API: Results & Ranks
-    API-->>P: WS Broadcast: Q_RESULTS & SHOW_RANK
+    API-->>P: WS Broadcast: Q_RESULTS { correct, stats: [{optionId, count}] }
+    API-->>P: WS Broadcast: SHOW_RANK { top5, myRank }
 ```
 
 ### 4.1. Resilience and Disconnections
@@ -348,19 +349,20 @@ A unique `timeTaken` parameter allows the system to award a dynamic **Time Bonus
 
 ### 4.3. WebSocket Event Dictionary
 
-The RealtimeGateway (`/realtime` namespace) listens to and emits the following highly-typed events:
+The RealtimeGateway (`/realtime` namespace) listens to and emits the following highly-typed events, strictly mapping to a Kahoot-style UI flow:
 
 **Client ➔ Server (Emitted by participants/hosts)**
-- `JOIN_ROOM`: Connects the socket to the `assessmentId` room. Payload requires `{ roomId, role, userId? }`.
-- `START_Q`: Emitted by the **host** to advance to the next question. Payload: `{ roomId, questionId? }`.
-- `SUBMIT_ANS`: Emitted by **participants** to lock in their answer before time expires. Payload: `{ roomId, assessmentQuestionId, choice?, response?, timeTaken }`.
+- `JOIN_ROOM`: Connects the socket to the `roomId`. Payload requires `{ roomId, role, participantId? }`.
+- `START_Q`: Emitted by the **host** to advance to the next question. Payload: `{ questionId? }`. (Room is dynamically inferred via socket state).
+- `REVEAL_ANSWERS`: Emitted by the **host** to stop the timer early and force an immediate answer reveal. Payload: *(none)*.
+- `SUBMIT_ANS`: Emitted by **participants** to lock in their answer before time expires. Payload: `{ choice?, response?, timeTaken }`. (Room and active question are dynamically inferred).
 
 **Server ➔ Client (Broadcasted to the room)**
-- `ROOM_UPDATE`: Broadcasted when participants join/leave or an answer is received. Payload: `{ count, users, totalAnswered?, totalParticipants? }`.
-- `NEW_QUESTION`: Broadcasted when the host starts a question. Contains stripped question data and the absolute `endTime` timestamp.
-- `Q_RESULTS`: Broadcasted when a question ends (by host or timeout). Reveals the `correctAnswer` and aggregated `stats` to the room.
-- `SHOW_RANK`: Sent to individual participants with their exact leaderboard standing `myRank` and the room's `top5`.
-- `SHOW_FINAL_RANK`: Broadcasted when the session completely concludes, revealing the final podium leaderboard.
+- `ROOM_UPDATE`: Broadcasted when participants join/leave or an answer is received. Payload: `{ count, participants: [{id, name, status}] }` (or `{ event, totalAnswered, totalParticipants }` for host-only answer receipts).
+- `NEW_QUESTION`: Broadcasted when the host starts a question. Contains `{ q: {id, text, type}, options, endTime }`.
+- `Q_RESULTS`: Broadcasted when a question ends (by host skipping or timeout). Reveals `{ correct: string, stats: [{ optionId, count }] }` matching frontend charting structures.
+- `SHOW_RANK`: Sent to individual participants with their exact leaderboard standing `{ top5, myRank }`.
+- `SHOW_FINAL_RANK`: Broadcasted when the session completely concludes, revealing the final `{ id, name, score, rank }` podium leaderboard strictly bounded to the **Top 3** participants.
 
 ---
 

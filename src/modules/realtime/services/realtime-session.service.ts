@@ -104,9 +104,9 @@ export class RealtimeSessionService {
   ): Promise<{
     count: number;
     users: {
-      participantId: string | null;
+      id: string | null;
       name: string | null;
-      role: string;
+      status: string;
     }[];
   }> {
     const session = await this.redis.getSession(assessmentId);
@@ -133,9 +133,9 @@ export class RealtimeSessionService {
     return {
       count: participants.length,
       users: participants.map((m) => ({
-        participantId: m.participantId,
+        id: m.participantId,
         name: m.name,
-        role: m.role,
+        status: 'CONNECTED',
       })),
     };
   }
@@ -199,12 +199,9 @@ export class RealtimeSessionService {
       questionNumber: nextIndex + 1,
       totalQuestions: questions.length,
       q: {
-        id: snapshot.id,
-        assessmentQuestionId: targetQuestion.id,
+        id: targetQuestion.id,
+        text: snapshot.questionText,
         type: snapshot.type,
-        questionText: snapshot.questionText,
-        difficulty: snapshot.difficulty,
-        points: targetQuestion.points,
       },
       options,
       endTime,
@@ -261,10 +258,9 @@ export class RealtimeSessionService {
     questionNumber: number;
     correctAnswer: any;
     stats: {
-      totalAnswered: number;
-      totalParticipants: number;
-      distribution: Record<string, number>;
-    };
+      optionId: string;
+      count: number;
+    }[];
   }> {
     const session = await this.redis.getSession(assessmentId);
     if (!session || !session.currentQuestionId) {
@@ -325,11 +321,10 @@ export class RealtimeSessionService {
         snapshot.type,
         correctAnswer,
       ),
-      stats: {
-        totalAnswered: Object.keys(answers).length,
-        totalParticipants,
-        distribution,
-      },
+      stats: Object.entries(distribution).map(([optionId, count]) => ({
+        optionId,
+        count,
+      })),
     };
   }
 
@@ -340,7 +335,7 @@ export class RealtimeSessionService {
   async getRankData(assessmentId: string): Promise<{
     top5: {
       rank: number;
-      participantId: string;
+      id: string;
       name: string;
       score: number;
     }[];
@@ -349,7 +344,7 @@ export class RealtimeSessionService {
     const top5 = await Promise.all(
       top5Raw.map(async (entry) => ({
         rank: entry.rank,
-        participantId: entry.participantId,
+        id: entry.participantId,
         name: await this.redis.getName(assessmentId, entry.participantId),
         score: entry.score,
       })),
@@ -370,7 +365,7 @@ export class RealtimeSessionService {
     const allScores = await this.redis.getAllScores(assessmentId);
 
     const leaderboard = await Promise.all(
-      allScores.map(async (entry) => ({
+      allScores.slice(0, 3).map(async (entry) => ({
         id: entry.participantId,
         name: await this.redis.getName(assessmentId, entry.participantId),
         score: entry.score,
@@ -422,9 +417,9 @@ export class RealtimeSessionService {
     return {
       count: participants.length,
       users: participants.map((m) => ({
-        participantId: m.participantId,
+        id: m.participantId,
         name: m.name,
-        role: m.role,
+        status: 'CONNECTED',
       })),
     };
   }
