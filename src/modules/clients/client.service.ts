@@ -5,6 +5,7 @@ import { ClientRepository } from './client.repository';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './client.entity';
+import { CacheService } from '../../common/cache/cache.service';
 
 export interface CreatedClientResult {
   client: Client;
@@ -24,7 +25,10 @@ export class ClientService {
 
   private readonly logger = new Logger(ClientService.name);
 
-  constructor(private readonly clientRepo: ClientRepository) {}
+  constructor(
+    private readonly clientRepo: ClientRepository,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async create(dto: CreateClientDto): Promise<CreatedClientResult> {
     try {
@@ -79,7 +83,9 @@ export class ClientService {
     try {
       const client = await this.findOne(id);
       Object.assign(client, dto);
-      return await this.clientRepo.save(client);
+      const saved = await this.clientRepo.save(client);
+      await this.cacheService.invalidate(`client:${saved.clientId}`);
+      return saved;
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error(`Failed to update client ${id}: ${(error as Error).message}`, (error as Error).stack);
@@ -93,6 +99,7 @@ export class ClientService {
       const rawSecret = this.generateSecret();
       client.clientSecretHash = await argon2.hash(rawSecret, this.argon2Options);
       const saved = await this.clientRepo.save(client);
+      await this.cacheService.invalidate(`client:${saved.clientId}`);
       return { client: saved, rawSecret };
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -105,7 +112,9 @@ export class ClientService {
     try {
       const client = await this.findOne(id);
       client.isActive = isActive;
-      return await this.clientRepo.save(client);
+      const saved = await this.clientRepo.save(client);
+      await this.cacheService.invalidate(`client:${saved.clientId}`);
+      return saved;
     } catch (error) {
       if (error instanceof HttpException) throw error;
       this.logger.error(`Failed to set active status for client ${id}: ${(error as Error).message}`, (error as Error).stack);
