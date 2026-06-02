@@ -7,10 +7,16 @@ export default registerAs('app', () => ({
 
   appName: process.env.APP_NAME || 'assessment-service',
 
-  gemini: {
-    apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
-    timeoutMs: parseInt(process.env.GEMINI_TIMEOUT_MS || '30000', 10),
+  ai: {
+    provider: process.env.AI_PROVIDER || 'gemini',
+    gemini: {
+      apiKey: process.env.GEMINI_API_KEY,
+      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+      timeoutMs: parseInt(process.env.GEMINI_TIMEOUT_MS || '30000', 10),
+    },
+    deepseek: {
+      apiKey: process.env.DEEPSEEK_API_KEY,
+    },
   },
 
   auth: {
