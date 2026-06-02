@@ -19,6 +19,9 @@ A high-performance NestJS application built for configuring, distributing, and g
 * **Database & Query Performance Optimizations**: 
   * Promoted `type` column mapping from JSONB (`questionSnapshot`) to first-class, indexed `questionType` column on `AssessmentQuestion` to use standard B-Tree indexes.
   * Optimized index layout with composite partial indexes on junction/transaction tables (`answer_sheet`, `answer_entry`) to prevent query degradation as dataset scales.
+* **Security & Scalability**:
+  * Config-driven **Multi-tier Rate Limiting** with fallback tracking backed by Redis (`@nest-lab/throttler-storage-redis`). Features strict limits for auth endpoints to mitigate brute force attacks and granular limits for read/write APIs.
+  * **Redis Entity Caching** to heavily optimize DB hits for OAuth Client resolution, caching data at the token verification layer with instant invalidation upon metadata modification.
 
 ---
 
@@ -28,8 +31,8 @@ The system is secured using a strict **OAuth2 Client Credentials Grant** archite
 
 * **Client Provisioning**: Clients are provisioned via `POST /api/v1/clients`. The system returns a cryptographically secure `clientSecret` exactly once.
 * **Secret Storage**: Client secrets are hashed securely using **Argon2id** (OWASP recommended parameters) before being stored in PostgreSQL.
-* **Token Issuance**: Clients authenticate via `POST /api/v1/auth/token` using `grant_type=client_credentials`. The system validates the hash and issues a stateless JWT access token.
-* **Global Protection**: All endpoints are protected globally by a custom `ClientAuthGuard`. Valid tokens effortlessly inject the active tenant context via the `@CurrentClient()` decorator.
+* **Token Issuance**: Clients authenticate via `POST /api/v1/auth/token` using `grant_type=client_credentials`. The system validates the hash and issues a stateless JWT access token. This endpoint features strict per-clientId rate-limiting (configurable via `.env`) to prevent DDOS and credential-stuffing attacks.
+* **Global Protection**: All endpoints are protected globally by a custom `ClientAuthGuard`. Valid tokens effortlessly inject the active tenant context via the `@CurrentClient()` decorator. The tenant lookup is **heavily cached in Redis** with instant invalidation hooks on updates, drastically reducing load on PostgreSQL for every API call.
 
 ---
 
