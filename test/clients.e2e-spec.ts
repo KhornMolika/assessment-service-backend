@@ -68,6 +68,8 @@ describe('ClientsModule (e2e)', () => {
           name: 'E2E Test Client',
           slug: `e2e-client-${Date.now()}`,
           allowedOrigins: ['https://acme.com'],
+          webhookUrl: 'https://acme.com/webhook',
+          webhookSecret: 'my-super-secret',
         })
         .expect(201);
 
@@ -76,6 +78,8 @@ describe('ClientsModule (e2e)', () => {
       expect(response.body.data.id).toBeDefined();
       expect(response.body.data.clientId).toBeDefined();
       expect(response.body.data.clientSecret).toBeDefined();
+      expect(response.body.data.webhookUrl).toBe('https://acme.com/webhook');
+      expect(response.body.data.webhookSecret).toBeUndefined(); // Should not be returned
 
       clientDbId = response.body.data.id;
       clientId = response.body.data.clientId;
@@ -123,16 +127,20 @@ describe('ClientsModule (e2e)', () => {
       expect(response.body.data.name).toBe('E2E Test Client');
     });
 
-    it('PATCH /:id - should update the client name', async () => {
+    it('PATCH /:id - should update the client name and webhook settings', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/api/v1/clients/${clientDbId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Updated E2E Client',
+          webhookUrl: 'https://new-acme.com/webhook',
+          webhookSecret: 'new-secret',
         })
         .expect(200);
 
       expect(response.body.data.name).toBe('Updated E2E Client');
+      expect(response.body.data.webhookUrl).toBe('https://new-acme.com/webhook');
+      expect(response.body.data.webhookSecret).toBeUndefined();
     });
 
     it('PATCH /:id/suspend - should suspend the client', async () => {

@@ -30,4 +30,9 @@ export class CreateClientDto {
   @IsUrl()
   @IsOptional()
   webhookUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  webhookSecret?: string;
 }

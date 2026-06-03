@@ -22,6 +22,8 @@ export class ClientAuthGuard extends AuthGuard('jwt') {
     if (err || !client) {
       throw err || new UnauthorizedException('Authentication failed: Invalid or missing client token');
     }
+    const request = context.switchToHttp().getRequest();
+    request.client = client;
     return client;
   }
 }

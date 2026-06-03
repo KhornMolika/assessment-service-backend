@@ -574,3 +574,53 @@ flowchart TD
     D --> D2["Rating Questions: distribution map + average rating"]
     D --> D3["Text Questions: all SHORT_ANSWER / ESSAY responses"]
 ```
+
+---
+
+## 7. Webhooks & Event Dispatching
+
+The Webhooks Module enables external integration by pushing real-time HTTP callbacks to configured client endpoints when key lifecycle events occur.
+
+### 7.1. Webhook Configuration
+
+Clients can set up webhooks during provisioning (`POST /api/v1/clients`) or update them later. The configuration consists of:
+- **`webhookUrl`**: The HTTPS endpoint to receive POST requests.
+- **`webhookSecret`**: An optional secret string used to cryptographically sign the payload.
+
+### 7.2. Dispatch Architecture
+
+To prevent blocking the main execution thread and to provide retry resilience, webhooks are dispatched asynchronously using a Redis-backed Bull queue (`'webhooks'`).
+
+```mermaid
+sequenceDiagram
+    participant RM as Runtime/Grading
+    participant WS as WebhookService
+    participant Q as Bull Queue (webhooks)
+    participant WP as WebhookProcessor
+    participant CE as Client Endpoint
+
+    RM->>WS: dispatch(clientId, event, payload)
+    WS->>Q: Add job to queue
+    Q->>WP: @Process() picks up job
+    WP->>WP: Lookup Client webhookUrl & Secret
+    WP->>WP: Generate HMAC-SHA256 Signature (if secret exists)
+    WP->>CE: POST payload + Headers
+    CE-->>WP: 200 OK
+```
+
+### 7.3. Supported Events
+
+Currently, the following system events trigger webhook dispatches:
+- **`assessment.completed`**: Dispatched when an assessment session ends (either self-paced or instructor-led) and the status transitions to `COMPLETED` or `GRADED`.
+- **`assessment.graded`**: Dispatched specifically when a session is fully graded by the `GradingEngine` (either synchronously for auto-gradable tests or asynchronously after AI evaluation).
+
+### 7.4. Security and Signatures
+
+Webhook payloads are sent via standard `POST` requests. If a `webhookSecret` is configured, the `WebhookProcessor` generates an HMAC-SHA256 signature of the stringified JSON payload and attaches it to the request headers.
+
+**Headers:**
+- `Content-Type: application/json`
+- `x-webhook-event: <event-name>`
+- `x-webhook-signature: <hmac-signature>`
+
+Clients are expected to compute the HMAC of the received payload using their shared secret and compare it against the `x-webhook-signature` header to verify authenticity and prevent spoofing.

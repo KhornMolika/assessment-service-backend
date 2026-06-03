@@ -10,6 +10,7 @@ import { AIGradingService } from './ai-grading.service';
 import { AIGradingJobRepository } from '../repositories/ai-grading-job.repository';
 import { AIPromptService } from './ai-prompt.service';
 import { GeminiService } from './gemini.service';
+import { AI_PROVIDER_TOKEN } from '../interfaces/ai-provider.interface';
 import { AIGradingJobStatus } from '../entities/ai-grading-job.entity';
 import { GradingStatus } from '@modules/assessments/entities/answer-entry.entity';
 
@@ -54,7 +55,7 @@ describe('AIGradingService', () => {
         AIGradingService,
         { provide: AIGradingJobRepository, useValue: jobsRepoMock },
         { provide: AIPromptService, useValue: promptsServiceMock },
-        { provide: GeminiService, useValue: geminiServiceMock },
+        { provide: AI_PROVIDER_TOKEN, useValue: geminiServiceMock },
         { provide: getQueueToken('ai-grading'), useValue: queueMock },
         { provide: DataSource, useValue: mockDataSource },
       ],

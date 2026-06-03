@@ -238,8 +238,8 @@ export class QuestionBanksService {
         throw new BadRequestException('Question already in this bank');
 
       await this.bankQuestionRepository.save({
-        bankId,
-        questionId,
+        questionBankId: bankId,
+        questionId: questionId,
       } as any);
 
       return {
@@ -272,7 +272,7 @@ export class QuestionBanksService {
 
       await Promise.all(
         newIds.map((questionId) =>
-          this.bankQuestionRepository.save({ bankId, questionId } as any),
+          this.bankQuestionRepository.save({ questionBankId: bankId, questionId: questionId } as any),
         ),
       );
 

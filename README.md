@@ -16,6 +16,7 @@ A high-performance NestJS application built for configuring, distributing, and g
   * **Session Report** (`GET /api/v1/assessments/:assessmentId/sessions/:sessionId/report`): Deep dive into a single attempt, including AI grading feedback and correctness details.
   * **Assessment Report** (`GET /api/v1/assessments/:assessmentId/report`): Aggregated statistics, score distributions (bucketed into ranges), correct/incorrect answer counts, and a paginated list of top-performing participants. Adapts dynamically for scored tests and survey metrics.
   * **Participant Report** (`GET /api/v1/participants/:participantId/report`): Cross-assessment participant transcript history, overall pass/fail rates, averages, and durations.
+* **Webhooks & Event Dispatching**: Clients can configure a `webhookUrl` and `webhookSecret` to receive real-time, asynchronous HTTP callbacks for key lifecycle events (e.g., `assessment.completed`, `assessment.graded`). Payloads are cryptographically signed using HMAC-SHA256 (`x-webhook-signature`) to ensure payload authenticity.
 * **Database & Query Performance Optimizations**: 
   * Promoted `type` column mapping from JSONB (`questionSnapshot`) to first-class, indexed `questionType` column on `AssessmentQuestion` to use standard B-Tree indexes.
   * Optimized index layout with composite partial indexes on junction/transaction tables (`answer_sheet`, `answer_entry`) to prevent query degradation as dataset scales.
