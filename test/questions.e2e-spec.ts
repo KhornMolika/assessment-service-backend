@@ -154,7 +154,9 @@ describe('QuestionsModule (e2e)', () => {
         })
         .expect(200);
 
-      expect(response.body.data.text).toBe('Which city is the capital of France?');
+      expect(response.body.data.text).toBe(
+        'Which city is the capital of France?',
+      );
       expect(response.body.data.difficulty).toBe('EASY');
     });
 

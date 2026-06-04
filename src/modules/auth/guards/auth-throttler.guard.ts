@@ -3,7 +3,9 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AuthThrottlerGuard extends ThrottlerGuard {
-  protected async handleRequest(requestProps: ThrottlerRequest): Promise<boolean> {
+  protected async handleRequest(
+    requestProps: ThrottlerRequest,
+  ): Promise<boolean> {
     // Only run the auth throttlers for this guard, skip all others
     const { throttler } = requestProps;
     if (throttler.name !== 'auth' && throttler.name !== 'authBurst') {

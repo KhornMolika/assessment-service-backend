@@ -32,10 +32,10 @@ export class Question extends ClientScopedEntity {
   points!: number;
 
   @Column({ type: 'jsonb', nullable: true })
-  options!: Record<string, any> | null;
+  options!: Record<string, unknown> | null;
 
   @Column({ type: 'jsonb', nullable: true })
-  correctAnswer!: Record<string, any> | null;
+  correctAnswer!: Record<string, unknown> | null;
 
   @OneToMany(() => QuestionBankQuestion, (bq) => bq.question)
   bankQuestions!: QuestionBankQuestion[];

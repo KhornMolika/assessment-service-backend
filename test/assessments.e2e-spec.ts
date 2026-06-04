@@ -19,12 +19,12 @@ import { Reflector } from '@nestjs/core';
  * What's NOT tested:
  * - We skip testing the internal database mappings and raw SQL logic, relying on
  *   the public API contract.
- * - We skip negative tests for every single validation field (we test a few to ensure 
+ * - We skip negative tests for every single validation field (we test a few to ensure
  *   validation works) because exhaustive validation testing belongs in unit tests.
  *
  * Coverage assessment:
- * This gives ~80% confidence on the Assessment API layer, covering the main happy 
- * paths and the critical transition from DRAFT to PUBLISHED. Error cases like updating 
+ * This gives ~80% confidence on the Assessment API layer, covering the main happy
+ * paths and the critical transition from DRAFT to PUBLISHED. Error cases like updating
  * a published assessment are also covered.
  *
  * Test data strategy:
@@ -143,7 +143,9 @@ describe('AssessmentsModule (e2e)', () => {
         })
         .expect(200);
 
-      expect(response.body.data.description).toBe('Updated basic math questions');
+      expect(response.body.data.description).toBe(
+        'Updated basic math questions',
+      );
     });
 
     it('POST /assessments/:id/questions - should add a question', async () => {
@@ -165,7 +167,9 @@ describe('AssessmentsModule (e2e)', () => {
         });
 
       if (qRes.status !== 201) {
-        throw new Error(`Failed to create question: ${JSON.stringify(qRes.body)}`);
+        throw new Error(
+          `Failed to create question: ${JSON.stringify(qRes.body)}`,
+        );
       }
 
       const createdQuestionId = qRes.body.data.id;

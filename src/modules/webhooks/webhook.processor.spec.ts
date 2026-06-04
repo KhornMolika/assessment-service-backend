@@ -47,7 +47,10 @@ describe('WebhookProcessor', () => {
   });
 
   it('should skip if client has no webhookUrl', async () => {
-    mockClientRepo.findByClientId.mockResolvedValue({ id: '1', webhookUrl: null });
+    mockClientRepo.findByClientId.mockResolvedValue({
+      id: '1',
+      webhookUrl: null,
+    });
     const job = { data: { clientId: '1' } } as Job<WebhookJobData>;
 
     await processor.handleWebhookDispatch(job);
@@ -55,7 +58,11 @@ describe('WebhookProcessor', () => {
   });
 
   it('should dispatch webhook with HMAC signature', async () => {
-    const payload = { event: 'test', timestamp: '2023-01-01', data: { foo: 'bar' } };
+    const payload = {
+      event: 'test',
+      timestamp: '2023-01-01',
+      data: { foo: 'bar' },
+    };
     const secret = 'my-secret';
     mockClientRepo.findByClientId.mockResolvedValue({
       id: '1',
@@ -69,7 +76,10 @@ describe('WebhookProcessor', () => {
     await processor.handleWebhookDispatch(job);
 
     const payloadString = JSON.stringify(payload);
-    const expectedSig = crypto.createHmac('sha256', secret).update(payloadString).digest('hex');
+    const expectedSig = crypto
+      .createHmac('sha256', secret)
+      .update(payloadString)
+      .digest('hex');
 
     expect(global.fetch).toHaveBeenCalledWith(
       'https://example.com/webhook',
@@ -92,9 +102,17 @@ describe('WebhookProcessor', () => {
       webhookSecret: null,
     });
 
-    const job = { data: { clientId: '1', payload: { event: 'test' } } } as Job<WebhookJobData>;
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error' });
+    const job = {
+      data: { clientId: '1', payload: { event: 'test' } },
+    } as Job<WebhookJobData>;
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+    });
 
-    await expect(processor.handleWebhookDispatch(job)).rejects.toThrow('Endpoint responded with status 500 Internal Server Error');
+    await expect(processor.handleWebhookDispatch(job)).rejects.toThrow(
+      'Endpoint responded with status 500 Internal Server Error',
+    );
   });
 });

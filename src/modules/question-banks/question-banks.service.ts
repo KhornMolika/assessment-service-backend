@@ -240,7 +240,7 @@ export class QuestionBanksService {
       await this.bankQuestionRepository.save({
         questionBankId: bankId,
         questionId: questionId,
-      } as any);
+      });
 
       return {
         bankId,
@@ -272,7 +272,10 @@ export class QuestionBanksService {
 
       await Promise.all(
         newIds.map((questionId) =>
-          this.bankQuestionRepository.save({ questionBankId: bankId, questionId: questionId } as any),
+          this.bankQuestionRepository.save({
+            questionBankId: bankId,
+            questionId: questionId,
+          } as any),
         ),
       );
 

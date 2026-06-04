@@ -7,7 +7,7 @@ import { QuestionBankQuestionRepository } from './repositories/question-bank-que
 
 describe('QuestionBanksService', () => {
   let service: QuestionBanksService;
-  
+
   let bankRepositoryMock: any;
   let topicRepositoryMock: any;
   let bankQuestionRepositoryMock: any;
@@ -36,7 +36,10 @@ describe('QuestionBanksService', () => {
         QuestionBanksService,
         { provide: QuestionBankRepository, useValue: bankRepositoryMock },
         { provide: TopicRepository, useValue: topicRepositoryMock },
-        { provide: QuestionBankQuestionRepository, useValue: bankQuestionRepositoryMock },
+        {
+          provide: QuestionBankQuestionRepository,
+          useValue: bankQuestionRepositoryMock,
+        },
       ],
     }).compile();
 
@@ -54,13 +57,15 @@ describe('QuestionBanksService', () => {
   describe('create', () => {
     it('should throw BadRequestException if name exists', async () => {
       bankRepositoryMock.findOne.mockResolvedValue({ id: '1', name: 'Test' });
-      await expect(service.create({ name: 'Test', description: '' })).rejects.toThrow(BadRequestException);
+      await expect(
+        service.create({ name: 'Test', description: '' }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should create successfully', async () => {
       bankRepositoryMock.findOne.mockResolvedValue(null);
       bankRepositoryMock.create.mockResolvedValue({ id: '1', name: 'Test' });
-      
+
       const result = await service.create({ name: 'Test', description: '' });
       expect(result.id).toBe('1');
       expect(result.questionCount).toBe(0);
@@ -71,18 +76,27 @@ describe('QuestionBanksService', () => {
     it('should throw NotFoundException if topic not found', async () => {
       bankRepositoryMock.findOne.mockResolvedValue(null);
       topicRepositoryMock.findById.mockResolvedValue(null);
-      
-      await expect(service.createTopicBank('topic-1', { name: 'Test', description: '' })).rejects.toThrow(NotFoundException);
+
+      await expect(
+        service.createTopicBank('topic-1', { name: 'Test', description: '' }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should create topic bank successfully', async () => {
       bankRepositoryMock.findOne.mockResolvedValue(null);
       topicRepositoryMock.findById.mockResolvedValue({ id: 'topic-1' });
       bankRepositoryMock.create.mockResolvedValue({ id: '1', name: 'Test' });
-      
-      const result = await service.createTopicBank('topic-1', { name: 'Test', description: '' });
+
+      const result = await service.createTopicBank('topic-1', {
+        name: 'Test',
+        description: '',
+      });
       expect(result.id).toBe('1');
-      expect(bankRepositoryMock.create).toHaveBeenCalledWith({ name: 'Test', description: '', topic: { id: 'topic-1' } });
+      expect(bankRepositoryMock.create).toHaveBeenCalledWith({
+        name: 'Test',
+        description: '',
+        topic: { id: 'topic-1' },
+      });
     });
   });
 
@@ -93,7 +107,10 @@ describe('QuestionBanksService', () => {
     });
 
     it('should return bank with questionCount', async () => {
-      bankRepositoryMock.findById.mockResolvedValue({ id: '1', questions: [{}, {}] });
+      bankRepositoryMock.findById.mockResolvedValue({
+        id: '1',
+        questions: [{}, {}],
+      });
       const result = await service.findById('1');
       expect(result.questionCount).toBe(2);
       expect(result.questions).toBeUndefined();
@@ -103,16 +120,22 @@ describe('QuestionBanksService', () => {
   describe('addQuestionToBank', () => {
     it('should throw BadRequestException if already in bank', async () => {
       bankRepositoryMock.findById.mockResolvedValue({ id: '1' });
-      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue({ id: 'jq1' });
-      
-      await expect(service.addQuestionToBank('1', 'q1')).rejects.toThrow(BadRequestException);
+      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue({
+        id: 'jq1',
+      });
+
+      await expect(service.addQuestionToBank('1', 'q1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should add question successfully', async () => {
       bankRepositoryMock.findById.mockResolvedValue({ id: '1' });
-      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue(null);
+      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue(
+        null,
+      );
       bankQuestionRepositoryMock.save.mockResolvedValue({ id: 'jq1' });
-      
+
       const result = await service.addQuestionToBank('1', 'q1');
       expect(result.questionId).toBe('q1');
     });
@@ -120,14 +143,22 @@ describe('QuestionBanksService', () => {
 
   describe('removeQuestionFromBank', () => {
     it('should throw BadRequestException if not found', async () => {
-      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue(null);
-      await expect(service.removeQuestionFromBank('1', 'q1')).rejects.toThrow(BadRequestException);
+      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue(
+        null,
+      );
+      await expect(service.removeQuestionFromBank('1', 'q1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should remove question successfully', async () => {
-      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue({ id: 'jq1' });
+      bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue({
+        id: 'jq1',
+      });
       const result = await service.removeQuestionFromBank('1', 'q1');
-      expect(bankQuestionRepositoryMock.softDelete).toHaveBeenCalledWith({ id: 'jq1' });
+      expect(bankQuestionRepositoryMock.softDelete).toHaveBeenCalledWith({
+        id: 'jq1',
+      });
       expect(result.questionId).toBe('q1');
     });
   });

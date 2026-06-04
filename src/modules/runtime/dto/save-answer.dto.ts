@@ -5,5 +5,5 @@ export class SaveAnswerDto {
   assessmentQuestionId!: string;
 
   @IsNotEmpty()
-  response!: Record<string, any>;
+  response!: Record<string, unknown>;
 }

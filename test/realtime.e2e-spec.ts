@@ -27,18 +27,36 @@ describe('RealtimeGateway (e2e)', () => {
 
     sessionServiceMock = {
       redis: {
-        getSession: jest.fn().mockResolvedValue({ hostSocketId: 'host-socket-id', status: 'active', currentQuestionId: 'q-0' }),
-        getMembers: jest.fn().mockResolvedValue([{ socketId: 'test-participant-socket', role: 'participant', participantId }]),
-        getParticipantRank: jest.fn().mockResolvedValue({ rank: 1, score: 1000 }),
+        getSession: jest.fn().mockResolvedValue({
+          hostSocketId: 'host-socket-id',
+          status: 'active',
+          currentQuestionId: 'q-0',
+        }),
+        getMembers: jest.fn().mockResolvedValue([
+          {
+            socketId: 'test-participant-socket',
+            role: 'participant',
+            participantId,
+          },
+        ]),
+        getParticipantRank: jest
+          .fn()
+          .mockResolvedValue({ rank: 1, score: 1000 }),
       } as any,
       joinRoom: jest.fn().mockResolvedValue({
         count: 1,
         participants: [],
       }),
-      startQuestion: jest.fn().mockResolvedValue({ questionNumber: 1, totalQuestions: 5 }),
+      startQuestion: jest
+        .fn()
+        .mockResolvedValue({ questionNumber: 1, totalQuestions: 5 }),
       revealAnswers: jest.fn().mockResolvedValue(true),
-      submitAnswer: jest.fn().mockResolvedValue({ totalAnswered: 1, totalParticipants: 1 }),
-      endQuestion: jest.fn().mockResolvedValue({ correctAnswer: { optionId: 'A' }, stats: {} }),
+      submitAnswer: jest
+        .fn()
+        .mockResolvedValue({ totalAnswered: 1, totalParticipants: 1 }),
+      endQuestion: jest
+        .fn()
+        .mockResolvedValue({ correctAnswer: { optionId: 'A' }, stats: {} }),
       getRankData: jest.fn().mockResolvedValue({ leaderboard: [] }),
     };
 
@@ -53,7 +71,7 @@ describe('RealtimeGateway (e2e)', () => {
     app.useWebSocketAdapter(new IoAdapter(app));
     await app.init();
     await app.listen(0);
-    
+
     const server = app.getHttpServer();
     const port = server.address().port;
     serverUrl = `http://127.0.0.1:${port}/realtime`;
@@ -87,7 +105,9 @@ describe('RealtimeGateway (e2e)', () => {
 
     const connectPromise = new Promise<void>((resolve, reject) => {
       hostSocket.on('connect', () => resolve());
-      hostSocket.on('connect_error', (err) => reject(new Error('Connect Error: ' + err.message)));
+      hostSocket.on('connect_error', (err) =>
+        reject(new Error('Connect Error: ' + err.message)),
+      );
     });
 
     await connectPromise;
@@ -109,7 +129,9 @@ describe('RealtimeGateway (e2e)', () => {
   it('should broadcast ROOM_UPDATE when a participant joins', async () => {
     sessionServiceMock.joinRoom = jest.fn().mockResolvedValue({
       count: 2,
-      participants: [{ id: participantId, name: 'Test User', status: 'connected' }],
+      participants: [
+        { id: participantId, name: 'Test User', status: 'connected' },
+      ],
     });
 
     participantSocket = io(serverUrl, {
@@ -119,7 +141,9 @@ describe('RealtimeGateway (e2e)', () => {
 
     const connectPromise = new Promise<void>((resolve, reject) => {
       participantSocket.on('connect', () => resolve());
-      participantSocket.on('connect_error', (err) => reject(new Error('Connect Error: ' + err.message)));
+      participantSocket.on('connect_error', (err) =>
+        reject(new Error('Connect Error: ' + err.message)),
+      );
     });
 
     await connectPromise;
@@ -136,12 +160,16 @@ describe('RealtimeGateway (e2e)', () => {
 
     const data = await roomUpdatePromise;
     expect(data.count).toBe(2);
-    expect(data.participants.some((p: any) => p.id === participantId)).toBe(true);
+    expect(data.participants.some((p: any) => p.id === participantId)).toBe(
+      true,
+    );
   });
 
   it('should start the session when host emits START_Q', async () => {
     const sessionStartedPromise = new Promise<any>((resolve) => {
-      participantSocket.on(RealtimeEvents.NEW_QUESTION, (data) => resolve(data));
+      participantSocket.on(RealtimeEvents.NEW_QUESTION, (data) =>
+        resolve(data),
+      );
     });
 
     hostSocket.emit(RealtimeEvents.START_Q, {

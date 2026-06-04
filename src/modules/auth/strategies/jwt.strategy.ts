@@ -44,13 +44,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
           return null; // cache the null result too for inactive clients
         }
         return found;
-      }
+      },
     );
 
     if (!client) {
       throw new UnauthorizedException('Client is inactive or does not exist');
     }
-    
+
     return client; // becomes request.client
   }
 }

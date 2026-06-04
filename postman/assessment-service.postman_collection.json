@@ -1,8 +1,10 @@
 {
   "info": {
+    "_postman_id": "b35e3410-1edd-425f-91a5-366d09ed0941",
     "name": "Assessment Service API",
     "description": "Comprehensive API collection for Assessment Service Backend",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "36500760"
   },
   "item": [
     {
@@ -47,7 +49,8 @@
                 "token"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -83,7 +86,8 @@
                 "topics"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "List Topics",
@@ -123,7 +127,8 @@
                 }
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Topic by ID",
@@ -146,7 +151,8 @@
                 "{{topicId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Topic",
@@ -178,7 +184,8 @@
                 "{{topicId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Topic",
@@ -201,7 +208,8 @@
                 "{{topicId}}"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -239,7 +247,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create MULTIPLE_CHOICE Question",
@@ -272,7 +281,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create TRUE_FALSE Question",
@@ -305,7 +315,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create ORDERING Question",
@@ -338,7 +349,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create FILL_IN_THE_BLANK Question",
@@ -371,7 +383,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create MATCHING Question",
@@ -404,7 +417,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create RATING Question",
@@ -437,7 +451,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create SHORT_ANSWER Question",
@@ -470,7 +485,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create ESSAY Question",
@@ -503,7 +519,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "List Topic Questions",
@@ -537,7 +554,8 @@
                 }
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Question by ID",
@@ -560,7 +578,8 @@
                 "{{questionId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Question",
@@ -592,7 +611,8 @@
                 "{{questionId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Question",
@@ -615,7 +635,8 @@
                 "{{questionId}}"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -653,7 +674,8 @@
                 "banks"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "List Topic Question Banks",
@@ -677,7 +699,8 @@
                 "banks"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Question Bank by ID",
@@ -700,7 +723,8 @@
                 "{{bankId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Question Bank",
@@ -732,7 +756,8 @@
                 "{{bankId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Questions in Bank",
@@ -766,7 +791,8 @@
                 }
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Add Questions to Bank",
@@ -799,7 +825,8 @@
                 "questions"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Remove Question from Bank",
@@ -824,7 +851,8 @@
                 "{{questionId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Question Bank",
@@ -847,7 +875,8 @@
                 "{{bankId}}"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -855,465 +884,804 @@
       "name": "Assessments",
       "item": [
         {
-          "name": "Create Assessment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Final Exam Test\",\n  \"type\": \"EXAM\",\n  \"description\": \"Final knowledge checking assessment\"\n}"
+          "name": "Configuration",
+          "item": [
+            {
+              "name": "1. Lifecycle & Core",
+              "item": [
+                {
+                  "name": "Create Assessment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Final Exam Test\",\n  \"type\": \"EXAM\",\n  \"description\": \"Final knowledge checking assessment\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "topics",
+                        "{{topicId}}",
+                        "assessments"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List Topic Assessments",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "topics",
+                        "{{topicId}}",
+                        "assessments"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Assessment by ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Assessment",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Final Assessment (Updated)\",\n  \"description\": \"Updated descriptive text\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Publish Assessment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/publish",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "publish"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Archive Assessment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/archive",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "archive"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete Assessment",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Recalculate Session",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{sessionId}}/recalculate",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{sessionId}}",
+                        "recalculate"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
             },
-            "url": {
-              "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "assessments"
+            {
+              "name": "2. Questions Management",
+              "item": [
+                {
+                  "name": "Add Question to Assessment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"points\": 10\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "questions"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Assessment Questions",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "questions"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Replace Assessment Questions",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"questionIds\": [\"{{questionId}}\"]\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "questions"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Remove Question from Assessment",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions/{{assessmentQuestionId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "questions",
+                        "{{assessmentQuestionId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
               ]
-            }
-          }
-        },
-        {
-          "name": "List Topic Assessments",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "assessments"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Assessment by ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update Assessment",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Final Assessment (Updated)\",\n  \"description\": \"Updated descriptive text\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}"
+            {
+              "name": "3. Settings & Participants",
+              "item": [
+                {
+                  "name": "Get Assessment Settings",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "settings"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Assessment Settings",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"mode\": \"SELF_PACED\",\n  \"questionSelection\": \"MANUAL\",\n  \"participantIdentity\": \"EXTERNAL\",\n  \"numQuestions\": 10,\n  \"timeLimit\": 45,\n  \"passMark\": 60,\n  \"isShuffle\": true,\n  \"showResults\": \"IMMEDIATELY\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "settings"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Assign Participant to Assessment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Alice Assignee\",\n  \"email\": \"alice@assignee.com\",\n  \"phone\": \"+1234567890\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "participants"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "List Assessment Participants",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "participants"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Remove Participant from Assessment",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants/{{participantId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "participants",
+                        "{{participantId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
               ]
             }
-          }
+          ]
         },
         {
-          "name": "Add Question to Assessment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"points\": 10\n}"
+          "name": "Execution",
+          "item": [
+            {
+              "name": "Self Paced",
+              "item": [
+                {
+                  "name": "Start Session",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"assessmentId\": \"{{assessmentId}}\",\n  \"participantId\": \"{{participantId}}\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/start",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "start"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Save Answer",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"assessmentQuestionId\": \"{{assessmentQuestionId}}\",\n  \"response\": {\n    \"optionId\": \"opt_1\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "{{sessionId}}",
+                        "answers"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Submit Session",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "{{sessionId}}",
+                        "submit"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Session Result",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "{{sessionId}}",
+                        "result"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Save SHORT_ANSWER AI Answer",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"assessmentQuestionId\": \"{{shortAnswerAssessmentQuestionId}}\",\n  \"response\": {\n    \"text\": \"CLI stands for Command Line Interface.\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "{{sessionId}}",
+                        "answers"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Save ESSAY AI Answer",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"assessmentQuestionId\": \"{{essayAssessmentQuestionId}}\",\n  \"response\": {\n    \"text\": \"NestJS uses a modular architecture that keeps features organized into modules, controllers, and providers. This makes backend code easier to maintain, easier to test with dependency injection, and familiar for teams that know Angular patterns.\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "{{sessionId}}",
+                        "answers"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Submit Session - Run AI Grading",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "{{sessionId}}",
+                        "submit"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get AI-Graded Session Result",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "sessions",
+                        "{{sessionId}}",
+                        "result"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
             },
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "questions"
+            {
+              "name": "Real Time",
+              "item": [
+                {
+                  "name": "Start Real-Time Assessment",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/runtime/real-time/{{assessmentId}}/start",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "runtime",
+                        "real-time",
+                        "{{assessmentId}}",
+                        "start"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "WebSocket Documentation",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/realtime (Not REST)",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "realtime (Not REST)"
+                      ]
+                    },
+                    "description": "Connect via Socket.io to `/realtime`.\n\n**Events to Emit:**\n- `join`: `{ sessionId, participantId }`\n- `submit_answer`: `{ sessionId, assessmentQuestionId, response }`\n\n**Events to Listen For:**\n- `session_state`\n- `question_broadcast`\n- `session_ended`"
+                  },
+                  "response": []
+                }
               ]
             }
-          }
-        },
-        {
-          "name": "Get Assessment Questions",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "questions"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Replace Assessment Questions",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"questionIds\": [\"{{questionId}}\"]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "questions"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Remove Question from Assessment",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions/{{assessmentQuestionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "questions",
-                "{{assessmentQuestionId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Assessment Settings",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "settings"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update Assessment Settings",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mode\": \"SELF_PACED\",\n  \"questionSelection\": \"MANUAL\",\n  \"participantIdentity\": \"EXTERNAL\",\n  \"numQuestions\": 10,\n  \"timeLimit\": 45,\n  \"passMark\": 60,\n  \"isShuffle\": true,\n  \"showResults\": \"IMMEDIATELY\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "settings"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Assign Participant to Assessment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Alice Assignee\",\n  \"email\": \"alice@assignee.com\",\n  \"phone\": \"+1234567890\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "participants"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Assessment Participants",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "participants"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Remove Participant from Assessment",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants/{{participantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "participants",
-                "{{participantId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Publish Assessment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/publish",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "publish"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Archive Assessment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}/archive",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "archive"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Assessment",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Recalculate Session",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assessments/{{sessionId}}/recalculate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{sessionId}}",
-                "recalculate"
-              ]
-            }
-          }
+          ]
         }
       ]
     },
@@ -1349,7 +1717,8 @@
                 "participants"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "List Participants",
@@ -1371,7 +1740,8 @@
                 "participants"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Participant by ID",
@@ -1394,7 +1764,8 @@
                 "{{participantId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Participant",
@@ -1426,7 +1797,8 @@
                 "{{participantId}}"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Participant",
@@ -1449,277 +1821,8 @@
                 "{{participantId}}"
               ]
             }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Runtime",
-      "item": [
-        {
-          "name": "Start Session",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"assessmentId\": \"{{assessmentId}}\",\n  \"participantId\": \"{{participantId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "start"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Save Answer",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"assessmentQuestionId\": \"{{assessmentQuestionId}}\",\n  \"response\": {\n    \"optionId\": \"opt_1\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "{{sessionId}}",
-                "answers"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Submit Session",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "{{sessionId}}",
-                "submit"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Session Result",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "{{sessionId}}",
-                "result"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "AI Grading Test Flow",
-      "item": [
-        {
-          "name": "Save SHORT_ANSWER AI Answer",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"assessmentQuestionId\": \"{{shortAnswerAssessmentQuestionId}}\",\n  \"response\": {\n    \"text\": \"CLI stands for Command Line Interface.\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "{{sessionId}}",
-                "answers"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Save ESSAY AI Answer",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"assessmentQuestionId\": \"{{essayAssessmentQuestionId}}\",\n  \"response\": {\n    \"text\": \"NestJS uses a modular architecture that keeps features organized into modules, controllers, and providers. This makes backend code easier to maintain, easier to test with dependency injection, and familiar for teams that know Angular patterns.\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "{{sessionId}}",
-                "answers"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Submit Session - Run AI Grading",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "{{sessionId}}",
-                "submit"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get AI-Graded Session Result",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "sessions",
-                "{{sessionId}}",
-                "result"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Start Real-Time Assessment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/runtime/real-time/{{assessmentId}}/start",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "runtime",
-                "real-time",
-                "{{assessmentId}}",
-                "start"
-              ]
-            }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -1750,7 +1853,8 @@
                 "report"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Assessment Report",
@@ -1784,7 +1888,8 @@
                 }
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Participant Report",
@@ -1808,7 +1913,8 @@
                 "report"
               ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -1833,7 +1939,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Acme Corp\",\n  \"slug\": \"acme-corp\"\n}"
+              "raw": "{\n  \"name\": \"Acme Corp2\",\n  \"slug\": \"acme-corp2\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/clients",
@@ -1844,7 +1950,8 @@
                 "clients"
               ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "List Clients",
@@ -1866,7 +1973,75 @@
                 "clients"
               ]
             }
-          }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Client by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Client Name\",\n  \"allowedOrigins\": [\n    \"https://updated.acme.com\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         },
         {
           "name": "Rotate Secret",
@@ -1890,81 +2065,152 @@
                 "rotate-secret"
               ]
             }
-          }
+          },
+          "response": []
+        },
+        {
+          "name": "Suspend Client",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/:id/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients",
+                "{{id}}",
+                "suspend"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Client",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/:id/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients",
+                "{{id}}",
+                "activate"
+              ]
+            }
+          },
+          "response": []
         }
       ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api/v1",
-      "type": "string"
+      "value": "http://localhost:3000/api/v1"
     },
     {
       "key": "clientId",
-      "value": "f0f1cb24-c031-4097-a186-0f23995ac62a",
-      "type": "string"
+      "value": "f0f1cb24-c031-4097-a186-0f23995ac62a"
     },
     {
       "key": "topicId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "questionId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "bankId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "assessmentId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "assessmentQuestionId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "shortAnswerAssessmentQuestionId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "essayAssessmentQuestionId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "participantId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "sessionId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "jobId",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "clientSecret",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
       "key": "accessToken",
-      "value": "",
-      "type": "string"
+      "value": ""
     }
   ]
 }

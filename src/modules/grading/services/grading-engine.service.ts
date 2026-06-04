@@ -193,11 +193,15 @@ export class GradingEngineService {
         `Session ${sessionId} graded — ` +
           `score: ${totalScoreAwarded}/${totalMaxScore} ` +
           `(${scorePercent.toFixed(1)}%) ` +
-        `passed: ${isPassed} ` +
+          `passed: ${isPassed} ` +
           `status: ${sheetStatus}`,
       );
 
-      if (sheetStatus === AnswerSheetStatus.GRADED && this.webhooks && sheet.clientId) {
+      if (
+        sheetStatus === AnswerSheetStatus.GRADED &&
+        this.webhooks &&
+        sheet.clientId
+      ) {
         await this.webhooks.dispatch(sheet.clientId, 'assessment.graded', {
           assessmentId: sheet.assessmentId,
           sessionId: sheet.id,
@@ -279,7 +283,11 @@ export class GradingEngineService {
           `score: ${totalScoreAwarded}/${totalMaxScore}`,
       );
 
-      if (sheetStatus === AnswerSheetStatus.GRADED && this.webhooks && sheet.clientId) {
+      if (
+        sheetStatus === AnswerSheetStatus.GRADED &&
+        this.webhooks &&
+        sheet.clientId
+      ) {
         await this.webhooks.dispatch(sheet.clientId, 'assessment.graded', {
           assessmentId: sheet.assessmentId,
           sessionId: sheet.id,

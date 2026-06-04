@@ -1,4 +1,8 @@
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from './public.decorator';
@@ -18,9 +22,20 @@ export class ClientAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err: any, client: any, info: any, context: ExecutionContext, status?: any) {
+  handleRequest(
+    err: any,
+    client: any,
+    info: any,
+    context: ExecutionContext,
+    status?: any,
+  ) {
     if (err || !client) {
-      throw err || new UnauthorizedException('Authentication failed: Invalid or missing client token');
+      throw (
+        err ||
+        new UnauthorizedException(
+          'Authentication failed: Invalid or missing client token',
+        )
+      );
     }
     const request = context.switchToHttp().getRequest();
     request.client = client;

@@ -22,9 +22,13 @@ export class WebhookService {
   /**
    * Dispatches a webhook asynchronously by placing it in the Bull queue.
    */
-  async dispatch(clientId: string | null | undefined, event: string, data: any): Promise<void> {
+  async dispatch(
+    clientId: string | null | undefined,
+    event: string,
+    data: any,
+  ): Promise<void> {
     if (!clientId) return; // Ignore if no associated client
-    
+
     try {
       const payload: WebhookPayload = {
         event,
@@ -34,7 +38,7 @@ export class WebhookService {
 
       await this.webhooksQueue.add(
         'send-webhook',
-        { clientId, payload } as WebhookJobData,
+        { clientId, payload },
         {
           attempts: 3, // Retry up to 3 times
           backoff: {
@@ -45,9 +49,14 @@ export class WebhookService {
           removeOnFail: false, // Keep failed jobs for inspection
         },
       );
-      this.logger.debug(`Queued webhook event '${event}' for client ${clientId}`);
+      this.logger.debug(
+        `Queued webhook event '${event}' for client ${clientId}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to queue webhook event '${event}' for client ${clientId}`, error);
+      this.logger.error(
+        `Failed to queue webhook event '${event}' for client ${clientId}`,
+        error,
+      );
     }
   }
 }

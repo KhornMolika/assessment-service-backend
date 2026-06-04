@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -189,7 +188,8 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
       const assessmentId = this.socketRooms.get(socket.id);
       if (!assessmentId) throw new Error('Not in a room');
 
-      const session = await this.sessionService['redis'].getSession(assessmentId);
+      const session =
+        await this.sessionService['redis'].getSession(assessmentId);
       if (session?.hostSocketId !== socket.id) {
         throw new Error('Only the host can reveal answers');
       }
@@ -229,8 +229,10 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         return;
       }
 
-      const session = await this.sessionService['redis'].getSession(assessmentId);
-      if (!session || !session.currentQuestionId) throw new Error('No active question');
+      const session =
+        await this.sessionService['redis'].getSession(assessmentId);
+      if (!session || !session.currentQuestionId)
+        throw new Error('No active question');
 
       const result = await this.sessionService.submitAnswer(
         assessmentId,
@@ -248,11 +250,13 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
       const hostSession =
         await this.sessionService['redis'].getSession(assessmentId);
       if (hostSession?.hostSocketId) {
-        this.server.to(hostSession.hostSocketId).emit(RealtimeEvents.ROOM_UPDATE, {
-          event: 'answer:received',
-          totalAnswered: result.totalAnswered,
-          totalParticipants: result.totalParticipants,
-        });
+        this.server
+          .to(hostSession.hostSocketId)
+          .emit(RealtimeEvents.ROOM_UPDATE, {
+            event: 'answer:received',
+            totalAnswered: result.totalAnswered,
+            totalParticipants: result.totalParticipants,
+          });
       }
 
       if (result.totalAnswered >= result.totalParticipants) {

@@ -33,7 +33,10 @@ async function setupTestData(app: INestApplication, token: string) {
     .post('/api/v1/topics')
     .set('Authorization', `Bearer ${token}`)
     .send({ name: `Runtime Topic ${Date.now()}` });
-  const topicId = topicRes.body.data.id;
+  const topicId = String(
+    ((topicRes.body as Record<string, unknown>).data as Record<string, unknown>)
+      .id,
+  );
 
   // 2. Create Question Bank
   const bankRes = await request(app.getHttpServer())
@@ -72,7 +75,7 @@ async function setupTestData(app: INestApplication, token: string) {
       type: 'EXAM',
     });
   const assessmentId = assessmentRes.body.data.id;
-  
+
   // 6. Add Question to Assessment
   await request(app.getHttpServer())
     .post(`/api/v1/assessments/${assessmentId}/questions`)
@@ -101,7 +104,7 @@ async function setupTestData(app: INestApplication, token: string) {
   const aQuestionsRes = await request(app.getHttpServer())
     .get(`/api/v1/assessments/${assessmentId}/questions`)
     .set('Authorization', `Bearer ${token}`);
-    
+
   const assessmentQuestionId = aQuestionsRes.body.data[0].id;
 
   return { assessmentId, assessmentQuestionId };
@@ -155,7 +158,9 @@ describe('RuntimeModule (e2e)', () => {
 
       if (response.status !== 201) {
         console.error('Failed to start session:', response.body);
-        throw new Error(`Failed to start session: ${JSON.stringify(response.body)}`);
+        throw new Error(
+          `Failed to start session: ${JSON.stringify(response.body)}`,
+        );
       }
 
       expect(response.body.data).toBeDefined();

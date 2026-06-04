@@ -9,7 +9,10 @@ import { AIGradingService } from './services/ai-grading.service';
 import { AIGradingProcessor } from './jobs/ai-grading.processor';
 import { GradingModule } from '@modules/grading/grading.module';
 import { ConfigService } from '@nestjs/config';
-import { AI_PROVIDER_TOKEN, IAiProvider } from './interfaces/ai-provider.interface';
+import {
+  AI_PROVIDER_TOKEN,
+  IAiProvider,
+} from './interfaces/ai-provider.interface';
 import { DeepSeekService } from './services/deepseek.service';
 
 const aiProviderFactory = {

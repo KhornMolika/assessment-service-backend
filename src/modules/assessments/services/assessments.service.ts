@@ -72,6 +72,23 @@ export class AssessmentsService {
   }
 
   /**
+   * Paginated assessments globally across all topics.
+   * Includes settings in each result.
+   */
+  async findAllGlobal(query: PaginationQueryDto) {
+    const [data, total] = await this.assessments.findPaginatedGlobal(query);
+    return {
+      data,
+      meta: {
+        total,
+        page: query.page,
+        limit: query.limit,
+        pageCount: Math.ceil(total / query.limit),
+      },
+    };
+  }
+
+  /**
    * Full assessment detail — settings, ordered questions with source records.
    * Throws 404 if not found.
    */
@@ -93,7 +110,7 @@ export class AssessmentsService {
       description: dto.description,
       topicId,
       status: AssessmentStatus.DRAFT,
-    } as any);
+    });
 
     await this.assessmentSettings.save({
       assessmentId: assessment.id,
@@ -112,7 +129,7 @@ export class AssessmentsService {
    */
   async update(id: string, dto: UpdateAssessmentDto): Promise<Assessment> {
     await this.assertDraft(id);
-    await this.assessments.update({ id }, dto as any);
+    await this.assessments.update({ id }, dto);
     return this.assessments.findOneWithDetails(id) as Promise<Assessment>;
   }
 
@@ -297,7 +314,10 @@ export class AssessmentsService {
       throw new ConflictException('Duplicate questionIds inside the request');
     }
 
-    const questionsMap: Record<string, any> = {};
+    const questionsMap: Record<
+      string,
+      import('../../questions/entities/question.entity').Question
+    > = {};
 
     for (const dto of dtos) {
       const question = await this.questions.findById(dto.questionId);
@@ -331,7 +351,8 @@ export class AssessmentsService {
       questionsMap[dto.questionId] = question;
     }
 
-    const savedQuestions: any[] = [];
+    const savedQuestions: import('../entities/assessment-question.entity').AssessmentQuestion[] =
+      [];
     let maxOrder = await this.assessmentQuestions.findMaxOrder(assessmentId);
 
     for (const dto of dtos) {
@@ -525,7 +546,8 @@ export class AssessmentsService {
         );
       }
 
-      const { source, bankId, total, distribution } = effectiveRules;
+      const { source, bankId, total, distribution } =
+        effectiveRules as import('../dto/selection-rules.dto').SelectionRulesDto;
 
       if (!['bank', 'topic'].includes(source)) {
         throw new BadRequestException(
@@ -540,14 +562,14 @@ export class AssessmentsService {
       }
 
       if (distribution) {
-        const distributionTotal = Object.values(distribution).reduce(
-          (sum: number, n: any) => sum + (Number(n) ?? 0),
+        const distributionTotal = (Object.values(distribution) as unknown[]).reduce(
+          (sum: number, n: unknown) => sum + (Number(n) || 0),
           0,
         );
         if (distributionTotal !== total) {
           throw new BadRequestException(
-            `selectionRules.distribution sum (${distributionTotal}) must equal ` +
-              `selectionRules.total (${total})`,
+            `selectionRules.distribution sum (${String(distributionTotal)}) must equal ` +
+              `selectionRules.total (${String(total)})`,
           );
         }
       }
@@ -555,7 +577,7 @@ export class AssessmentsService {
       if (source === SelectionSource.BANK && bankId) {
         const assessment = await this.assessments.findById(assessmentId);
         const bank = await this.questionBanks.findOne({ id: bankId });
-        if (!bank || (bank as any).topicId !== assessment!.topicId) {
+        if (!bank || bank.topicId !== assessment!.topicId) {
           throw new BadRequestException(
             'selectionRules.bankId must belong to the same topic as this assessment',
           );
@@ -563,7 +585,7 @@ export class AssessmentsService {
       }
     }
 
-    await this.assessmentSettings.update({ id: current.id }, dto);
+    await this.assessmentSettings.update({ id: current.id }, dto as any);
     return this.assessmentSettings.findByAssessment(assessmentId);
   }
 
@@ -757,7 +779,7 @@ export class AssessmentsService {
     await Promise.all(
       aqs.map((aq) =>
         this.assessmentQuestions.update(
-          { id: aq.id } as any,
+          { id: aq.id },
           {
             questionType: aq.question.type,
             questionSnapshot: {
@@ -768,7 +790,7 @@ export class AssessmentsService {
               correctAnswer: aq.question.correctAnswer,
               difficulty: aq.question.difficulty,
             },
-          } as any,
+          },
         ),
       ),
     );

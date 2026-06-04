@@ -165,7 +165,6 @@ export class AIGradingService {
     }
   }
 
-  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
   private resolvePayload(entry: AnswerEntry) {
     const snapshot = entry.assessmentQuestion?.questionSnapshot as Record<
       string,
@@ -215,5 +214,4 @@ export class AIGradingService {
       confidence: evaluation.confidence,
     });
   }
-  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 }

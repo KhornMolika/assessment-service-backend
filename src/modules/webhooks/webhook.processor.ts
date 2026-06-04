@@ -14,7 +14,7 @@ export class WebhookProcessor {
   @Process('send-webhook')
   async handleWebhookDispatch(job: Job<WebhookJobData>) {
     const { clientId, payload } = job.data;
-    
+
     // 1. Fetch client from DB to get webhookUrl and webhookSecret
     const client = await this.clientRepo.findByClientId(clientId);
     if (!client) {
@@ -30,7 +30,7 @@ export class WebhookProcessor {
     // 2. Prepare payload string and signature
     const payloadString = JSON.stringify(payload);
     let signature = '';
-    
+
     if (client.webhookSecret) {
       signature = crypto
         .createHmac('sha256', client.webhookSecret)
@@ -40,8 +40,10 @@ export class WebhookProcessor {
 
     // 3. Dispatch the HTTP POST request using native fetch
     try {
-      this.logger.debug(`Dispatching webhook event '${payload.event}' to ${client.webhookUrl}`);
-      
+      this.logger.debug(
+        `Dispatching webhook event '${payload.event}' to ${client.webhookUrl}`,
+      );
+
       const response = await fetch(client.webhookUrl, {
         method: 'POST',
         headers: {
@@ -53,12 +55,18 @@ export class WebhookProcessor {
       });
 
       if (!response.ok) {
-        throw new Error(`Endpoint responded with status ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Endpoint responded with status ${response.status} ${response.statusText}`,
+        );
       }
 
-      this.logger.log(`Successfully dispatched webhook '${payload.event}' to ${client.webhookUrl}`);
+      this.logger.log(
+        `Successfully dispatched webhook '${payload.event}' to ${client.webhookUrl}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to dispatch webhook to ${client.webhookUrl}: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to dispatch webhook to ${client.webhookUrl}: ${(error as Error).message}`,
+      );
       throw error; // Let Bull catch this and retry
     }
   }

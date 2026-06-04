@@ -1,4 +1,11 @@
-import { ConflictException, Injectable, NotFoundException, InternalServerErrorException, Logger, HttpException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+  Logger,
+  HttpException,
+} from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
 import { ClientRepository } from './client.repository';
@@ -34,7 +41,9 @@ export class ClientService {
     try {
       const existing = await this.clientRepo.findBySlug(dto.slug);
       if (existing) {
-        throw new ConflictException(`Client provisioning failed: The slug '${dto.slug}' is already in use by another client`);
+        throw new ConflictException(
+          `Client provisioning failed: The slug '${dto.slug}' is already in use by another client`,
+        );
       }
 
       const rawSecret = this.generateSecret();
@@ -51,8 +60,13 @@ export class ClientService {
       return { client: saved, rawSecret };
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error(`Failed to create client: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException('An unexpected error occurred while provisioning the client');
+      this.logger.error(
+        `Failed to create client: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while provisioning the client',
+      );
     }
   }
 
@@ -60,8 +74,13 @@ export class ClientService {
     try {
       return await this.clientRepo.find({ order: { createdAt: 'DESC' } });
     } catch (error) {
-      this.logger.error(`Failed to fetch clients: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException('An unexpected error occurred while fetching clients');
+      this.logger.error(
+        `Failed to fetch clients: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while fetching clients',
+      );
     }
   }
 
@@ -69,13 +88,20 @@ export class ClientService {
     try {
       const client = await this.clientRepo.findOne({ where: { id } });
       if (!client) {
-        throw new NotFoundException(`Client lookup failed: The requested client ID '${id}' does not exist`);
+        throw new NotFoundException(
+          `Client lookup failed: The requested client ID '${id}' does not exist`,
+        );
       }
       return client;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error(`Failed to find client with ID ${id}: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException('An unexpected error occurred while looking up the client');
+      this.logger.error(
+        `Failed to find client with ID ${id}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while looking up the client',
+      );
     }
   }
 
@@ -88,8 +114,13 @@ export class ClientService {
       return saved;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error(`Failed to update client ${id}: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException('An unexpected error occurred while updating the client');
+      this.logger.error(
+        `Failed to update client ${id}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while updating the client',
+      );
     }
   }
 
@@ -97,14 +128,22 @@ export class ClientService {
     try {
       const client = await this.findOne(id);
       const rawSecret = this.generateSecret();
-      client.clientSecretHash = await argon2.hash(rawSecret, this.argon2Options);
+      client.clientSecretHash = await argon2.hash(
+        rawSecret,
+        this.argon2Options,
+      );
       const saved = await this.clientRepo.save(client);
       await this.cacheService.invalidate(`client:${saved.clientId}`);
       return { client: saved, rawSecret };
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error(`Failed to rotate secret for client ${id}: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException('An unexpected error occurred while rotating the client secret');
+      this.logger.error(
+        `Failed to rotate secret for client ${id}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while rotating the client secret',
+      );
     }
   }
 
@@ -117,21 +156,38 @@ export class ClientService {
       return saved;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      this.logger.error(`Failed to set active status for client ${id}: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException('An unexpected error occurred while updating the client active status');
+      this.logger.error(
+        `Failed to set active status for client ${id}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred while updating the client active status',
+      );
     }
   }
 
   // Used by AuthService.token() — single source of truth for credential validation
-  async verifySecret(clientId: string, rawSecret: string): Promise<Client | null> {
+  async verifySecret(
+    clientId: string,
+    rawSecret: string,
+  ): Promise<Client | null> {
     try {
       const client = await this.clientRepo.findByClientId(clientId);
       if (!client || !client.isActive) return null;
-      const valid = await argon2.verify(client.clientSecretHash, rawSecret, this.argon2Options);
+      const valid = await argon2.verify(
+        client.clientSecretHash,
+        rawSecret,
+        this.argon2Options,
+      );
       return valid ? client : null;
     } catch (error) {
-      this.logger.error(`Failed to verify secret for clientId ${clientId}: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException('An unexpected error occurred during secret verification');
+      this.logger.error(
+        `Failed to verify secret for clientId ${clientId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        'An unexpected error occurred during secret verification',
+      );
     }
     // Note: do NOT distinguish "inactive" from "wrong secret" — both return null
     // This prevents information leakage about whether a clientId exists

@@ -40,6 +40,30 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
   }
 
   /**
+   * Paginated assessments across all topics.
+   * Includes settings. Supports name search.
+   */
+  findPaginatedGlobal(query: PaginationQueryDto) {
+    const { page, limit, search, sortBy = 'createdAt', order = 'desc' } = query;
+
+    const builder = this.qb('a')
+      .leftJoinAndSelect('a.settings', 'settings')
+      .andWhere('a.deletedAt IS NULL');
+
+    if (search?.trim()) {
+      builder.andWhere('a.name ILIKE :search', {
+        search: `%${search.trim()}%`,
+      });
+    }
+
+    return builder
+      .orderBy(`a.${sortBy}`, order.toUpperCase() as 'ASC' | 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+  }
+
+  /**
    * Full assessment detail with settings, ordered questions,
    * and each question's source record.
    */

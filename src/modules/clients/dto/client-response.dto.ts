@@ -17,6 +17,7 @@ export class ClientResponseDto {
 
 // Returned ONCE at creation and at secret rotation — never again
 export class ClientCreatedResponseDto extends ClientResponseDto {
-  @Expose() @ApiProperty({ description: 'Raw secret — shown once, store securely' })
+  @Expose()
+  @ApiProperty({ description: 'Raw secret — shown once, store securely' })
   clientSecret!: string;
 }

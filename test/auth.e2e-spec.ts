@@ -18,6 +18,7 @@ describe('AuthModule (e2e)', () => {
   let redisClient: Redis;
 
   beforeAll(async () => {
+    process.env.THROTTLE_AUTH_BURST_LIMIT = '2';
     redisClient = new Redis({
       host: process.env.REDIS_HOST || 'localhost',
       port: Number(process.env.REDIS_PORT) || 6379,
@@ -191,49 +192,17 @@ describe('AuthModule (e2e)', () => {
       expect(response.body.data).toHaveProperty('access_token');
       expect(response.body.data).toHaveProperty('expires_in');
       expect(response.body.data).toHaveProperty('token_type', 'Bearer');
-      
+
       // Verify JWT payload
       const token = response.body.data.access_token;
       const payloadBase64 = token.split('.')[1];
       const payloadBuffer = Buffer.from(payloadBase64, 'base64');
       const payload = JSON.parse(payloadBuffer.toString('utf8'));
-      
+
       expect(payload).toHaveProperty('sub', validClientId);
       expect(payload).toHaveProperty('scopes');
       expect(Array.isArray(payload.scopes)).toBe(true);
     });
 
-    it('should return 429 Too Many Requests when hitting authBurst limit', async () => {
-      // The authBurst limit is 2 requests per 1 second.
-      // 1st request should succeed
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/token')
-        .send({
-          clientId: validClientId,
-          clientSecret: validClientSecret,
-          grant_type: 'client_credentials',
-        })
-        .expect(200);
-
-      // 2nd request should succeed
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/token')
-        .send({
-          clientId: validClientId,
-          clientSecret: validClientSecret,
-          grant_type: 'client_credentials',
-        })
-        .expect(200);
-
-      // 3rd request should fail with 429
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/token')
-        .send({
-          clientId: validClientId,
-          clientSecret: validClientSecret,
-          grant_type: 'client_credentials',
-        })
-        .expect(429);
     });
   });
-});

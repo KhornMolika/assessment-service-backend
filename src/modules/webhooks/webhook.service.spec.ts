@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bull';
-import { WebhookService, WebhookPayload, WebhookJobData } from './webhook.service';
+import {
+  WebhookService,
+  WebhookPayload,
+  WebhookJobData,
+} from './webhook.service';
 
 describe('WebhookService', () => {
   let service: WebhookService;
@@ -47,7 +51,7 @@ describe('WebhookService', () => {
       }),
       expect.objectContaining({
         attempts: 3,
-      })
+      }),
     );
   });
 

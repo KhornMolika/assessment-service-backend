@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { TokenRequestDto } from './dto/token-request.dto';
@@ -15,7 +22,9 @@ export class AuthController {
   @Public() // exempt from global ClientAuthGuard
   @Post('token')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'OAuth2 client credentials grant — returns Bearer token' })
+  @ApiOperation({
+    summary: 'OAuth2 client credentials grant — returns Bearer token',
+  })
   async token(@Body() dto: TokenRequestDto): Promise<TokenResponseDto> {
     return this.authService.token(dto);
   }

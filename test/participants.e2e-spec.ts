@@ -86,7 +86,7 @@ describe('ParticipantsModule (e2e)', () => {
 
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data.length).toBeGreaterThan(0);
-      
+
       const found = response.body.data.find((p: any) => p.id === participantId);
       expect(found).toBeDefined();
       expect(found.name).toBe('John Doe');

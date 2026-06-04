@@ -43,7 +43,7 @@ describe('ClientsModule (e2e)', () => {
         allowedOrigins: ['https://admin.com'],
       })
       .expect(201);
-      
+
     const tokenRes = await request(app.getHttpServer())
       .post('/api/v1/auth/token')
       .send({
@@ -52,7 +52,7 @@ describe('ClientsModule (e2e)', () => {
         grant_type: 'client_credentials',
       })
       .expect(200);
-      
+
     adminToken = tokenRes.body.data.access_token;
   });
 
@@ -102,9 +102,7 @@ describe('ClientsModule (e2e)', () => {
     });
 
     it('GET - should fail without token', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/clients')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/clients').expect(401);
     });
 
     it('GET - should return array of clients when authenticated', async () => {
@@ -114,7 +112,9 @@ describe('ClientsModule (e2e)', () => {
         .expect(200);
 
       expect(Array.isArray(response.body.data)).toBeTruthy();
-      expect(response.body.data.some((c: any) => c.id === clientDbId)).toBeTruthy();
+      expect(
+        response.body.data.some((c: any) => c.id === clientDbId),
+      ).toBeTruthy();
     });
 
     it('GET /:id - should return the specific client', async () => {
@@ -139,7 +139,9 @@ describe('ClientsModule (e2e)', () => {
         .expect(200);
 
       expect(response.body.data.name).toBe('Updated E2E Client');
-      expect(response.body.data.webhookUrl).toBe('https://new-acme.com/webhook');
+      expect(response.body.data.webhookUrl).toBe(
+        'https://new-acme.com/webhook',
+      );
       expect(response.body.data.webhookSecret).toBeUndefined();
     });
 
@@ -163,7 +165,7 @@ describe('ClientsModule (e2e)', () => {
 
     it('POST /:id/rotate-secret - should rotate the secret', async () => {
       // Wait for authBurst limit window (1000ms) to reset from earlier token requests
-      await new Promise(r => setTimeout(r, 1100));
+      await new Promise((r) => setTimeout(r, 1100));
 
       const response = await request(app.getHttpServer())
         .post(`/api/v1/clients/${clientDbId}/rotate-secret`)
@@ -172,7 +174,7 @@ describe('ClientsModule (e2e)', () => {
 
       expect(response.body.data.clientSecret).toBeDefined();
       expect(response.body.data.clientSecret).not.toBe(clientSecret);
-      
+
       const newSecret = response.body.data.clientSecret;
 
       // Try to get token with old secret -> should fail (this is request 2/2 in 1s burst window)
@@ -186,7 +188,7 @@ describe('ClientsModule (e2e)', () => {
         .expect(401);
 
       // Wait for authBurst limit window (1000ms) to reset
-      await new Promise(r => setTimeout(r, 1100));
+      await new Promise((r) => setTimeout(r, 1100));
 
       // Try to get token with new secret -> should succeed
       await request(app.getHttpServer())

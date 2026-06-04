@@ -86,6 +86,7 @@ export class SessionReportService {
         }
 
         return {
+          entryId: entry.id,
           order: aq?.order ?? null,
           assessmentQuestionId: aq?.id ?? null,
           questionText: snapshot.questionText ?? null,

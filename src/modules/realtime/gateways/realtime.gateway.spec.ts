@@ -48,9 +48,9 @@ describe('RealtimeGateway', () => {
         { provide: RealtimeSessionService, useValue: sessionServiceMock },
       ],
     })
-    .overrideInterceptor(WsClientContextInterceptor)
-    .useValue({ intercept: jest.fn((context, next) => next.handle()) }) // mock interceptor
-    .compile();
+      .overrideInterceptor(WsClientContextInterceptor)
+      .useValue({ intercept: jest.fn((context, next) => next.handle()) }) // mock interceptor
+      .compile();
 
     gateway = module.get<RealtimeGateway>(RealtimeGateway);
     (gateway as any).server = serverMock;
@@ -66,118 +66,224 @@ describe('RealtimeGateway', () => {
 
   describe('handleJoinRoom', () => {
     it('should join room and emit update', async () => {
-      sessionServiceMock.joinRoom.mockResolvedValue({ count: 1, participants: [] });
+      sessionServiceMock.joinRoom.mockResolvedValue({
+        count: 1,
+        participants: [],
+      });
       sessionServiceMock.redis.getSession.mockResolvedValue(null);
 
-      await gateway.handleJoinRoom(socketMock, { roomId: 'room-1', role: RoomRole.HOST });
-      
+      await gateway.handleJoinRoom(socketMock, {
+        roomId: 'room-1',
+        role: RoomRole.HOST,
+      });
+
       expect(socketMock.join).toHaveBeenCalledWith('room-1');
-      expect(sessionServiceMock.joinRoom).toHaveBeenCalledWith('room-1', 'socket-1', null, RoomRole.HOST, null);
+      expect(sessionServiceMock.joinRoom).toHaveBeenCalledWith(
+        'room-1',
+        'socket-1',
+        null,
+        RoomRole.HOST,
+        null,
+      );
       expect(serverMock.to).toHaveBeenCalledWith('room-1');
-      expect(serverMock.emit).toHaveBeenCalledWith(RealtimeEvents.ROOM_UPDATE, { count: 1, participants: [] });
+      expect(serverMock.emit).toHaveBeenCalledWith(RealtimeEvents.ROOM_UPDATE, {
+        count: 1,
+        participants: [],
+      });
     });
 
     it('should handle errors and emit ERROR event', async () => {
       sessionServiceMock.joinRoom.mockRejectedValue(new Error('Test error'));
-      await gateway.handleJoinRoom(socketMock, { roomId: 'room-1', role: RoomRole.HOST });
-      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, { event: RealtimeEvents.JOIN_ROOM, message: 'Test error' });
+      await gateway.handleJoinRoom(socketMock, {
+        roomId: 'room-1',
+        role: RoomRole.HOST,
+      });
+      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, {
+        event: RealtimeEvents.JOIN_ROOM,
+        message: 'Test error',
+      });
     });
   });
 
   describe('handleStartQuestion', () => {
     it('should throw error if not in room', async () => {
       await gateway.handleStartQuestion(socketMock, { questionId: 'q1' });
-      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, { event: RealtimeEvents.START_Q, message: 'Not in a room' });
+      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, {
+        event: RealtimeEvents.START_Q,
+        message: 'Not in a room',
+      });
     });
 
     it('should start question and emit NEW_QUESTION', async () => {
       (gateway as any).socketRooms.set('socket-1', 'room-1');
       sessionServiceMock.redis.getSession.mockResolvedValue(null);
-      sessionServiceMock.startQuestion.mockResolvedValue({ questionNumber: 1, totalQuestions: 5 });
+      sessionServiceMock.startQuestion.mockResolvedValue({
+        questionNumber: 1,
+        totalQuestions: 5,
+      });
 
       await gateway.handleStartQuestion(socketMock, { questionId: 'q1' });
 
-      expect(sessionServiceMock.startQuestion).toHaveBeenCalledWith('room-1', 'socket-1', 'q1');
+      expect(sessionServiceMock.startQuestion).toHaveBeenCalledWith(
+        'room-1',
+        'socket-1',
+        'q1',
+      );
       expect(serverMock.to).toHaveBeenCalledWith('room-1');
-      expect(serverMock.emit).toHaveBeenCalledWith(RealtimeEvents.NEW_QUESTION, { questionNumber: 1, totalQuestions: 5 });
+      expect(serverMock.emit).toHaveBeenCalledWith(
+        RealtimeEvents.NEW_QUESTION,
+        { questionNumber: 1, totalQuestions: 5 },
+      );
     });
 
     it('should end session if no more questions', async () => {
       (gateway as any).socketRooms.set('socket-1', 'room-1');
       sessionServiceMock.redis.getSession.mockResolvedValue(null);
-      sessionServiceMock.startQuestion.mockRejectedValue(new Error('No more questions'));
+      sessionServiceMock.startQuestion.mockRejectedValue(
+        new Error('No more questions'),
+      );
       sessionServiceMock.endSession.mockResolvedValue({ leaderboard: [] });
 
       await gateway.handleStartQuestion(socketMock, { questionId: 'q1' });
 
       expect(sessionServiceMock.endSession).toHaveBeenCalledWith('room-1');
       expect(serverMock.to).toHaveBeenCalledWith('room-1');
-      expect(serverMock.emit).toHaveBeenCalledWith(RealtimeEvents.SHOW_FINAL_RANK, []);
+      expect(serverMock.emit).toHaveBeenCalledWith(
+        RealtimeEvents.SHOW_FINAL_RANK,
+        [],
+      );
     });
   });
 
   describe('handleRevealAnswers', () => {
     it('should error if not host', async () => {
       (gateway as any).socketRooms.set('socket-1', 'room-1');
-      sessionServiceMock.redis.getSession.mockResolvedValue({ hostSocketId: 'other-socket' });
+      sessionServiceMock.redis.getSession.mockResolvedValue({
+        hostSocketId: 'other-socket',
+      });
 
       await gateway.handleRevealAnswers(socketMock);
-      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, { event: RealtimeEvents.REVEAL_ANSWERS, message: 'Only the host can reveal answers' });
+      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, {
+        event: RealtimeEvents.REVEAL_ANSWERS,
+        message: 'Only the host can reveal answers',
+      });
     });
   });
 
   describe('handleSubmitAnswer', () => {
     it('should error if not in room', async () => {
-      await gateway.handleSubmitAnswer(socketMock, { choice: 'A', response: null, timeTaken: 10 });
-      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, { event: RealtimeEvents.SUBMIT_ANS, message: 'Not in a room' });
+      await gateway.handleSubmitAnswer(socketMock, {
+        choice: 'A',
+        response: null,
+        timeTaken: 10,
+      });
+      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, {
+        event: RealtimeEvents.SUBMIT_ANS,
+        message: 'Not in a room',
+      });
     });
 
     it('should error if participant not found in room', async () => {
       (gateway as any).socketRooms.set('socket-1', 'room-1');
       sessionServiceMock.redis.getMembers.mockResolvedValue([]);
-      
-      await gateway.handleSubmitAnswer(socketMock, { choice: 'A', response: null, timeTaken: 10 });
-      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, { event: RealtimeEvents.SUBMIT_ANS, message: 'Participant not found in room' });
+
+      await gateway.handleSubmitAnswer(socketMock, {
+        choice: 'A',
+        response: null,
+        timeTaken: 10,
+      });
+      expect(socketMock.emit).toHaveBeenCalledWith(RealtimeEvents.ERROR, {
+        event: RealtimeEvents.SUBMIT_ANS,
+        message: 'Participant not found in room',
+      });
     });
 
     it('should submit answer successfully', async () => {
       (gateway as any).socketRooms.set('socket-1', 'room-1');
-      sessionServiceMock.redis.getMembers.mockResolvedValue([{ socketId: 'socket-1', participantId: 'p1' }]);
-      sessionServiceMock.redis.getSession.mockResolvedValue({ currentQuestionId: 'q1' });
-      sessionServiceMock.submitAnswer.mockResolvedValue({ stored: true, totalAnswered: 1, totalParticipants: 2 });
+      sessionServiceMock.redis.getMembers.mockResolvedValue([
+        { socketId: 'socket-1', participantId: 'p1' },
+      ]);
+      sessionServiceMock.redis.getSession.mockResolvedValue({
+        currentQuestionId: 'q1',
+      });
+      sessionServiceMock.submitAnswer.mockResolvedValue({
+        stored: true,
+        totalAnswered: 1,
+        totalParticipants: 2,
+      });
 
-      await gateway.handleSubmitAnswer(socketMock, { choice: 'A', response: null, timeTaken: 10 });
-      expect(sessionServiceMock.submitAnswer).toHaveBeenCalledWith('room-1', 'p1', 'q1', 'A', null, 10);
+      await gateway.handleSubmitAnswer(socketMock, {
+        choice: 'A',
+        response: null,
+        timeTaken: 10,
+      });
+      expect(sessionServiceMock.submitAnswer).toHaveBeenCalledWith(
+        'room-1',
+        'p1',
+        'q1',
+        'A',
+        null,
+        10,
+      );
     });
 
     it('should end question if all participants answered', async () => {
       (gateway as any).socketRooms.set('socket-1', 'room-1');
-      sessionServiceMock.redis.getMembers.mockResolvedValue([{ socketId: 'socket-1', participantId: 'p1' }]);
-      sessionServiceMock.redis.getSession.mockResolvedValue({ currentQuestionId: 'q1' });
-      sessionServiceMock.submitAnswer.mockResolvedValue({ stored: true, totalAnswered: 2, totalParticipants: 2 });
-      
+      sessionServiceMock.redis.getMembers.mockResolvedValue([
+        { socketId: 'socket-1', participantId: 'p1' },
+      ]);
+      sessionServiceMock.redis.getSession.mockResolvedValue({
+        currentQuestionId: 'q1',
+      });
+      sessionServiceMock.submitAnswer.mockResolvedValue({
+        stored: true,
+        totalAnswered: 2,
+        totalParticipants: 2,
+      });
+
       // endQuestion logic
-      sessionServiceMock.endQuestion.mockResolvedValue({ stats: {}, correctAnswer: { value: 'A' } });
+      sessionServiceMock.endQuestion.mockResolvedValue({
+        stats: {},
+        correctAnswer: { value: 'A' },
+      });
       sessionServiceMock.getRankData.mockResolvedValue({ top5: [] });
       // overriding getMembers to return an empty array for rank sending loop to not crash
-      sessionServiceMock.redis.getMembers.mockResolvedValueOnce([{ socketId: 'socket-1', participantId: 'p1' }]).mockResolvedValueOnce([]); 
+      sessionServiceMock.redis.getMembers
+        .mockResolvedValueOnce([{ socketId: 'socket-1', participantId: 'p1' }])
+        .mockResolvedValueOnce([]);
 
-      await gateway.handleSubmitAnswer(socketMock, { choice: 'A', response: null, timeTaken: 10 });
+      await gateway.handleSubmitAnswer(socketMock, {
+        choice: 'A',
+        response: null,
+        timeTaken: 10,
+      });
       expect(sessionServiceMock.endQuestion).toHaveBeenCalledWith('room-1');
-      expect(serverMock.emit).toHaveBeenCalledWith(RealtimeEvents.Q_RESULTS, expect.anything());
+      expect(serverMock.emit).toHaveBeenCalledWith(
+        RealtimeEvents.Q_RESULTS,
+        expect.anything(),
+      );
     });
   });
 
   describe('handleDisconnect', () => {
     it('should handle disconnect if in room', async () => {
       (gateway as any).socketRooms.set('socket-1', 'room-1');
-      sessionServiceMock.handleDisconnect.mockResolvedValue({ count: 0, participants: [] });
+      sessionServiceMock.handleDisconnect.mockResolvedValue({
+        count: 0,
+        participants: [],
+      });
 
       await gateway.handleDisconnect(socketMock);
-      
-      expect(sessionServiceMock.handleDisconnect).toHaveBeenCalledWith('socket-1', 'room-1');
+
+      expect(sessionServiceMock.handleDisconnect).toHaveBeenCalledWith(
+        'socket-1',
+        'room-1',
+      );
       expect(serverMock.to).toHaveBeenCalledWith('room-1');
-      expect(serverMock.emit).toHaveBeenCalledWith(RealtimeEvents.ROOM_UPDATE, { count: 0, participants: [] });
+      expect(serverMock.emit).toHaveBeenCalledWith(RealtimeEvents.ROOM_UPDATE, {
+        count: 0,
+        participants: [],
+      });
       expect((gateway as any).socketRooms.get('socket-1')).toBeUndefined();
     });
   });

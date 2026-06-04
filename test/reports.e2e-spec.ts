@@ -162,7 +162,8 @@ describe('ReportsModule (e2e)', () => {
         participantId,
       });
     sessionId = startRes.body.data.sessionId;
-    const assessmentQuestionId = startRes.body.data.questions[0].assessmentQuestionId;
+    const assessmentQuestionId =
+      startRes.body.data.questions[0].assessmentQuestionId;
 
     // 9. Answer Question
     await request(app.getHttpServer())

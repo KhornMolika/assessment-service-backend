@@ -38,7 +38,11 @@ async function createIsolatedTopic(app: INestApplication, token: string) {
   return topicRes.body.data.id;
 }
 
-async function createQuestionForBank(app: INestApplication, token: string, topicId: string) {
+async function createQuestionForBank(
+  app: INestApplication,
+  token: string,
+  topicId: string,
+) {
   const qRes = await request(app.getHttpServer())
     .post(`/api/v1/topics/${topicId}/questions`)
     .set('Authorization', `Bearer ${token}`)
@@ -49,15 +53,15 @@ async function createQuestionForBank(app: INestApplication, token: string, topic
       points: 10,
       options: {
         trueLabel: 'Yes',
-        falseLabel: 'No'
+        falseLabel: 'No',
       },
       correctAnswers: { value: true },
     });
-  
+
   if (qRes.status !== 201) {
     throw new Error(`Failed to create question: ${JSON.stringify(qRes.body)}`);
   }
-  
+
   return qRes.body.data.id;
 }
 

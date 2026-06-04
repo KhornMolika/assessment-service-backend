@@ -35,7 +35,9 @@ describe('SessionReportService', () => {
   describe('getSessionReport', () => {
     it('should throw NotFoundException if session not found', async () => {
       reportRepoMock.getSessionDetail.mockResolvedValue(null);
-      await expect(service.getSessionReport('a1', 's1')).rejects.toThrow(NotFoundException);
+      await expect(service.getSessionReport('a1', 's1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return session report', async () => {
@@ -48,7 +50,9 @@ describe('SessionReportService', () => {
         grade: 'A',
         isPassed: true,
         assessment: { name: 'Test Assessment', settings: { passMark: 50 } },
-        assessmentParticipant: { participant: { id: 'p1', name: 'Test User', email: 'test@test.com' } },
+        assessmentParticipant: {
+          participant: { id: 'p1', name: 'Test User', email: 'test@test.com' },
+        },
         entries: [
           {
             scoreAwarded: 10,
@@ -64,29 +68,32 @@ describe('SessionReportService', () => {
                 difficulty: 'EASY',
                 options: { options: [{ id: 'A', text: 'Option A' }] },
                 correctAnswer: { optionIds: ['A'] },
-              }
+              },
             },
             aiJobs: [
               {
                 status: AIGradingJobStatus.COMPLETED,
                 processedAt: new Date('2023-01-01T00:05:00Z'),
                 suggestedScore: 10,
-                reasoning: JSON.stringify({ reasoning: 'Good job', keyPointsAddressed: ['all'] }),
-              }
-            ]
-          }
-        ]
+                reasoning: JSON.stringify({
+                  reasoning: 'Good job',
+                  keyPointsAddressed: ['all'],
+                }),
+              },
+            ],
+          },
+        ],
       };
 
       reportRepoMock.getSessionDetail.mockResolvedValue(mockSession);
 
       const result = await service.getSessionReport('a1', 's1');
-      
+
       expect(result.data.session.id).toBe('s1');
       expect(result.data.session.duration).toBe(10);
       expect(result.data.session.scorePercent).toBe(100);
       expect(result.data.questions).toHaveLength(1);
-      
+
       const question = result.data.questions[0];
       expect(question.questionText).toBe('Test Question');
       expect(question.isCorrect).toBe(true);
@@ -99,11 +106,11 @@ describe('SessionReportService', () => {
         id: 's1',
         assessment: null,
         assessmentParticipant: null,
-        entries: []
+        entries: [],
       };
       reportRepoMock.getSessionDetail.mockResolvedValue(mockSession);
       const result = await service.getSessionReport('a1', 's1');
-      
+
       expect(result.data.session.id).toBe('s1');
       expect(result.data.questions).toHaveLength(0);
       expect(result.data.session.scorePercent).toBeNull();

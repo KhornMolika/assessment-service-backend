@@ -46,7 +46,7 @@ export class AnswerEntry extends ClientScopedEntity {
   // SHORT_ANSWER:     { text: "participant answer" }
   // ESSAY:            { text: "participant essay" }
   @Column({ type: 'jsonb', nullable: true })
-  response?: Record<string, any>;
+  response?: Record<string, unknown>;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   scoreAwarded?: number;

@@ -71,16 +71,56 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
           }),
         ),
         throttlers: [
-          { name: 'default', ttl: config.get('app.throttle.read.ttl', 60000), limit: config.get('app.throttle.read.limit', 500) },
-          { name: 'readBurst', ttl: config.get('app.throttle.readBurst.ttl', 10000), limit: config.get('app.throttle.readBurst.limit', 50) },
-          { name: 'write', ttl: config.get('app.throttle.write.ttl', 60000), limit: config.get('app.throttle.write.limit', 200) },
-          { name: 'writeBurst', ttl: config.get('app.throttle.writeBurst.ttl', 10000), limit: config.get('app.throttle.writeBurst.limit', 20) },
-          { name: 'admin', ttl: config.get('app.throttle.admin.ttl', 60000), limit: config.get('app.throttle.admin.limit', 100) },
-          { name: 'adminBurst', ttl: config.get('app.throttle.adminBurst.ttl', 10000), limit: config.get('app.throttle.adminBurst.limit', 10) },
-          { name: 'auth', ttl: config.get('app.throttle.auth.ttl', 60000), limit: config.get('app.throttle.auth.limit', 10) },
-          { name: 'authBurst', ttl: config.get('app.throttle.authBurst.ttl', 1000), limit: config.get('app.throttle.authBurst.limit', 2) },
-          { name: 'websocket', ttl: config.get('app.throttle.websocket.ttl', 60000), limit: config.get('app.throttle.websocket.limit', 30) },
-          { name: 'websocketBurst', ttl: config.get('app.throttle.websocketBurst.ttl', 10000), limit: config.get('app.throttle.websocketBurst.limit', 5) },
+          {
+            name: 'default',
+            ttl: config.get('app.throttle.read.ttl', 60000),
+            limit: config.get('app.throttle.read.limit', 500),
+          },
+          {
+            name: 'readBurst',
+            ttl: config.get('app.throttle.readBurst.ttl', 10000),
+            limit: config.get('app.throttle.readBurst.limit', 50),
+          },
+          {
+            name: 'write',
+            ttl: config.get('app.throttle.write.ttl', 60000),
+            limit: config.get('app.throttle.write.limit', 200),
+          },
+          {
+            name: 'writeBurst',
+            ttl: config.get('app.throttle.writeBurst.ttl', 10000),
+            limit: config.get('app.throttle.writeBurst.limit', 20),
+          },
+          {
+            name: 'admin',
+            ttl: config.get('app.throttle.admin.ttl', 60000),
+            limit: config.get('app.throttle.admin.limit', 100),
+          },
+          {
+            name: 'adminBurst',
+            ttl: config.get('app.throttle.adminBurst.ttl', 10000),
+            limit: config.get('app.throttle.adminBurst.limit', 10),
+          },
+          {
+            name: 'auth',
+            ttl: config.get('app.throttle.auth.ttl', 60000),
+            limit: config.get('app.throttle.auth.limit', 10),
+          },
+          {
+            name: 'authBurst',
+            ttl: config.get('app.throttle.authBurst.ttl', 1000),
+            limit: config.get('app.throttle.authBurst.limit', 2),
+          },
+          {
+            name: 'websocket',
+            ttl: config.get('app.throttle.websocket.ttl', 60000),
+            limit: config.get('app.throttle.websocket.limit', 30),
+          },
+          {
+            name: 'websocketBurst',
+            ttl: config.get('app.throttle.websocketBurst.ttl', 10000),
+            limit: config.get('app.throttle.websocketBurst.limit', 5),
+          },
         ],
       }),
     }),
@@ -108,14 +148,18 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     GradingModule,
 
     ReportsModule,
-    
+
     WebhooksModule,
   ],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    ...(process.env.NODE_ENV === 'test'
+      ? []
+      : [
+          {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+          },
+        ]),
     {
       provide: APP_GUARD,
       useClass: ClientAuthGuard,
