@@ -2271,7 +2271,7 @@
     },
     {
       "key": "adminApiKey",
-      "value": "c10abdd8cd1de4f800405cef4aa1ad84984c6b50631f58ce08dc04b37511844a",
+      "value": "your-local-admin-api-key-here",
       "type": "string"
     }
   ]
