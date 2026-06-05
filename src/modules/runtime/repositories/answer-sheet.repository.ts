@@ -52,4 +52,15 @@ export class AnswerSheetRepository extends ClientRepository<AnswerSheet> {
       .andWhere('sheet.deletedAt IS NULL')
       .getOne();
   }
+
+  /**
+   * Finds all answer sheets for a specific assessment.
+   * Used by the real-time session service when grading.
+   */
+  findByAssessment(assessmentId: string) {
+    return this.qb('sheet')
+      .andWhere('sheet.assessmentId = :assessmentId', { assessmentId })
+      .andWhere('sheet.deletedAt IS NULL')
+      .getMany();
+  }
 }

@@ -2,7 +2,6 @@ import {
   IsString,
   IsEnum,
   IsOptional,
-  IsArray,
   IsNumber,
   IsPositive,
 } from 'class-validator';
@@ -24,8 +23,8 @@ export class CreateQuestionDto {
   points!: number;
 
   @IsOptional()
-  options?: string | string[] | Record<string, any>[];
+  options?: string | string[] | Record<string, unknown>[];
 
   @IsOptional()
-  correctAnswers?: string | string[] | Record<string, any>[];
+  correctAnswers?: string | string[] | Record<string, unknown>[];
 }

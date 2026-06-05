@@ -60,7 +60,7 @@ export class AssessmentSetting extends ClientScopedEntity {
 
   // DYNAMIC mode only — { source, bankId?, total, distribution: { easy, medium, hard } }
   @Column({ type: 'jsonb', nullable: true })
-  selectionRules?: Record<string, any>;
+  selectionRules?: Record<string, unknown>;
 
   // Minutes a participant has to complete once they start
   @Column({ type: 'int', nullable: true })
@@ -86,7 +86,7 @@ export class AssessmentSetting extends ClientScopedEntity {
 
   // [{ name: 'A', min: 90 }, { name: 'B', min: 75 }]
   @Column({ type: 'jsonb', nullable: true })
-  gradeLabels?: Record<string, any>[];
+  gradeLabels?: Record<string, unknown>[];
 
   @Column({ default: false })
   isAllowShare!: boolean;

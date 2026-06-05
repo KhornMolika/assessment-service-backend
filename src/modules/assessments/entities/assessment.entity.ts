@@ -36,7 +36,7 @@ export class Assessment extends ClientScopedEntity {
   name!: string;
 
   @Column({ type: 'enum', enum: AssessmentType, default: AssessmentType.QUIZ })
-  type!: AssessmentStatus;
+  type!: AssessmentType;
 
   @Column({ nullable: true, type: 'text' })
   description?: string;

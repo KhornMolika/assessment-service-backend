@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-argument */
 import { Test, TestingModule } from '@nestjs/testing';
 import { GradingEngineService } from './grading-engine.service';
 import { AnswerSheetRepository } from '@modules/runtime/repositories/answer-sheet.repository';
@@ -7,13 +6,16 @@ import { AssessmentSettingRepository } from '@modules/assessments/repositories/a
 import { AnswerSheetStatus } from '@modules/assessments/entities/answer-sheet.entity';
 import { GradingStatus } from '@modules/assessments/entities/answer-entry.entity';
 import { AIGradingService } from '@modules/ai/services/ai-grading.service';
+import { MockType } from '@common/utils/test-mock.types';
+import { AnswerSheet } from '@modules/assessments/entities/answer-sheet.entity';
+import { AssessmentSetting } from '@modules/assessments/entities/assessment-settings.entity';
 
 describe('GradingEngineService', () => {
   let service: GradingEngineService;
-  let answerSheetsMock: jest.Mocked<AnswerSheetRepository>;
-  let answerEntriesMock: jest.Mocked<AnswerEntryRepository>;
-  let assessmentSettingsMock: jest.Mocked<AssessmentSettingRepository>;
-  let aiGradingMock: jest.Mocked<AIGradingService>;
+  let answerSheetsMock: MockType<AnswerSheetRepository>;
+  let answerEntriesMock: MockType<AnswerEntryRepository>;
+  let assessmentSettingsMock: MockType<AssessmentSettingRepository>;
+  let aiGradingMock: MockType<AIGradingService>;
 
   beforeEach(async () => {
     const mockAnswerSheets = {
@@ -82,14 +84,16 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue({
       passMark: 50,
       gradeLabels: [
         { name: 'Pass', min: 50 },
         { name: 'Fail', min: 0 },
       ],
-    } as any);
+    } as unknown as AssessmentSetting);
 
     await service.gradeSession('session-1');
 
@@ -141,10 +145,12 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue({
       passMark: 50,
-    } as any);
+    } as unknown as AssessmentSetting);
 
     await service.gradeSession('session-2');
 
@@ -174,8 +180,12 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({});
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue(
+      {} as unknown as AssessmentSetting,
+    );
 
     await service.gradeSession('session-3');
 
@@ -204,8 +214,12 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({});
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue(
+      {} as unknown as AssessmentSetting,
+    );
 
     await service.gradeSession('session-4');
 
@@ -240,8 +254,12 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({});
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue(
+      {} as unknown as AssessmentSetting,
+    );
 
     await service.gradeSession('session-5');
 
@@ -280,8 +298,12 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({});
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue(
+      {} as unknown as AssessmentSetting,
+    );
 
     await service.gradeSession('session-6');
 
@@ -311,8 +333,12 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({});
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue(
+      {} as unknown as AssessmentSetting,
+    );
 
     await service.gradeSession('session-7');
 
@@ -345,9 +371,13 @@ describe('GradingEngineService', () => {
       ],
     };
 
-    answerSheetsMock.findOneWithEntries.mockResolvedValue(mockSheet as any);
-    assessmentSettingsMock.findByAssessment.mockResolvedValue({});
-    aiGradingMock.queueGradingJob.mockResolvedValue(undefined);
+    answerSheetsMock.findOneWithEntries!.mockResolvedValue(
+      mockSheet as unknown as AnswerSheet,
+    );
+    assessmentSettingsMock.findByAssessment!.mockResolvedValue(
+      {} as unknown as AssessmentSetting,
+    );
+    aiGradingMock.queueGradingJob!.mockResolvedValue(undefined);
 
     await service.gradeSession('session-8');
 

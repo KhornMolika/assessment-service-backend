@@ -59,7 +59,6 @@ export class TransformInterceptor<T> implements NestInterceptor {
       const cleaned = { ...data };
 
       // Enforce removal of sensitive columns explicitly
-      delete cleaned.clientId;
       delete cleaned.deletedAt;
 
       return cleaned;

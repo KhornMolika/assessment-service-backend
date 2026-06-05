@@ -36,8 +36,8 @@ export class AssessmentQuestionRepository extends ClientRepository<AssessmentQue
       .select('COALESCE(MAX(aq.order), 0)', 'max')
       .andWhere('aq.assessmentId = :assessmentId', { assessmentId })
       .andWhere('aq.deletedAt IS NULL')
-      .getRawOne()
-      .then((r) => Number(r.max));
+      .getRawOne<{ max: string | number }>()
+      .then((r) => Number(r?.max ?? 0));
   }
 
   /**

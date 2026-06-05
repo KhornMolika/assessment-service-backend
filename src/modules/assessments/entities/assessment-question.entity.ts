@@ -8,9 +8,11 @@ import { Entity, Column, ManyToOne, Index } from 'typeorm';
 import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { Assessment } from './assessment.entity';
 import { Question } from '@modules/questions/entities/question.entity';
+import { QuestionType } from '@modules/questions/enums/question-type.enum';
 
 @Entity()
 @Index(['assessment', 'question'], { unique: true })
+@Index(['assessmentId', 'questionType'])
 export class AssessmentQuestion extends ClientScopedEntity {
   @ManyToOne(() => Assessment, (a) => a.questions, { onDelete: 'CASCADE' })
   assessment!: Assessment;
@@ -32,6 +34,9 @@ export class AssessmentQuestion extends ClientScopedEntity {
   // Overrides question.defaultPoints for this assessment only
   @Column({ type: 'decimal', precision: 5, scale: 2 })
   points!: number;
+
+  @Column({ type: 'enum', enum: QuestionType, nullable: true })
+  questionType?: QuestionType;
 
   // Frozen at publish — prevents live edits from affecting active sessions
   @Column({ type: 'jsonb' })

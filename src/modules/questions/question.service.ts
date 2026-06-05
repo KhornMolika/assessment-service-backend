@@ -20,10 +20,12 @@ export class QuestionsService {
     private readonly bankRepository: QuestionBankRepository,
   ) {}
 
-  private transformResponse(question: any) {
-    if (!question) return question;
+  private transformResponse(question: unknown): Record<string, unknown> | null {
+    if (!question) return null;
 
-    const mapped = { ...question };
+    const mapped: Record<string, unknown> = {
+      ...(question as Record<string, unknown>),
+    };
 
     // API expects `text`, DB has `questionText`
     if (mapped.questionText) {
@@ -62,8 +64,8 @@ export class QuestionsService {
         difficulty: dto.difficulty,
         points: dto.points !== undefined ? dto.points : 1,
         topic: { id: topic.id },
-        options: dto.options || [],
-        correctAnswer: dto.correctAnswers,
+        options: (dto.options as Record<string, unknown>[]) || [],
+        correctAnswer: dto.correctAnswers as unknown as Record<string, unknown>,
       } as any);
 
       return this.transformResponse(saved);
@@ -120,7 +122,7 @@ export class QuestionsService {
       const question = await this.questionRepository.findById(id);
       if (!question) throw new NotFoundException('Question not found');
 
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (dto.questionText !== undefined)
         updateData.questionText = dto.questionText;
       if (dto.type !== undefined) updateData.type = dto.type;

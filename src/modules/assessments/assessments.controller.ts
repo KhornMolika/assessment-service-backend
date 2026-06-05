@@ -26,6 +26,8 @@ import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentSettingDto } from './dto/update-assessment-setting.dto';
 import { AssignParticipantDto } from './dto/assign-participant.dto';
 import { GradingEngineService } from '../grading/services/grading-engine.service';
+import { AIGradingService } from '@modules/ai/services/ai-grading.service';
+import { clientStorage } from '@common/context/client.storage';
 
 @Controller()
 export class AssessmentsController {
@@ -33,9 +35,17 @@ export class AssessmentsController {
     private readonly assessmentService: AssessmentsService,
     @Inject(forwardRef(() => GradingEngineService))
     private readonly gradingEngine: GradingEngineService,
+    @Inject(forwardRef(() => AIGradingService))
+    private readonly aiGradingService: AIGradingService,
   ) {}
 
   // CRUD ----------------------------------------------------------------------
+
+  /** GET /assessments */
+  @Get('assessments')
+  findAllGlobal(@Query() query: PaginationQueryDto) {
+    return this.assessmentService.findAllGlobal(query);
+  }
 
   /** GET /topics/:topicId/assessments */
   @Get('topics/:topicId/assessments')
@@ -226,5 +236,20 @@ export class AssessmentsController {
   async recalculate(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
     await this.gradingEngine.recalculateSession(sessionId);
     return { sessionId, recalculatedAt: new Date() };
+  }
+
+  /** POST /assessments/:sessionId/entries/:entryId/ai-grading/retry */
+  @Post('assessments/:sessionId/entries/:entryId/ai-grading/retry')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async retryAiGrading(
+    @Param('sessionId', ParseUUIDPipe) sessionId: string,
+    @Param('entryId', ParseUUIDPipe) entryId: string,
+  ) {
+    const clientId = clientStorage.getStore()?.clientId;
+    if (!clientId) {
+      throw new BadRequestException('Client ID not found in context');
+    }
+    await this.aiGradingService.queueGradingJob(entryId, clientId);
+    return { entryId, status: 'queued' };
   }
 }

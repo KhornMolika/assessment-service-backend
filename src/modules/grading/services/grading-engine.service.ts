@@ -19,6 +19,7 @@ import { MatchingStrategy } from '../strategies/matching.strategy';
 import { RatingStrategy } from '../strategies/rating.strategy';
 import { GradingStrategy } from '../strategies/grading-strategy.interface';
 import { AIGradingService } from '@modules/ai/services/ai-grading.service';
+import { WebhookService } from '@modules/webhooks/webhook.service';
 
 // Question types that require AI grading — deferred until AI provider decided
 const AI_GRADED_TYPES = ['SHORT_ANSWER', 'ESSAY'];
@@ -54,6 +55,8 @@ export class GradingEngineService {
     private readonly assessmentSettings: AssessmentSettingRepository,
     @Optional()
     private readonly aiGrading?: AIGradingService,
+    @Optional()
+    private readonly webhooks?: WebhookService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -193,6 +196,21 @@ export class GradingEngineService {
           `passed: ${isPassed} ` +
           `status: ${sheetStatus}`,
       );
+
+      if (
+        sheetStatus === AnswerSheetStatus.GRADED &&
+        this.webhooks &&
+        sheet.clientId
+      ) {
+        await this.webhooks.dispatch(sheet.clientId, 'assessment.graded', {
+          assessmentId: sheet.assessmentId,
+          sessionId: sheet.id,
+          totalScore: totalScoreAwarded,
+          maxScore: totalMaxScore,
+          isPassed,
+          grade,
+        });
+      }
     } catch (error) {
       this.logger.error(`Failed to grade session ${sessionId}`, error);
       throw new InternalServerErrorException(
@@ -264,6 +282,21 @@ export class GradingEngineService {
         `Session ${sessionId} recalculated — ` +
           `score: ${totalScoreAwarded}/${totalMaxScore}`,
       );
+
+      if (
+        sheetStatus === AnswerSheetStatus.GRADED &&
+        this.webhooks &&
+        sheet.clientId
+      ) {
+        await this.webhooks.dispatch(sheet.clientId, 'assessment.graded', {
+          assessmentId: sheet.assessmentId,
+          sessionId: sheet.id,
+          totalScore: totalScoreAwarded,
+          maxScore: totalMaxScore,
+          isPassed,
+          grade,
+        });
+      }
     } catch (error) {
       this.logger.error(`Failed to recalculate session ${sessionId}`, error);
       throw new InternalServerErrorException(

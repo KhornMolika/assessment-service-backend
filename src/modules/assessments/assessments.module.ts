@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AiModule } from '../ai/ai.module';
 import { Assessment } from './entities/assessment.entity';
 import { AssessmentSetting } from './entities/assessment-settings.entity';
 import { AssessmentQuestion } from './entities/assessment-question.entity';
@@ -31,6 +32,7 @@ import { GradingModule } from '../grading/grading.module';
     QuestionBanksModule, // QuestionBankRepository for DYNAMIC bank validation
     ParticipantsModule, // ParticipantRepository for assignParticipant
     forwardRef(() => GradingModule),
+    forwardRef(() => AiModule),
   ],
   controllers: [AssessmentsController],
   providers: [

@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { InjectQueue } from '@nestjs/bull';
@@ -18,7 +19,8 @@ import {
 } from '../entities/ai-grading-job.entity';
 import { AIGradingJobRepository } from '../repositories/ai-grading-job.repository';
 import { AIPromptService } from './ai-prompt.service';
-import { GeminiService } from './gemini.service';
+import { AI_PROVIDER_TOKEN } from '../interfaces/ai-provider.interface';
+import type { IAiProvider } from '../interfaces/ai-provider.interface';
 import { AIEvaluationResult } from '../interfaces/ai-evaluation-result.interface';
 
 const AI_GRADED_TYPES = [QuestionTypeName.SHORT_ANSWER, QuestionTypeName.ESSAY];
@@ -35,7 +37,8 @@ export class AIGradingService {
   constructor(
     private readonly jobs: AIGradingJobRepository,
     private readonly prompts: AIPromptService,
-    private readonly gemini: GeminiService,
+    @Inject(AI_PROVIDER_TOKEN)
+    private readonly aiProvider: IAiProvider,
     @InjectQueue('ai-grading')
     private readonly aiGradingQueue: Queue,
     dataSource: DataSource,
@@ -106,7 +109,7 @@ export class AIGradingService {
 
     try {
       const prompt = this.prompts.buildEvaluationPrompt(payload);
-      const evaluation = await this.gemini.evaluate(prompt, payload.points);
+      const evaluation = await this.aiProvider.evaluate(prompt, payload.points);
       const reasoning = this.stringifyReasoning(evaluation);
 
       await this.jobs.update(
@@ -162,7 +165,6 @@ export class AIGradingService {
     }
   }
 
-  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
   private resolvePayload(entry: AnswerEntry) {
     const snapshot = entry.assessmentQuestion?.questionSnapshot as Record<
       string,
@@ -212,5 +214,4 @@ export class AIGradingService {
       confidence: evaluation.confidence,
     });
   }
-  /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 }

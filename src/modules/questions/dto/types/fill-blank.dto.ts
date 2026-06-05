@@ -30,7 +30,7 @@ function IsArrayOfStringArrays(validationOptions?: ValidationOptions) {
       propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any) {
+        validate(value: unknown) {
           if (!Array.isArray(value)) return false;
           return value.every(
             (inner) =>

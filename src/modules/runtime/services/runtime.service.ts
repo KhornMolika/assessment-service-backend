@@ -100,7 +100,7 @@ export class RuntimeService {
 
       if (settings.startsAt && now < new Date(settings.startsAt)) {
         throw new BadRequestException(
-          `Assessment has not started yet. Starts at ${settings.startsAt}`,
+          `Assessment has not started yet. Starts at ${String(settings.startsAt)}`,
         );
       }
 
@@ -109,14 +109,14 @@ export class RuntimeService {
       }
 
       // 4. Resolve assessment participant
-      let assessmentParticipant: any;
+      let assessmentParticipant: import('../../assessments/entities/assessment-participant.entity').AssessmentParticipant | null = null;
 
       if (settings.participantIdentity === ParticipantIdentity.ANONYMOUS) {
         // ANONYMOUS — create participant and assignment on the fly
         const participant = await this.participants.save({
           name: null,
           email: null,
-        } as any);
+        } as unknown as import('../../participants/entities/participant.entity').Participant);
 
         assessmentParticipant = await this.assessmentParticipants.save({
           assessmentId: dto.assessmentId,
@@ -158,7 +158,10 @@ export class RuntimeService {
       }
 
       // 6. Resolve questions for this session
-      let sessionQuestions: any[];
+      let sessionQuestions: (
+        | import('../../assessments/entities/assessment-question.entity').AssessmentQuestion
+        | import('../../questions/entities/question.entity').Question
+      )[];
       let selectedQuestionIds: string[] | undefined;
 
       if (settings.questionSelection === QuestionSelection.MANUAL) {
@@ -169,12 +172,13 @@ export class RuntimeService {
         sessionQuestions = aqs;
       } else {
         // DYNAMIC — randomly select per selectionRules
-        const rules = settings.selectionRules as any;
+        const rules =
+          settings.selectionRules as unknown as import('../../assessments/dto/selection-rules.dto').SelectionRulesDto;
         sessionQuestions = await this.selectDynamicQuestions(
           dto.assessmentId,
           rules,
         );
-        selectedQuestionIds = sessionQuestions.map((q: any) => q.id);
+        selectedQuestionIds = sessionQuestions.map((q) => q.id);
       }
 
       // 7. Create AnswerSheet
@@ -188,7 +192,7 @@ export class RuntimeService {
 
       // 8. Schedule expiry jobs if timeLimit is set
       if (settings.timeLimit) {
-        await this.scheduleExpiryJobs(sheet.id, settings.timeLimit, now);
+        await this.scheduleExpiryJobs(sheet.id, settings.timeLimit);
       }
 
       // 9. Build response — strip correctAnswer from all questions
@@ -477,11 +481,12 @@ export class RuntimeService {
       total: number;
       distribution?: { easy?: number; medium?: number; hard?: number };
     },
-  ): Promise<any[]> {
+  ): Promise<import('../../questions/entities/question.entity').Question[]> {
     const assessment = await this.assessments.findById(assessmentId);
     if (!assessment) throw new NotFoundException('Assessment not found');
 
-    const selected: any[] = [];
+    const selected: import('../../questions/entities/question.entity').Question[] =
+      [];
 
     if (rules.distribution) {
       const difficultyMap: Record<string, number> = {
@@ -525,27 +530,30 @@ export class RuntimeService {
    * For DYNAMIC: reads from live question record.
    */
   private buildSessionQuestions(
-    questions: any[],
+    questions: (
+      | import('../../assessments/entities/assessment-question.entity').AssessmentQuestion
+      | import('../../questions/entities/question.entity').Question
+    )[],
     selectionMode: QuestionSelection,
     isShuffle: boolean,
-  ): any[] {
+  ) {
     let list = questions.map((q, index) => {
-      const source =
-        selectionMode === QuestionSelection.MANUAL
-          ? q.questionSnapshot // frozen at publish time
-          : q; // live question for DYNAMIC
+      const isManual = selectionMode === QuestionSelection.MANUAL;
+      const aq =
+        q as import('../../assessments/entities/assessment-question.entity').AssessmentQuestion;
+      const question =
+        q as import('../../questions/entities/question.entity').Question;
+
+      const source = isManual ? aq.questionSnapshot : question;
 
       return {
         order: index + 1,
-        assessmentQuestionId:
-          selectionMode === QuestionSelection.MANUAL ? q.id : undefined,
+        assessmentQuestionId: isManual ? aq.id : undefined,
         questionId: source.id,
-        type: source.type,
+        type: source.type as string,
         questionText: source.questionText,
         difficulty: source.difficulty,
-        points:
-          selectionMode === QuestionSelection.MANUAL ? q.points : source.points,
-        // options returned, correctAnswer never returned
+        points: isManual ? aq.points : question.points,
         options: source.options ?? null,
       };
     });
@@ -567,7 +575,6 @@ export class RuntimeService {
   private async scheduleExpiryJobs(
     sessionId: string,
     timeLimitMinutes: number,
-    startedAt: Date,
   ): Promise<void> {
     const clientId = ClientContextService.getClientId();
     const expiryMs = timeLimitMinutes * 60 * 1000;

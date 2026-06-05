@@ -16,6 +16,9 @@ export class QuestionBank extends ClientScopedEntity {
   })
   topic!: Topic;
 
+  @Column({ type: 'uuid' })
+  topicId!: string;
+
   @Column()
   name!: string;
 
