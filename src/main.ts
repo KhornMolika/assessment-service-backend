@@ -37,7 +37,31 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('NBFSA Assessment API')
+    .setTitle('NBFSA Assessment Service API')
+    .setDescription(`
+## Authentication
+All standard endpoints require a Bearer token obtained from \`POST /auth/token\`.
+Administrative endpoints require the \`x-admin-api-key\` header.
+
+## Rate Limits
+- Auth endpoint: 10 requests/minute per clientId
+- Read endpoints: 500 requests/minute per clientId
+- Write endpoints: 200 requests/minute per clientId
+
+Exceeded limits return \`429 Too Many Requests\` with a \`Retry-After\` header.
+
+## Error Format
+All errors follow this shape:
+\`\`\`json
+{
+  "statusCode": 404,
+  "error": "NOT_FOUND",
+  "message": "Assessment abc-123 not found",
+  "path": "/api/v1/assessments/abc-123",
+  "timestamp": "2026-01-15T09:23:01.123Z"
+}
+\`\`\`
+  `)
     .setVersion('1.0')
     .addBearerAuth()
     .addApiKey(

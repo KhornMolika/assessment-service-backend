@@ -41,8 +41,8 @@ pnpm migration:run
 pnpm start:dev
 ```
 
-API available at `http://localhost:3000`
-Swagger UI at `http://localhost:3000/docs`
+API available at `http://localhost:3001`
+Swagger UI at `http://localhost:3001/docs`
 
 ---
 

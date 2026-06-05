@@ -64,10 +64,16 @@ export class GradingEngineService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Main entry point called after submit.
-   * Grades all auto-gradable entries synchronously.
-   * Leaves AI-graded entries as PENDING.
-   * Updates AnswerSheet with total score, grade label, isPassed, and status.
+   * Grades a submitted session synchronously.
+   *
+   * Auto-gradable types (single, multi, truefalse, ordering, fillin, matching, rating)
+   * are scored immediately. Essay and short-answer questions are sent to the AI
+   * grading provider unless manualGradingAIQues is true, in which case they remain
+   * PENDING until a human scores them via POST /api/v1/assessments/:sessionId/recalculate.
+   *
+   * @param sessionId - AnswerSheet UUID
+   * @throws {NotFoundException} if session does not exist
+   * @throws {InternalServerErrorException} if grading transaction fails entirely
    */
   async gradeSession(sessionId: string): Promise<void> {
     try {

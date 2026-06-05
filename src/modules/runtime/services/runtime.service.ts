@@ -77,6 +77,12 @@ export class RuntimeService {
    * Schedules auto-submit and warning jobs if timeLimit is set.
    *
    * Returns session with full question list (no correctAnswer exposed).
+   * 
+   * @param dto - StartSessionDto containing assessmentId and optional participantId
+   * @throws {NotFoundException} if assessment or participant does not exist
+   * @throws {BadRequestException} if assessment is not published or outside timing window
+   * @throws {ConflictException} if participant already started this assessment
+   * @throws {InternalServerErrorException} if session creation fails
    */
   async startSession(dto: StartSessionDto) {
     try {
@@ -238,6 +244,12 @@ export class RuntimeService {
    *
    * Creates a new AnswerEntry if first answer, updates if already answered.
    * gradingStatus set to PENDING — grading engine processes after submit.
+   * 
+   * @param sessionId - AnswerSheet UUID
+   * @param dto - SaveAnswerDto containing questionId and response object
+   * @throws {NotFoundException} if session or question does not exist
+   * @throws {BadRequestException} if session is not IN_PROGRESS or time limit expired
+   * @throws {InternalServerErrorException} if save operation fails
    */
   async saveAnswer(sessionId: string, dto: SaveAnswerDto) {
     try {
@@ -319,6 +331,11 @@ export class RuntimeService {
    * Sets status to SUBMITTED and submittedAt to now.
    * Cancels pending expiry jobs.
    * Grading engine processes entries in the next phase.
+   * 
+   * @param sessionId - AnswerSheet UUID
+   * @throws {NotFoundException} if session does not exist
+   * @throws {BadRequestException} if session is not IN_PROGRESS or not all questions are answered
+   * @throws {InternalServerErrorException} if submission or grading trigger fails
    */
   async submitSession(sessionId: string) {
     try {
