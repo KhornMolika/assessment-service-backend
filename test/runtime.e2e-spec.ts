@@ -10,7 +10,8 @@ async function createIsolatedClientAndToken(app: INestApplication) {
   const timestamp = Date.now();
   const adminClientRes = await request(app.getHttpServer())
     .post('/api/v1/clients')
-    .send({
+      .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
+      .send({
       name: `Runtime E2E Client ${timestamp}`,
       slug: `runtime-e2e-${timestamp}`,
       allowedOrigins: ['https://test.com'],

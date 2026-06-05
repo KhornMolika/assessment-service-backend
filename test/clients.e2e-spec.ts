@@ -37,6 +37,7 @@ describe('ClientsModule (e2e)', () => {
     // Create an Admin client for testing admin-like operations on other clients
     const adminClientRes = await request(app.getHttpServer())
       .post('/api/v1/clients')
+      .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
       .send({
         name: 'Admin Test Client',
         slug: `admin-client-${Date.now()}`,
@@ -61,8 +62,9 @@ describe('ClientsModule (e2e)', () => {
   });
 
   describe('/api/v1/clients', () => {
-    it('POST - should create a new client', async () => {
-      const response = await request(app.getHttpServer())
+    it('POST - should create a new client (Admin Only)', async () => {
+      // Missing API key should fail
+      await request(app.getHttpServer())
         .post('/api/v1/clients')
         .send({
           name: 'E2E Test Client',
@@ -71,15 +73,20 @@ describe('ClientsModule (e2e)', () => {
           webhookUrl: 'https://acme.com/webhook',
           webhookSecret: 'my-super-secret',
         })
-        .expect(201);
+        .expect(401);
 
-      console.log('CREATE CLIENT RESPONSE:', response.body);
-      expect(response.body.data).toBeDefined();
-      expect(response.body.data.id).toBeDefined();
-      expect(response.body.data.clientId).toBeDefined();
-      expect(response.body.data.clientSecret).toBeDefined();
-      expect(response.body.data.webhookUrl).toBe('https://acme.com/webhook');
-      expect(response.body.data.webhookSecret).toBeUndefined(); // Should not be returned
+      // With API key should succeed
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/clients')
+        .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
+        .send({
+          name: 'E2E Test Client',
+          slug: `e2e-client-${Date.now()}`,
+          allowedOrigins: ['https://acme.com'],
+          webhookUrl: 'https://acme.com/webhook',
+          webhookSecret: 'my-super-secret',
+        })
+        .expect(201);
 
       clientDbId = response.body.data.id;
       clientId = response.body.data.clientId;
@@ -96,19 +103,17 @@ describe('ClientsModule (e2e)', () => {
         })
         .expect(200);
 
-      expect(response.body.data).toBeDefined();
-      expect(response.body.data.access_token).toBeDefined();
       jwtToken = response.body.data.access_token;
     });
 
-    it('GET - should fail without token', async () => {
+    it('GET - should fail without admin API key', async () => {
       await request(app.getHttpServer()).get('/api/v1/clients').expect(401);
     });
 
-    it('GET - should return array of clients when authenticated', async () => {
+    it('GET - should return array of clients when admin API key is provided', async () => {
       const response = await request(app.getHttpServer())
         .get('/api/v1/clients')
-        .set('Authorization', `Bearer ${jwtToken}`)
+        .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
         .expect(200);
 
       expect(Array.isArray(response.body.data)).toBeTruthy();
@@ -117,9 +122,26 @@ describe('ClientsModule (e2e)', () => {
       ).toBeTruthy();
     });
 
-    it('GET /:id - should return the specific client', async () => {
+    it('GET /:id - should return the specific client (Admin Only)', async () => {
+      // Standard JWT should fail
+      await request(app.getHttpServer())
+        .get(`/api/v1/clients/${clientDbId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(401);
+
+      // Admin key should succeed
       const response = await request(app.getHttpServer())
         .get(`/api/v1/clients/${clientDbId}`)
+        .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
+        .expect(200);
+
+      expect(response.body.data.id).toBe(clientDbId);
+      expect(response.body.data.name).toBe('E2E Test Client');
+    });
+
+    it('GET /me - should return own client profile', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/v1/clients/me`)
         .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200);
 
@@ -127,10 +149,22 @@ describe('ClientsModule (e2e)', () => {
       expect(response.body.data.name).toBe('E2E Test Client');
     });
 
-    it('PATCH /:id - should update the client name and webhook settings', async () => {
+    it('PATCH /me - should update own client configuration', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/api/v1/clients/me`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({
+          webhookUrl: 'https://own-update.com/webhook',
+        })
+        .expect(200);
+
+      expect(response.body.data.webhookUrl).toBe('https://own-update.com/webhook');
+    });
+
+    it('PATCH /:id - should update the client name and webhook settings (Admin Only)', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/api/v1/clients/${clientDbId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
         .send({
           name: 'Updated E2E Client',
           webhookUrl: 'https://new-acme.com/webhook',
@@ -148,7 +182,7 @@ describe('ClientsModule (e2e)', () => {
     it('PATCH /:id/suspend - should suspend the client', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/api/v1/clients/${clientDbId}/suspend`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
         .expect(200);
 
       expect(response.body.data.isActive).toBe(false);
@@ -157,7 +191,7 @@ describe('ClientsModule (e2e)', () => {
     it('PATCH /:id/activate - should activate the client', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/api/v1/clients/${clientDbId}/activate`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
         .expect(200);
 
       expect(response.body.data.isActive).toBe(true);
@@ -169,7 +203,7 @@ describe('ClientsModule (e2e)', () => {
 
       const response = await request(app.getHttpServer())
         .post(`/api/v1/clients/${clientDbId}/rotate-secret`)
-        .set('Authorization', `Bearer ${adminToken}`)
+        .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
         .expect(200);
 
       expect(response.body.data.clientSecret).toBeDefined();

@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TopicsModule } from './modules/topics/topics.module';
 import appConfig from './config/app.config';
+import adminConfig from './config/admin.config';
 import { envValidationSchema } from './config/env.validation';
 import { databaseConfig } from './config/database.config';
 import { ClientsModule } from './modules/clients/clients.module';
@@ -33,7 +34,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     ConfigModule.forRoot({
       isGlobal: true,
 
-      load: [appConfig],
+      load: [appConfig, adminConfig],
 
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
 

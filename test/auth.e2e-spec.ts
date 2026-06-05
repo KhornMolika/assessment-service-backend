@@ -45,6 +45,7 @@ describe('AuthModule (e2e)', () => {
     // Setup: Create an active client
     const activeRes = await request(app.getHttpServer())
       .post('/api/v1/clients')
+      .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
       .send({
         name: 'Auth Test Active Client',
         slug: 'auth-active-' + Date.now(),
@@ -56,6 +57,7 @@ describe('AuthModule (e2e)', () => {
     // Setup: Create a suspended client
     const suspendedRes = await request(app.getHttpServer())
       .post('/api/v1/clients')
+      .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
       .send({
         name: 'Auth Test Suspended Client',
         slug: 'auth-suspended-' + Date.now(),
@@ -65,20 +67,11 @@ describe('AuthModule (e2e)', () => {
     suspendedClientId = suspendedRes.body.data.clientId;
     suspendedClientSecret = suspendedRes.body.data.clientSecret;
 
-    // Get an admin token using the active client to suspend the second client
-    const adminTokenRes = await request(app.getHttpServer())
-      .post('/api/v1/auth/token')
-      .send({
-        clientId: validClientId,
-        clientSecret: validClientSecret,
-        grant_type: 'client_credentials',
-      });
-    const adminToken = adminTokenRes.body.data.access_token;
-
     // Suspend the client
     await request(app.getHttpServer())
       .patch(`/api/v1/clients/${suspendedClientDbId}/suspend`)
-      .set('Authorization', `Bearer ${adminToken}`);
+      .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
+      .expect(200);
   });
 
   afterAll(async () => {
