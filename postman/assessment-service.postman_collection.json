@@ -1927,13 +1927,13 @@
             "method": "POST",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
+                "key": "Content-Type",
+                "value": "application/json",
                 "type": "text"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json",
+                "key": "x-admin-api-key",
+                "value": "{{adminApiKey}}",
                 "type": "text"
               }
             ],
@@ -1954,13 +1954,70 @@
           "response": []
         },
         {
-          "name": "List Clients",
+          "name": "Get Me",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
                 "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"webhookUrl\": \"https://my-tenant.com/api/webhooks/assessments\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clients/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clients",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-admin-api-key",
+                "value": "{{adminApiKey}}",
                 "type": "text"
               }
             ],
@@ -1982,13 +2039,13 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{bearerToken}}",
+                "key": "Content-Type",
+                "value": "application/json",
                 "type": "text"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json",
+                "key": "x-admin-api-key",
+                "value": "{{adminApiKey}}",
                 "type": "text"
               }
             ],
@@ -2011,13 +2068,13 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{bearerToken}}",
+                "key": "Content-Type",
+                "value": "application/json",
                 "type": "text"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json",
+                "key": "x-admin-api-key",
+                "value": "{{adminApiKey}}",
                 "type": "text"
               }
             ],
@@ -2049,8 +2106,8 @@
             "method": "POST",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
+                "key": "x-admin-api-key",
+                "value": "{{adminApiKey}}",
                 "type": "text"
               }
             ],
@@ -2074,13 +2131,13 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{bearerToken}}",
+                "key": "Content-Type",
+                "value": "application/json",
                 "type": "text"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json",
+                "key": "x-admin-api-key",
+                "value": "{{adminApiKey}}",
                 "type": "text"
               }
             ],
@@ -2104,13 +2161,13 @@
             "method": "PATCH",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{bearerToken}}",
+                "key": "Content-Type",
+                "value": "application/json",
                 "type": "text"
               },
               {
-                "key": "Content-Type",
-                "value": "application/json",
+                "key": "x-admin-api-key",
+                "value": "{{adminApiKey}}",
                 "type": "text"
               }
             ],
@@ -2211,6 +2268,11 @@
     {
       "key": "accessToken",
       "value": ""
+    },
+    {
+      "key": "adminApiKey",
+      "value": "c10abdd8cd1de4f800405cef4aa1ad84984c6b50631f58ce08dc04b37511844a",
+      "type": "string"
     }
   ]
 }
