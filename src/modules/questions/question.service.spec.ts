@@ -102,7 +102,7 @@ describe('QuestionsService', () => {
       const result = await service.findTopicQuestions('topic-1', {
         page: 1,
         limit: 10,
-      });
+      } as any);
 
       expect(result.data).toHaveLength(1);
       expect(result.data[0].text).toBe('test');

@@ -26,10 +26,9 @@ export class SuperAdminGuard implements CanActivate {
 
   // crypto.timingSafeEqual requires equal-length buffers
   private safeCompare(a: string, b: string): boolean {
-    const { timingSafeEqual } = require('crypto');
-    const bufA = Buffer.alloc(b.length, 0);
-    const bufB = Buffer.from(b);
-    bufA.write(a);
-    return timingSafeEqual(bufA, bufB);
+    const { timingSafeEqual, createHash } = require('crypto');
+    const hashA = createHash('sha256').update(a).digest();
+    const hashB = createHash('sha256').update(b).digest();
+    return timingSafeEqual(hashA, hashB);
   }
 }

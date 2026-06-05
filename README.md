@@ -89,7 +89,7 @@ A Postman collection is in `postman/`. Run against a live dev server:
 
 ```bash
 pnpm start:dev
-pnpm dlx newman run postman/assessment-service.postman_collection.json
+pnpm exec newman run postman/assessment-service.postman_collection.json
 ```
 
 ---

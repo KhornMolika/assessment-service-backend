@@ -3,6 +3,9 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
+  HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { QuestionRepository } from './repositories/question.repository';
 import { TopicRepository } from '../topics/repositories/topic.repository';
@@ -14,6 +17,8 @@ import { UpdateQuestionDto } from './dto/update-question.dto';
 
 @Injectable()
 export class QuestionsService {
+  private readonly logger = new Logger(QuestionsService.name);
+
   constructor(
     private readonly questionRepository: QuestionRepository,
     private readonly topicRepository: TopicRepository,
@@ -70,13 +75,9 @@ export class QuestionsService {
 
       return this.transformResponse(saved);
     } catch (error) {
-      console.error('createTopicQuestion error:', error);
-      if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException
-      )
-        throw error;
-      throw new BadRequestException('Failed to create question');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('createTopicQuestion error:', error);
+      throw new InternalServerErrorException('Failed to create question');
     }
   }
 
@@ -101,8 +102,9 @@ export class QuestionsService {
         },
       };
     } catch (error) {
-      console.error('findTopicQuestions error:', error);
-      throw new BadRequestException('Could not fetch questions');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('findTopicQuestions error:', error);
+      throw new InternalServerErrorException('Could not fetch questions');
     }
   }
 
@@ -112,8 +114,9 @@ export class QuestionsService {
       if (!question) throw new NotFoundException('Question not found');
       return this.transformResponse(question);
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Question not found');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('findById error:', error);
+      throw new InternalServerErrorException('Question not found');
     }
   }
 
@@ -135,13 +138,9 @@ export class QuestionsService {
       await this.questionRepository.update({ id }, updateData);
       return this.findById(id);
     } catch (error) {
-      console.error('Update question error:', error);
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      )
-        throw error;
-      throw new BadRequestException('Update failed');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Update question error:', error);
+      throw new InternalServerErrorException('Update failed');
     }
   }
 
@@ -151,8 +150,9 @@ export class QuestionsService {
       await this.questionRepository.softDelete({ id });
       return;
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new BadRequestException('Delete failed');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('Delete error:', error);
+      throw new InternalServerErrorException('Delete failed');
     }
   }
 }

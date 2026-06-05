@@ -11,14 +11,14 @@ import { GradingModule } from '@modules/grading/grading.module';
 import { ConfigService } from '@nestjs/config';
 import {
   AI_PROVIDER_TOKEN,
-  IAiProvider,
+  IAProvider,
 } from './interfaces/ai-provider.interface';
 import { DeepSeekService } from './services/deepseek.service';
 
 const aiProviderFactory = {
   provide: AI_PROVIDER_TOKEN,
   inject: [ConfigService],
-  useFactory: (config: ConfigService): IAiProvider => {
+  useFactory: (config: ConfigService): IAProvider => {
     const provider = config.get<string>('app.ai.provider', 'gemini');
     if (provider === 'deepseek') {
       return new DeepSeekService(config);

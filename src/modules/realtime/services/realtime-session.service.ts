@@ -616,7 +616,7 @@ export class RealtimeSessionService {
     try {
       const result = strategy.grade(responsePayload, correctAnswer, 1.0);
       return Math.max(0, result.scoreAwarded);
-    } catch (e) {
+    } catch {
       return 0;
     }
   }

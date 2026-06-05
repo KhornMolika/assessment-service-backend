@@ -8,37 +8,35 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
-import { GradingEngineService } from '../../grading/services/grading-engine.service';
+import { GradingEngineService } from '@modules/grading/services/grading-engine.service';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { AnswerSheetRepository } from '../repositories/answer-sheet.repository';
 import { AnswerEntryRepository } from '../repositories/answer-entry.repository';
-import { AssessmentRepository } from '../../assessments/repositories/assessment.repository';
-import { AssessmentSettingRepository } from '../../assessments/repositories/assessment-setting.repository';
-import { AssessmentParticipantRepository } from '../../assessments/repositories/assessment-participant.repository';
-import { AssessmentQuestionRepository } from '../../assessments/repositories/assessment-question.repository';
-import { ParticipantRepository } from '../../participants/repositories/participant.repository';
-import { QuestionRepository } from '../../questions/repositories/question.repository';
+import { AssessmentRepository } from '@modules/assessments/repositories/assessment.repository';
+import { AssessmentSettingRepository } from '@modules/assessments/repositories/assessment-setting.repository';
+import { AssessmentParticipantRepository } from '@modules/assessments/repositories/assessment-participant.repository';
+import { AssessmentQuestionRepository } from '@modules/assessments/repositories/assessment-question.repository';
+import { ParticipantRepository } from '@modules/participants/repositories/participant.repository';
+import { QuestionRepository } from '@modules/questions/repositories/question.repository';
 import {
-  AnswerSheet,
   AnswerSheetStatus,
-} from '../../assessments/entities/answer-sheet.entity';
-import { AssessmentStatus } from '../../assessments/entities/assessment.entity';
+} from '@modules/assessments/entities/answer-sheet.entity';
+import { AssessmentStatus } from '@modules/assessments/entities/assessment.entity';
 import {
-  Mode,
   ParticipantIdentity,
   QuestionSelection,
   ShowResults,
-} from '../../assessments/entities/assessment-settings.entity';
-import { GradingStatus } from '../../assessments/entities/answer-entry.entity';
+} from '@modules/assessments/entities/assessment-settings.entity';
+import { GradingStatus } from '@modules/assessments/entities/answer-entry.entity';
 import {
   SESSION_EXPIRY_QUEUE,
   SessionExpiryJobData,
 } from '../jobs/session-expiry.processor';
 import { StartSessionDto } from '../dto/start-session.dto';
 import { SaveAnswerDto } from '../dto/save-answer.dto';
-import { ClientContextService } from '../../../common/context/client-context.service';
-import { Difficulty } from '../../questions/entities/question.entity';
+import { ClientContextService } from '@common/context/client-context.service';
+import { Difficulty } from '@modules/questions/entities/question.entity';
 
 @Injectable()
 export class RuntimeService {

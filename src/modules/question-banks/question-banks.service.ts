@@ -2,6 +2,9 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Logger,
+  HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { QuestionBankRepository } from './repositories/question-bank.repository';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
@@ -13,6 +16,8 @@ import { QuestionBankQuestionRepository } from './repositories/question-bank-que
 
 @Injectable()
 export class QuestionBanksService {
+  private readonly logger = new Logger(QuestionBanksService.name);
+
   constructor(
     private readonly bankRepository: QuestionBankRepository,
     private readonly topicRepository: TopicRepository,
@@ -191,6 +196,9 @@ export class QuestionBanksService {
 
   async getBankQuestions(bankId: string, query: PaginationQueryDto) {
     try {
+      const bank = await this.findById(bankId);
+      if (!bank) throw new NotFoundException('Bank not found');
+
       const [junctions, total] = await this.bankQuestionRepository.findByBank(
         bankId,
         query.page,
@@ -218,8 +226,9 @@ export class QuestionBanksService {
         },
       };
     } catch (error) {
-      console.error('getBankQuestions error:', error);
-      throw new BadRequestException('Failed to get bank questions');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('getBankQuestions error:', error);
+      throw new InternalServerErrorException('Failed to get bank questions');
     }
   }
 
@@ -313,8 +322,9 @@ export class QuestionBanksService {
         removedAt: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('removeQuestionFromBank error:', error);
-      throw new BadRequestException('Failed to remove question');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('removeQuestionFromBank error:', error);
+      throw new InternalServerErrorException('Failed to remove question');
     }
   }
 }
