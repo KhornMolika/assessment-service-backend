@@ -22,6 +22,13 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@ne
 export class QuestionBanksController {
   constructor(private readonly bankService: QuestionBanksService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Get a paginated list of all banks globally' })
+  @ApiResponse({ status: 200, description: 'List of banks retrieved successfully.' })
+  async findAll(@Query() query: PaginationQueryDto) {
+    return await this.bankService.findAll(query);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a question bank by ID' })
   @ApiParam({ name: 'id', description: 'Question bank UUID' })

@@ -81,6 +81,29 @@ export class QuestionsService {
     }
   }
 
+  async findAll(query: PaginationQueryDto) {
+    try {
+      const [questions, total] = await this.questionRepository.findPaginated(
+        query,
+        ['questionText'],
+      );
+
+      return {
+        data: questions.map((q) => this.transformResponse(q)),
+        meta: {
+          total,
+          page: query.page,
+          limit: query.limit,
+          pageCount: Math.ceil(total / query.limit),
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error('findAll questions error:', error);
+      throw new InternalServerErrorException('Could not fetch questions');
+    }
+  }
+
   async findTopicQuestions(topicId: string, query: PaginationQueryDto) {
     try {
       // Force filter by topicId

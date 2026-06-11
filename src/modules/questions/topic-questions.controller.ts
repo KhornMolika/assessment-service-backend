@@ -13,7 +13,7 @@ import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { QuestionSchemaValidationPipe } from '@common/pipes/question-schema-validation.pipe';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
-@ApiTags('Topic Questions')
+@ApiTags('Questions')
 @ApiBearerAuth()
 @Controller('topics/:topicId/questions')
 export class TopicQuestionsController {

@@ -5,8 +5,10 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { QuestionsService } from './question.service';
 import { QuestionSchemaValidationPipe } from '@common/pipes/question-schema-validation.pipe';
@@ -17,6 +19,13 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@ne
 @Controller('questions')
 export class QuestionsController {
   constructor(private readonly questionsService: QuestionsService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get a paginated list of all questions globally' })
+  @ApiResponse({ status: 200, description: 'List of questions retrieved successfully.' })
+  async findAll(@Query() query: PaginationQueryDto) {
+    return await this.questionsService.findAll(query);
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a question by ID' })

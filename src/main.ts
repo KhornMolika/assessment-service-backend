@@ -37,7 +37,7 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('NBFSA Assessment Service API')
+    .setTitle('FSA Assessment Service API')
     .setDescription(`
 ## Authentication
 All standard endpoints require a Bearer token obtained from \`POST /auth/token\`.
@@ -63,6 +63,16 @@ All errors follow this shape:
 \`\`\`
   `)
     .setVersion('1.0')
+    .addTag('Auth')
+    .addTag('Clients')
+    .addTag('Topics')
+    .addTag('Questions')
+    .addTag('Question Banks')
+    .addTag('Assessments')
+    .addTag('Participants')
+    .addTag('Runtime')
+    .addTag('Realtime')
+    .addTag('Reports')
     .addBearerAuth()
     .addApiKey(
       { type: 'apiKey', in: 'header', name: 'x-admin-api-key' },

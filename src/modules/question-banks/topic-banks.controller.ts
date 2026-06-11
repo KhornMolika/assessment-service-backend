@@ -12,7 +12,7 @@ import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
-@ApiTags('Topic Banks')
+@ApiTags('Question Banks')
 @ApiBearerAuth()
 @Controller('topics/:topicId/banks')
 export class TopicBanksController {
