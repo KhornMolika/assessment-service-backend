@@ -220,7 +220,7 @@ export class RealtimeSessionService {
       totalQuestions: questions.length,
       q: {
         id: targetQuestion.id,
-        text: snapshot.questionText,
+        questionText: snapshot.questionText,
         type: snapshot.type,
       },
       options,

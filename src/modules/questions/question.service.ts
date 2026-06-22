@@ -36,11 +36,8 @@ export class QuestionsService {
       ...plain,
     };
 
-    // API expects `text`, DB has `questionText`
-    if (mapped.questionText) {
-      mapped.text = mapped.questionText;
-      delete mapped.questionText;
-    }
+    // API previously expected `text`, but user requested `questionText`
+    // We just leave mapped.questionText as is.
 
     // No longer need to unpack — entity column is now `options` directly
     // Just keep mapped.options as-is from the entity

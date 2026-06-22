@@ -222,7 +222,7 @@ export class QuestionBanksService {
       return {
         data: junctions.map((j) => ({
           id: j.question.id,
-          text: j.question.questionText,
+          questionText: j.question.questionText,
           type: j.question.type,
           difficulty: j.question.difficulty,
           points: j.question.points,
