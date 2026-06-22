@@ -8,7 +8,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { BankVisibility } from '../../modules/question-banks/entities/question-bank.entity';
+import { BankVisibility } from '@modules/question-banks/entities/question-bank.entity';
 
 export class PaginationQueryDto {
   @IsOptional()
@@ -19,7 +19,7 @@ export class PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsPositive()
-  @Max(100)
+  @Max(500)
   limit: number = 10; // Default to 10 records per page
 
   @IsOptional()

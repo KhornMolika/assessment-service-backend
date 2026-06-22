@@ -110,10 +110,11 @@ export class ClientRepository<T extends ClientScopedEntity> {
   }
 
   save(data: DeepPartial<T>): Promise<T> {
-    return this.repo.save({
+    const instance = this.repo.create({
       ...data,
       clientId: this.clientId,
-    } as T);
+    } as DeepPartial<T>);
+    return this.repo.save(instance);
   }
 
   update(

@@ -7,6 +7,7 @@ import {
   HttpException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { instanceToPlain } from 'class-transformer';
 import { QuestionRepository } from './repositories/question.repository';
 import { TopicRepository } from '../topics/repositories/topic.repository';
 import { QuestionBankRepository } from '../question-banks/repositories/question-bank.repository';
@@ -28,8 +29,11 @@ export class QuestionsService {
   private transformResponse(question: unknown): Record<string, unknown> | null {
     if (!question) return null;
 
+    // Use instanceToPlain to respect @Exclude() decorators on the entity
+    const plain = instanceToPlain(question);
+    
     const mapped: Record<string, unknown> = {
-      ...(question as Record<string, unknown>),
+      ...plain,
     };
 
     // API expects `text`, DB has `questionText`
@@ -44,6 +48,12 @@ export class QuestionsService {
     if (mapped.correctAnswer !== undefined) {
       mapped.correctAnswers = mapped.correctAnswer;
       delete mapped.correctAnswer;
+    }
+
+    // Keep the topic object as requested, do not flatten it into topicId
+    // and remove topicId if it somehow exists
+    if (mapped.topicId) {
+      delete mapped.topicId;
     }
 
     return mapped;
@@ -86,6 +96,7 @@ export class QuestionsService {
       const [questions, total] = await this.questionRepository.findPaginated(
         query,
         ['questionText'],
+        ['topic'],
       );
 
       return {
@@ -112,6 +123,7 @@ export class QuestionsService {
       const [questions, total] = await this.questionRepository.findPaginated(
         query,
         ['questionText'],
+        ['topic'],
       );
 
       return {
@@ -133,7 +145,7 @@ export class QuestionsService {
 
   async findById(id: string) {
     try {
-      const question = await this.questionRepository.findById(id);
+      const question = await this.questionRepository.findById(id, ['topic']);
       if (!question) throw new NotFoundException('Question not found');
       return this.transformResponse(question);
     } catch (error) {

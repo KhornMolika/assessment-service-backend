@@ -28,6 +28,7 @@ import Redis from 'ioredis';
 import { CacheModule } from './common/cache/cache.module';
 import { ClientContextInterceptor } from './common/interceptors/client-context.interceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -152,6 +153,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 
     WebhooksModule,
   ],
+  controllers: [AppController],
   providers: [
     ...(process.env.NODE_ENV === 'test'
       ? []

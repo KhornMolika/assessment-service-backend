@@ -38,10 +38,12 @@ export class QuestionBanksService {
         ...dto,
       });
 
-      return {
+      const mapped = {
         ...savedBank,
         questionCount: 0,
-      };
+      } as any;
+      delete mapped.clientId;
+      return mapped;
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException('Failed to create question bank');
@@ -53,7 +55,7 @@ export class QuestionBanksService {
       const [banks, total] = await this.bankRepository.findPaginated(
         query,
         ['name', 'description'],
-        ['questions'],
+        ['questions', 'topic'],
       );
 
       const mappedData = banks.map((bank: any) => ({
@@ -61,7 +63,11 @@ export class QuestionBanksService {
         questionCount: bank.questions?.length || 0,
       }));
 
-      mappedData.forEach((m) => delete m.questions);
+      mappedData.forEach((m) => {
+        delete m.questions;
+        delete m.topicId;
+        delete m.clientId;
+      });
 
       return {
         data: mappedData,
@@ -95,10 +101,12 @@ export class QuestionBanksService {
         topic: { id: topic.id },
       });
 
-      return {
+      const mapped = {
         ...savedBank,
         questionCount: 0,
-      };
+      } as any;
+      delete mapped.clientId;
+      return mapped;
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -115,7 +123,7 @@ export class QuestionBanksService {
       const [banks, total] = await this.bankRepository.findPaginated(
         query,
         ['name', 'description'],
-        ['questions'],
+        ['questions', 'topic'],
       );
 
       const mappedData = banks.map((bank: any) => ({
@@ -124,7 +132,11 @@ export class QuestionBanksService {
       }));
 
       // Cleanup
-      mappedData.forEach((m) => delete m.questions);
+      mappedData.forEach((m) => {
+        delete m.questions;
+        delete m.topicId;
+        delete m.clientId;
+      });
 
       return {
         data: mappedData,
@@ -143,11 +155,13 @@ export class QuestionBanksService {
 
   async findById(id: string) {
     try {
-      const bank: any = await this.bankRepository.findById(id, ['questions']);
+      const bank: any = await this.bankRepository.findById(id, ['questions', 'topic']);
       if (!bank) throw new NotFoundException('Question bank not found');
 
       bank.questionCount = bank.questions?.length || 0;
       delete bank.questions;
+      delete bank.topicId;
+      delete bank.clientId;
 
       return bank;
     } catch (error) {

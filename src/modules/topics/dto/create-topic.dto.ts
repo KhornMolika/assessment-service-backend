@@ -1,11 +1,9 @@
 import {
-  IsEnum,
   IsOptional,
   IsString,
   Length,
   MaxLength,
 } from 'class-validator';
-import { TopicVisibility } from '../entities/topic.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTopicDto {

@@ -23,6 +23,7 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
 
     const builder = this.qb('a')
       .leftJoinAndSelect('a.settings', 'settings')
+      .leftJoinAndSelect('a.topic', 'topic')
       .andWhere('a.topicId = :topicId', { topicId })
       .andWhere('a.deletedAt IS NULL');
 
@@ -48,6 +49,7 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
 
     const builder = this.qb('a')
       .leftJoinAndSelect('a.settings', 'settings')
+      .leftJoinAndSelect('a.topic', 'topic')
       .andWhere('a.deletedAt IS NULL');
 
     if (search?.trim()) {
@@ -70,6 +72,7 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
   findOneWithDetails(id: string) {
     return this.qb('a')
       .leftJoinAndSelect('a.settings', 'settings')
+      .leftJoinAndSelect('a.topic', 'topic')
       .leftJoinAndSelect('a.questions', 'questions')
       .leftJoinAndSelect('questions.question', 'question')
       .andWhere('a.id = :id', { id })
@@ -84,6 +87,7 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
    */
   findOneWithStatus(id: string, status: AssessmentStatus) {
     return this.qb('a')
+      .leftJoinAndSelect('a.topic', 'topic')
       .andWhere('a.id = :id', { id })
       .andWhere('a.status = :status', { status })
       .andWhere('a.deletedAt IS NULL')

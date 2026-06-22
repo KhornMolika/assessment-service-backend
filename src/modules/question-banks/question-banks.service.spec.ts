@@ -223,7 +223,7 @@ describe('QuestionBanksService', () => {
   describe('getBankQuestions', () => {
     it('should throw NotFoundException if bank not found', async () => {
       bankRepositoryMock.findById.mockResolvedValue(null);
-      await expect(service.getBankQuestions('1', { page: 1, limit: 10 })).rejects.toThrow(NotFoundException);
+      await expect(service.getBankQuestions('1', { page: 1, limit: 10 } as any)).rejects.toThrow(NotFoundException);
     });
 
     it('should return paginated bank questions', async () => {
@@ -232,7 +232,7 @@ describe('QuestionBanksService', () => {
         [{ id: 'jq1', question: { id: 'q1', text: 'Q1' } }],
         1,
       ]);
-      const result = await service.getBankQuestions('1', { page: 1, limit: 10 });
+      const result = await service.getBankQuestions('1', { page: 1, limit: 10 } as any);
       expect(result.data.length).toBe(1);
       expect(result.data[0].id).toBe('q1');
       expect(result.meta.total).toBe(1);

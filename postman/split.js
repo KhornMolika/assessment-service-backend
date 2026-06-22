@@ -5,8 +5,8 @@ const collectionPath = path.join(__dirname, 'assessment-service.postman_collecti
 const rawData = fs.readFileSync(collectionPath, 'utf8');
 const collection = JSON.parse(rawData);
 
-const clientFolders = ['Auth', 'Runtime', 'Realtime', 'Topics', 'Questions', 'Question Banks', 'Assessments', 'Participants', 'Reports'];
-const adminFolders = ['Auth', 'Topics', 'Questions', 'Question Banks', 'Assessments', 'Participants', 'Reports', 'Clients'];
+const clientFolders = ['Auth', 'Runtime', 'Realtime', 'Topics', 'Questions', 'Question Banks', 'Assessments', 'Participants', 'Reports', 'Health'];
+const adminFolders = ['Auth', 'Topics', 'Questions', 'Question Banks', 'Assessments', 'Participants', 'Reports', 'Clients', 'Health'];
 
 // Make a deep copy to avoid references
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
