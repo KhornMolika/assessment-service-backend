@@ -41,13 +41,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/token",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "token"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "token"]
             }
           },
           "response": []
@@ -79,12 +74,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics"]
             }
           },
           "response": []
@@ -101,13 +92,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/topics?page=1&limit=10&sortBy=createdAt&order=DESC",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics"
-              ],
+              "raw": "{{baseUrl}}/topics?page=1&limit=500&sortBy=createdAt&order=DESC",
+              "host": ["{{baseUrl}}"],
+              "path": ["topics"],
               "query": [
                 {
                   "key": "page",
@@ -143,13 +130,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}"]
             }
           },
           "response": []
@@ -176,13 +158,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}"]
             }
           },
           "response": []
@@ -200,13 +177,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}"]
             }
           },
           "response": []
@@ -238,14 +210,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -272,14 +238,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -306,14 +266,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -340,14 +294,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -374,14 +322,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -408,14 +350,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -442,14 +378,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -476,14 +406,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -510,14 +434,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"]
             }
           },
           "response": []
@@ -534,15 +452,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/topics/{{topicId}}/questions?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "questions"
-              ],
+              "raw": "{{baseUrl}}/topics/{{topicId}}/questions?page=1&limit=500",
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "questions"],
               "query": [
                 {
                   "key": "page",
@@ -570,13 +482,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/questions/{{questionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "questions",
-                "{{questionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "{{questionId}}"]
             }
           },
           "response": []
@@ -603,13 +510,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/questions/{{questionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "questions",
-                "{{questionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "{{questionId}}"]
             }
           },
           "response": []
@@ -627,13 +529,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/questions/{{questionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "questions",
-                "{{questionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "{{questionId}}"]
             }
           },
           "response": []
@@ -665,14 +562,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/banks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "banks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "banks"]
             }
           },
           "response": []
@@ -690,14 +581,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/topics/{{topicId}}/banks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "topics",
-                "{{topicId}}",
-                "banks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["topics", "{{topicId}}", "banks"]
             }
           },
           "response": []
@@ -715,13 +600,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "banks",
-                "{{bankId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["banks", "{{bankId}}"]
             }
           },
           "response": []
@@ -748,13 +628,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "banks",
-                "{{bankId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["banks", "{{bankId}}"]
             }
           },
           "response": []
@@ -771,15 +646,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/banks/{{bankId}}/questions?page=1&limit=10",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "banks",
-                "{{bankId}}",
-                "questions"
-              ],
+              "raw": "{{baseUrl}}/banks/{{bankId}}/questions?page=1&limit=500",
+              "host": ["{{baseUrl}}"],
+              "path": ["banks", "{{bankId}}", "questions"],
               "query": [
                 {
                   "key": "page",
@@ -816,14 +685,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}/questions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "banks",
-                "{{bankId}}",
-                "questions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["banks", "{{bankId}}", "questions"]
             }
           },
           "response": []
@@ -841,15 +704,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}/questions/{{questionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "banks",
-                "{{bankId}}",
-                "questions",
-                "{{questionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["banks", "{{bankId}}", "questions", "{{questionId}}"]
             }
           },
           "response": []
@@ -867,13 +723,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/banks/{{bankId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "banks",
-                "{{bankId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["banks", "{{bankId}}"]
             }
           },
           "response": []
@@ -911,14 +762,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "topics",
-                        "{{topicId}}",
-                        "assessments"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["topics", "{{topicId}}", "assessments"]
                     }
                   },
                   "response": []
@@ -936,14 +781,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/topics/{{topicId}}/assessments",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "topics",
-                        "{{topicId}}",
-                        "assessments"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["topics", "{{topicId}}", "assessments"]
                     }
                   },
                   "response": []
@@ -961,13 +800,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}"]
                     }
                   },
                   "response": []
@@ -994,13 +828,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}"]
                     }
                   },
                   "response": []
@@ -1018,14 +847,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/publish",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}",
-                        "publish"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}", "publish"]
                     }
                   },
                   "response": []
@@ -1043,14 +866,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/archive",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}",
-                        "archive"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}", "archive"]
                     }
                   },
                   "response": []
@@ -1068,13 +885,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}"]
                     }
                   },
                   "response": []
@@ -1092,14 +904,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{sessionId}}/recalculate",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{sessionId}}",
-                        "recalculate"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{sessionId}}", "recalculate"]
                     }
                   },
                   "response": []
@@ -1131,14 +937,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}",
-                        "questions"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}", "questions"]
                     }
                   },
                   "response": []
@@ -1156,14 +956,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}",
-                        "questions"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}", "questions"]
                     }
                   },
                   "response": []
@@ -1190,14 +984,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}",
-                        "questions"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}", "questions"]
                     }
                   },
                   "response": []
@@ -1215,9 +1003,7 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions/{{assessmentQuestionId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "assessments",
                         "{{assessmentId}}",
@@ -1246,14 +1032,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}",
-                        "settings"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}", "settings"]
                     }
                   },
                   "response": []
@@ -1280,14 +1060,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/settings",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "assessments",
-                        "{{assessmentId}}",
-                        "settings"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["assessments", "{{assessmentId}}", "settings"]
                     }
                   },
                   "response": []
@@ -1314,9 +1088,7 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "assessments",
                         "{{assessmentId}}",
@@ -1339,9 +1111,7 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "assessments",
                         "{{assessmentId}}",
@@ -1364,9 +1134,7 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/assessments/{{assessmentId}}/participants/{{participantId}}",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "assessments",
                         "{{assessmentId}}",
@@ -1409,14 +1177,8 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/start",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "runtime",
-                        "sessions",
-                        "start"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["runtime", "sessions", "start"]
                     }
                   },
                   "response": []
@@ -1443,9 +1205,7 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "runtime",
                         "sessions",
@@ -1469,15 +1229,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "runtime",
-                        "sessions",
-                        "{{sessionId}}",
-                        "submit"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["runtime", "sessions", "{{sessionId}}", "submit"]
                     }
                   },
                   "response": []
@@ -1495,15 +1248,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "runtime",
-                        "sessions",
-                        "{{sessionId}}",
-                        "result"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["runtime", "sessions", "{{sessionId}}", "result"]
                     }
                   },
                   "response": []
@@ -1530,9 +1276,7 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "runtime",
                         "sessions",
@@ -1565,9 +1309,7 @@
                     },
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/answers",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "runtime",
                         "sessions",
@@ -1591,15 +1333,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/submit",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "runtime",
-                        "sessions",
-                        "{{sessionId}}",
-                        "submit"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["runtime", "sessions", "{{sessionId}}", "submit"]
                     }
                   },
                   "response": []
@@ -1617,15 +1352,8 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/runtime/sessions/{{sessionId}}/result",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "runtime",
-                        "sessions",
-                        "{{sessionId}}",
-                        "result"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["runtime", "sessions", "{{sessionId}}", "result"]
                     }
                   },
                   "response": []
@@ -1648,9 +1376,7 @@
                     ],
                     "url": {
                       "raw": "{{baseUrl}}/runtime/real-time/{{assessmentId}}/start",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
+                      "host": ["{{baseUrl}}"],
                       "path": [
                         "runtime",
                         "real-time",
@@ -1668,12 +1394,8 @@
                     "header": [],
                     "url": {
                       "raw": "{{baseUrl}}/realtime (Not REST)",
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "path": [
-                        "realtime (Not REST)"
-                      ]
+                      "host": ["{{baseUrl}}"],
+                      "path": ["realtime (Not REST)"]
                     },
                     "description": "Connect via Socket.io to `/realtime`.\n\n**Events to Emit:**\n- `join`: `{ sessionId, participantId }`\n- `submit_answer`: `{ sessionId, assessmentQuestionId, response }`\n\n**Events to Listen For:**\n- `session_state`\n- `question_broadcast`\n- `session_ended`"
                   },
@@ -1710,12 +1432,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/participants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "participants"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["participants"]
             }
           },
           "response": []
@@ -1733,12 +1451,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/participants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "participants"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["participants"]
             }
           },
           "response": []
@@ -1756,13 +1470,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "participants",
-                "{{participantId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["participants", "{{participantId}}"]
             }
           },
           "response": []
@@ -1789,13 +1498,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "participants",
-                "{{participantId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["participants", "{{participantId}}"]
             }
           },
           "response": []
@@ -1813,13 +1517,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "participants",
-                "{{participantId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["participants", "{{participantId}}"]
             }
           },
           "response": []
@@ -1842,9 +1541,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/sessions/{{sessionId}}/report",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "assessments",
                 "{{assessmentId}}",
@@ -1869,14 +1566,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/assessments/{{assessmentId}}/report?page=1&limit=20",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assessments",
-                "{{assessmentId}}",
-                "report"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["assessments", "{{assessmentId}}", "report"],
               "query": [
                 {
                   "key": "page",
@@ -1904,14 +1595,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/participants/{{participantId}}/report",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "participants",
-                "{{participantId}}",
-                "report"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["participants", "{{participantId}}", "report"]
             }
           },
           "response": []
@@ -1928,12 +1613,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
             }
           },
           "response": []
@@ -1956,13 +1637,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/clients/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "clients",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["clients", "me"]
             }
           },
           "response": []
@@ -1989,13 +1665,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/clients/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "clients",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["clients", "me"]
             }
           },
           "response": []
@@ -2010,9 +1681,7 @@
         "type": "text/javascript",
         "packages": {},
         "requests": {},
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     },
     {
@@ -2021,9 +1690,7 @@
         "type": "text/javascript",
         "packages": {},
         "requests": {},
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     }
   ],
