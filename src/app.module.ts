@@ -76,42 +76,42 @@ import { AppController } from './app.controller';
           {
             name: 'default',
             ttl: config.get('app.throttle.read.ttl', 60000),
-            limit: config.get('app.throttle.read.limit', 500),
+            limit: config.get('app.throttle.read.limit', 5000),
           },
           {
             name: 'readBurst',
             ttl: config.get('app.throttle.readBurst.ttl', 10000),
-            limit: config.get('app.throttle.readBurst.limit', 50),
+            limit: config.get('app.throttle.readBurst.limit', 500),
           },
           {
             name: 'write',
             ttl: config.get('app.throttle.write.ttl', 60000),
-            limit: config.get('app.throttle.write.limit', 200),
+            limit: config.get('app.throttle.write.limit', 2000),
           },
           {
             name: 'writeBurst',
             ttl: config.get('app.throttle.writeBurst.ttl', 10000),
-            limit: config.get('app.throttle.writeBurst.limit', 20),
+            limit: config.get('app.throttle.writeBurst.limit', 200),
           },
           {
             name: 'admin',
             ttl: config.get('app.throttle.admin.ttl', 60000),
-            limit: config.get('app.throttle.admin.limit', 100),
+            limit: config.get('app.throttle.admin.limit', 1000),
           },
           {
             name: 'adminBurst',
             ttl: config.get('app.throttle.adminBurst.ttl', 10000),
-            limit: config.get('app.throttle.adminBurst.limit', 10),
+            limit: config.get('app.throttle.adminBurst.limit', 100),
           },
           {
             name: 'auth',
             ttl: config.get('app.throttle.auth.ttl', 60000),
-            limit: config.get('app.throttle.auth.limit', 10),
+            limit: config.get('app.throttle.auth.limit', 100),
           },
           {
             name: 'authBurst',
             ttl: config.get('app.throttle.authBurst.ttl', 1000),
-            limit: config.get('app.throttle.authBurst.limit', 2),
+            limit: config.get('app.throttle.authBurst.limit', 20),
           },
           {
             name: 'websocket',
