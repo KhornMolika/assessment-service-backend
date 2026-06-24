@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // Payload to create a new assessment under a topic.
 // -----------------------------------------------------------------------------
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   AssessmentType,
@@ -11,6 +11,7 @@ export class CreateAssessmentDto {
   @ApiProperty({ example: 'Midterm Exam', description: 'The name of the assessment' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(512)
   name!: string;
 
   @ApiProperty({ example: AssessmentType.EXAM, enum: AssessmentType, description: 'The type of the assessment' })
