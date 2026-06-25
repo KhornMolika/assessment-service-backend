@@ -20,4 +20,9 @@ export class JoinRoomDto {
   @ApiProperty({ enum: RoomRole, example: RoomRole.PARTICIPANT, description: 'The role of the user in the room' })
   @IsEnum(RoomRole)
   role!: RoomRole;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  name?: string;
 }

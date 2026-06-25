@@ -60,7 +60,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         socket.id,
         dto.participantId ?? null,
         dto.role,
-        null,
+        dto.name ?? null,
       );
 
       this.server.to(assessmentId).emit(RealtimeEvents.ROOM_UPDATE, {
