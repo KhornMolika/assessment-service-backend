@@ -120,12 +120,12 @@ describe('AssessmentsService', () => {
         [{ id: '1' } as unknown as Assessment],
         1,
       ]);
-      const result = await service.findAll('topic-1', { page: 1, limit: 10 });
+      const result = await service.findAll('topic-1', { page: 1, limit: 10 } as any);
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
       expect(assessmentsMock.findPaginatedByTopic).toHaveBeenCalledWith(
         'topic-1',
-        { page: 1, limit: 10 },
+        { page: 1, limit: 10 } as any,
       );
     });
   });
@@ -224,7 +224,7 @@ describe('AssessmentsService', () => {
       await expect(service.publish('1')).rejects.toThrow(BadRequestException);
     });
 
-    it('should successfully publish a manual assessment', async () => {
+    it('should successfully publish a manual assessment and snapshot questions', async () => {
       assessmentsMock.findById!.mockResolvedValue({
         id: '1',
         status: AssessmentStatus.DRAFT,
@@ -234,7 +234,9 @@ describe('AssessmentsService', () => {
         mode: Mode.SELF_PACED,
       } as unknown as AssessmentSetting);
       assessmentsMock.countQuestions!.mockResolvedValue(5);
-      assessmentQuestionsMock.findByAssessment!.mockResolvedValue([]);
+      assessmentQuestionsMock.findByAssessment!.mockResolvedValue([
+        { id: 'aq1', questionId: 'q1', question: { questionText: 'Q1' } as any }
+      ]);
       assessmentsMock.findOneWithDetails!.mockResolvedValue({
         id: '1',
         status: AssessmentStatus.PUBLISHED,
@@ -245,7 +247,184 @@ describe('AssessmentsService', () => {
         { id: '1' },
         { status: AssessmentStatus.PUBLISHED },
       );
+      // It should have generated snapshots using update
+      expect(assessmentQuestionsMock.update).toHaveBeenCalled();
       expect(result.status).toBe(AssessmentStatus.PUBLISHED);
+    });
+  });
+
+  describe('archive', () => {
+    it('should throw ConflictException if not PUBLISHED', async () => {
+      assessmentsMock.findOneWithStatus!.mockResolvedValue(null);
+      await expect(service.archive('1')).rejects.toThrow(ConflictException);
+    });
+
+    it('should archive successfully if PUBLISHED', async () => {
+      assessmentsMock.findOneWithStatus!.mockResolvedValue({ id: '1' } as unknown as Assessment);
+      assessmentsMock.findOneWithDetails!.mockResolvedValue({ id: '1', status: AssessmentStatus.ARCHIVED } as unknown as Assessment);
+      
+      const result = await service.archive('1');
+      expect(assessmentsMock.update).toHaveBeenCalledWith({ id: '1' }, { status: AssessmentStatus.ARCHIVED });
+      expect(result.status).toBe(AssessmentStatus.ARCHIVED);
+    });
+  });
+
+  describe('getQuestions', () => {
+    it('should return questions', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1' } as unknown as Assessment);
+      assessmentQuestionsMock.findByAssessment!.mockResolvedValue([{ id: 'aq1' }]);
+      const res = await service.getQuestions('1');
+      expect(res).toHaveLength(1);
+    });
+  });
+
+  describe('addQuestion', () => {
+    it('should throw NotFoundException if question not found', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      questionsMock.findById!.mockResolvedValue(null);
+      await expect(service.addQuestion('1', { questionId: 'q1' })).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ConflictException if duplicate question', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      questionsMock.findById!.mockResolvedValue({ id: 'q1' });
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({ mode: Mode.SELF_PACED } as unknown as AssessmentSetting);
+      assessmentQuestionsMock.findOne!.mockResolvedValue({ id: 'aq1' });
+
+      await expect(service.addQuestion('1', { questionId: 'q1' })).rejects.toThrow(ConflictException);
+    });
+
+    it('should add question successfully', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      questionsMock.findById!.mockResolvedValue({ id: 'q1', points: 10 });
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({ mode: Mode.SELF_PACED } as unknown as AssessmentSetting);
+      assessmentQuestionsMock.findOne!.mockResolvedValue(null);
+      assessmentQuestionsMock.findMaxOrder!.mockResolvedValue(0);
+      assessmentQuestionsMock.save!.mockResolvedValue({ id: 'aq1', points: 10 });
+
+      const res = await service.addQuestion('1', { questionId: 'q1' });
+      expect(res.points).toBe(10);
+      expect(assessmentQuestionsMock.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('removeQuestion', () => {
+    it('should throw ConflictException if not DRAFT', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.PUBLISHED } as unknown as Assessment);
+      await expect(service.removeQuestion('1', 'aq1')).rejects.toThrow(ConflictException);
+    });
+
+    it('should remove question', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      assessmentQuestionsMock.findOne!.mockResolvedValue({ id: 'aq1' });
+      
+      await service.removeQuestion('1', 'aq1');
+      expect(assessmentQuestionsMock.softDelete).toHaveBeenCalledWith({ id: 'aq1' });
+    });
+  });
+
+  describe('updateSettings', () => {
+    it('should update settings', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({ id: 's1' } as unknown as AssessmentSetting);
+      
+      await service.updateSettings('1', { mode: Mode.REAL_TIME } as any);
+      expect(assessmentSettingsMock.update).toHaveBeenCalledWith({ id: 's1' }, expect.objectContaining({ mode: Mode.REAL_TIME }));
+    });
+
+    it('should throw BadRequestException if DYNAMIC and rules missing', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({ id: 's1' } as unknown as AssessmentSetting);
+
+      await expect(service.updateSettings('1', { questionSelection: QuestionSelection.DYNAMIC } as any)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('addQuestions', () => {
+    it('should add multiple questions', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({ mode: Mode.SELF_PACED } as unknown as AssessmentSetting);
+      questionsMock.findById!.mockResolvedValue({ id: 'q1', points: 5 });
+      assessmentQuestionsMock.findOne!.mockResolvedValue(null);
+      assessmentQuestionsMock.findMaxOrder!.mockResolvedValue(0);
+      assessmentQuestionsMock.save!.mockResolvedValue({ id: 'aq1' });
+
+      const res = await service.addQuestions('1', [{ questionId: 'q1' }]);
+      expect(res).toHaveLength(1);
+    });
+
+    it('should throw ConflictException if duplicate questionIds in request', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({ mode: Mode.SELF_PACED } as unknown as AssessmentSetting);
+
+      await expect(service.addQuestions('1', [{ questionId: 'q1' }, { questionId: 'q1' }])).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('replaceQuestions', () => {
+    it('should replace questions successfully', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      questionsMock.findById!.mockResolvedValue({ id: 'q1', points: 10 });
+      assessmentQuestionsMock.replaceAll!.mockResolvedValue(undefined);
+
+      await service.replaceQuestions('1', { questionIds: ['q1'] });
+      expect(assessmentQuestionsMock.replaceAll).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if any question is missing', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1', status: AssessmentStatus.DRAFT } as unknown as Assessment);
+      questionsMock.findById!.mockResolvedValue(null);
+
+      await expect(service.replaceQuestions('1', { questionIds: ['q1'] })).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('remove', () => {
+    it('should remove successfully', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1' } as unknown as Assessment);
+      await service.remove('1');
+      expect(assessmentsMock.softDelete).toHaveBeenCalledWith({ id: '1' });
+    });
+  });
+
+  describe('getSettings', () => {
+    it('should throw NotFoundException if settings not found', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1' } as unknown as Assessment);
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue(null);
+      await expect(service.getSettings('1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return settings', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1' } as unknown as Assessment);
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({ id: 's1' } as unknown as AssessmentSetting);
+      const res = await service.getSettings('1');
+      expect(res.id).toBe('s1');
+    });
+  });
+
+  describe('getParticipants', () => {
+    it('should return paginated participants', async () => {
+      assessmentsMock.findById!.mockResolvedValue({ id: '1' } as unknown as Assessment);
+      assessmentParticipantsMock.findPaginatedByAssessment!.mockResolvedValue([
+        [{ participant: { id: 'p1' } }],
+        1,
+      ]);
+      const res = await service.getParticipants('1', { page: 1, limit: 10 } as any);
+      expect(res.data).toHaveLength(1);
+      expect(res.meta.total).toBe(1);
+    });
+  });
+
+  describe('removeParticipant', () => {
+    it('should remove participant successfully', async () => {
+      assessmentParticipantsMock.findOne!.mockResolvedValue({ id: 'ap1' });
+      await service.removeParticipant('1', 'p1');
+      expect(assessmentParticipantsMock.softDelete).toHaveBeenCalledWith({ id: 'ap1' });
+    });
+
+    it('should throw NotFoundException if participant not found', async () => {
+      assessmentParticipantsMock.findOne!.mockResolvedValue(null);
+      await expect(service.removeParticipant('1', 'p1')).rejects.toThrow(NotFoundException);
     });
   });
 

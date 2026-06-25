@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AIEvaluationResult } from '../interfaces/ai-evaluation-result.interface';
-import { IAiProvider } from '../interfaces/ai-provider.interface';
+import { IAProvider } from '../interfaces/ai-provider.interface';
 
 @Injectable()
-export class GeminiService implements IAiProvider {
+export class GeminiService implements IAProvider {
   constructor(private readonly config: ConfigService) {}
 
   async evaluate(

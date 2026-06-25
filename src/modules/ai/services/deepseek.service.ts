@@ -6,14 +6,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import { IAiProvider } from '../interfaces/ai-provider.interface';
+import { IAProvider } from '../interfaces/ai-provider.interface';
 import {
   AIEvaluationResult,
   AIEvaluationConfidence,
 } from '../interfaces/ai-evaluation-result.interface';
 
 @Injectable()
-export class DeepSeekService implements IAiProvider {
+export class DeepSeekService implements IAProvider {
   private readonly client: OpenAI;
   private readonly logger = new Logger(DeepSeekService.name);
 

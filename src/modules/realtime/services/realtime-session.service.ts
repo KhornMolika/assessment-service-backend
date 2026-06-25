@@ -152,6 +152,18 @@ export class RealtimeSessionService {
   // START QUESTION
   // ---------------------------------------------------------------------------
 
+  /**
+   * Starts a specific question or the next question in the sequence.
+   * Only the session host can start a question.
+   * Sets the session status to active and calculates the question end time.
+   * 
+   * @param assessmentId - The ID of the assessment
+   * @param socketId - The socket ID of the requester (must be host)
+   * @param questionId - Optional ID of a specific question to start
+   * @throws {NotFoundException} if session or question not found
+   * @throws {ForbiddenException} if requester is not the host
+   * @throws {BadRequestException} if no more questions available
+   */
   async startQuestion(
     assessmentId: string,
     socketId: string,
@@ -208,7 +220,7 @@ export class RealtimeSessionService {
       totalQuestions: questions.length,
       q: {
         id: targetQuestion.id,
-        text: snapshot.questionText,
+        questionText: snapshot.questionText,
         type: snapshot.type,
       },
       options,
@@ -220,6 +232,19 @@ export class RealtimeSessionService {
   // SUBMIT ANSWER
   // ---------------------------------------------------------------------------
 
+  /**
+   * Stores a participant's answer to the currently active question.
+   * Returns tracking metrics (totalAnswered, totalParticipants).
+   * 
+   * @param assessmentId - The ID of the assessment session
+   * @param participantId - The ID of the participant submitting the answer
+   * @param assessmentQuestionId - The ID of the question being answered
+   * @param choice - Optional selected option ID (for choice-based questions)
+   * @param response - Optional arbitrary JSON response (for complex questions)
+   * @param timeTaken - Optional time taken in milliseconds (used for time bonus)
+   * @throws {NotFoundException} if session not found
+   * @throws {BadRequestException} if session is not active or wrong question
+   */
   async submitAnswer(
     assessmentId: string,
     participantId: string,
@@ -591,7 +616,7 @@ export class RealtimeSessionService {
     try {
       const result = strategy.grade(responsePayload, correctAnswer, 1.0);
       return Math.max(0, result.scoreAwarded);
-    } catch (e) {
+    } catch {
       return 0;
     }
   }

@@ -6,7 +6,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { TokenRequestDto } from './dto/token-request.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
@@ -25,6 +25,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'OAuth2 client credentials grant — returns Bearer token',
   })
+  @ApiResponse({ status: 200, description: 'Token generated successfully', type: TokenResponseDto })
   async token(@Body() dto: TokenRequestDto): Promise<TokenResponseDto> {
     return this.authService.token(dto);
   }

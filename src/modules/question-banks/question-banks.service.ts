@@ -2,6 +2,9 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Logger,
+  HttpException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { QuestionBankRepository } from './repositories/question-bank.repository';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
@@ -13,6 +16,8 @@ import { QuestionBankQuestionRepository } from './repositories/question-bank-que
 
 @Injectable()
 export class QuestionBanksService {
+  private readonly logger = new Logger(QuestionBanksService.name);
+
   constructor(
     private readonly bankRepository: QuestionBankRepository,
     private readonly topicRepository: TopicRepository,
@@ -33,10 +38,12 @@ export class QuestionBanksService {
         ...dto,
       });
 
-      return {
+      const mapped = {
         ...savedBank,
         questionCount: 0,
-      };
+      } as any;
+      delete mapped.clientId;
+      return mapped;
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       throw new BadRequestException('Failed to create question bank');
@@ -48,7 +55,7 @@ export class QuestionBanksService {
       const [banks, total] = await this.bankRepository.findPaginated(
         query,
         ['name', 'description'],
-        ['questions'],
+        ['questions', 'topic'],
       );
 
       const mappedData = banks.map((bank: any) => ({
@@ -56,7 +63,11 @@ export class QuestionBanksService {
         questionCount: bank.questions?.length || 0,
       }));
 
-      mappedData.forEach((m) => delete m.questions);
+      mappedData.forEach((m) => {
+        delete m.questions;
+        delete m.topicId;
+        delete m.clientId;
+      });
 
       return {
         data: mappedData,
@@ -90,10 +101,12 @@ export class QuestionBanksService {
         topic: { id: topic.id },
       });
 
-      return {
+      const mapped = {
         ...savedBank,
         questionCount: 0,
-      };
+      } as any;
+      delete mapped.clientId;
+      return mapped;
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -110,7 +123,7 @@ export class QuestionBanksService {
       const [banks, total] = await this.bankRepository.findPaginated(
         query,
         ['name', 'description'],
-        ['questions'],
+        ['questions', 'topic'],
       );
 
       const mappedData = banks.map((bank: any) => ({
@@ -119,7 +132,11 @@ export class QuestionBanksService {
       }));
 
       // Cleanup
-      mappedData.forEach((m) => delete m.questions);
+      mappedData.forEach((m) => {
+        delete m.questions;
+        delete m.topicId;
+        delete m.clientId;
+      });
 
       return {
         data: mappedData,
@@ -138,11 +155,13 @@ export class QuestionBanksService {
 
   async findById(id: string) {
     try {
-      const bank: any = await this.bankRepository.findById(id, ['questions']);
+      const bank: any = await this.bankRepository.findById(id, ['questions', 'topic']);
       if (!bank) throw new NotFoundException('Question bank not found');
 
       bank.questionCount = bank.questions?.length || 0;
       delete bank.questions;
+      delete bank.topicId;
+      delete bank.clientId;
 
       return bank;
     } catch (error) {
@@ -191,6 +210,9 @@ export class QuestionBanksService {
 
   async getBankQuestions(bankId: string, query: PaginationQueryDto) {
     try {
+      const bank = await this.findById(bankId);
+      if (!bank) throw new NotFoundException('Bank not found');
+
       const [junctions, total] = await this.bankQuestionRepository.findByBank(
         bankId,
         query.page,
@@ -200,7 +222,7 @@ export class QuestionBanksService {
       return {
         data: junctions.map((j) => ({
           id: j.question.id,
-          text: j.question.questionText,
+          questionText: j.question.questionText,
           type: j.question.type,
           difficulty: j.question.difficulty,
           points: j.question.points,
@@ -218,8 +240,9 @@ export class QuestionBanksService {
         },
       };
     } catch (error) {
-      console.error('getBankQuestions error:', error);
-      throw new BadRequestException('Failed to get bank questions');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('getBankQuestions error:', error);
+      throw new InternalServerErrorException('Failed to get bank questions');
     }
   }
 
@@ -313,8 +336,9 @@ export class QuestionBanksService {
         removedAt: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('removeQuestionFromBank error:', error);
-      throw new BadRequestException('Failed to remove question');
+      if (error instanceof HttpException) throw error;
+      this.logger.error('removeQuestionFromBank error:', error);
+      throw new InternalServerErrorException('Failed to remove question');
     }
   }
 }

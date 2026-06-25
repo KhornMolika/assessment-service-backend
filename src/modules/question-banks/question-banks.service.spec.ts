@@ -44,6 +44,7 @@ describe('QuestionBanksService', () => {
     }).compile();
 
     service = module.get<QuestionBanksService>(QuestionBanksService);
+    jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -142,12 +143,12 @@ describe('QuestionBanksService', () => {
   });
 
   describe('removeQuestionFromBank', () => {
-    it('should throw BadRequestException if not found', async () => {
+    it('should throw NotFoundException if not found', async () => {
       bankQuestionRepositoryMock.findOneByBankAndQuestion.mockResolvedValue(
         null,
       );
       await expect(service.removeQuestionFromBank('1', 'q1')).rejects.toThrow(
-        BadRequestException,
+        NotFoundException,
       );
     });
 
@@ -162,4 +163,80 @@ describe('QuestionBanksService', () => {
       expect(result.questionId).toBe('q1');
     });
   });
+
+  describe('findAll', () => {
+    it('should return paginated data with questionCount', async () => {
+      bankRepositoryMock.findPaginated.mockResolvedValue([
+        [{ id: '1', name: 'Bank 1', questions: [{}, {}] }],
+        1,
+      ]);
+      const result = await service.findAll({ page: 1, limit: 10 });
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].questionCount).toBe(2);
+      expect(result.data[0].questions).toBeUndefined();
+      expect(result.meta.total).toBe(1);
+    });
+  });
+
+  describe('findTopicBanks', () => {
+    it('should return paginated topic banks', async () => {
+      bankRepositoryMock.findPaginated.mockResolvedValue([
+        [{ id: '1', name: 'Topic Bank', questions: [{}] }],
+        1,
+      ]);
+      const result = await service.findTopicBanks('topic-1', { page: 1, limit: 10 });
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].questionCount).toBe(1);
+      expect(result.meta.topicId).toBe('topic-1');
+    });
+  });
+
+  describe('update', () => {
+    it('should throw NotFoundException if bank not found', async () => {
+      bankRepositoryMock.findById.mockResolvedValue(null);
+      await expect(service.update('1', { name: 'New' })).rejects.toThrow(NotFoundException);
+    });
+
+    it('should update bank successfully', async () => {
+      bankRepositoryMock.findById.mockResolvedValue({ id: '1', name: 'Old' });
+      bankRepositoryMock.update.mockResolvedValue(undefined);
+      const result = await service.update('1', { name: 'New' });
+      expect(bankRepositoryMock.update).toHaveBeenCalledWith({ id: '1' }, { name: 'New' });
+      expect(result.id).toBe('1');
+    });
+  });
+
+  describe('delete', () => {
+    it('should throw NotFoundException if bank not found', async () => {
+      bankRepositoryMock.findById.mockResolvedValue(null);
+      await expect(service.delete('1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should delete bank successfully', async () => {
+      bankRepositoryMock.findById.mockResolvedValue({ id: '1' });
+      bankRepositoryMock.softDelete.mockResolvedValue(undefined);
+      await service.delete('1');
+      expect(bankRepositoryMock.softDelete).toHaveBeenCalledWith({ id: '1' });
+    });
+  });
+
+  describe('getBankQuestions', () => {
+    it('should throw NotFoundException if bank not found', async () => {
+      bankRepositoryMock.findById.mockResolvedValue(null);
+      await expect(service.getBankQuestions('1', { page: 1, limit: 10 } as any)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return paginated bank questions', async () => {
+      bankRepositoryMock.findById.mockResolvedValue({ id: '1' });
+      bankQuestionRepositoryMock.findByBank.mockResolvedValue([
+        [{ id: 'jq1', question: { id: 'q1', text: 'Q1' } }],
+        1,
+      ]);
+      const result = await service.getBankQuestions('1', { page: 1, limit: 10 } as any);
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].id).toBe('q1');
+      expect(result.meta.total).toBe(1);
+    });
+  });
 });
+

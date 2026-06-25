@@ -20,7 +20,7 @@ import {
 import { AIGradingJobRepository } from '../repositories/ai-grading-job.repository';
 import { AIPromptService } from './ai-prompt.service';
 import { AI_PROVIDER_TOKEN } from '../interfaces/ai-provider.interface';
-import type { IAiProvider } from '../interfaces/ai-provider.interface';
+import type { IAProvider } from '../interfaces/ai-provider.interface';
 import { AIEvaluationResult } from '../interfaces/ai-evaluation-result.interface';
 
 const AI_GRADED_TYPES = [QuestionTypeName.SHORT_ANSWER, QuestionTypeName.ESSAY];
@@ -38,7 +38,7 @@ export class AIGradingService {
     private readonly jobs: AIGradingJobRepository,
     private readonly prompts: AIPromptService,
     @Inject(AI_PROVIDER_TOKEN)
-    private readonly aiProvider: IAiProvider,
+    private readonly aiProvider: IAProvider,
     @InjectQueue('ai-grading')
     private readonly aiGradingQueue: Queue,
     dataSource: DataSource,

@@ -8,37 +8,35 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
-import { GradingEngineService } from '../../grading/services/grading-engine.service';
+import { GradingEngineService } from '@modules/grading/services/grading-engine.service';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { AnswerSheetRepository } from '../repositories/answer-sheet.repository';
 import { AnswerEntryRepository } from '../repositories/answer-entry.repository';
-import { AssessmentRepository } from '../../assessments/repositories/assessment.repository';
-import { AssessmentSettingRepository } from '../../assessments/repositories/assessment-setting.repository';
-import { AssessmentParticipantRepository } from '../../assessments/repositories/assessment-participant.repository';
-import { AssessmentQuestionRepository } from '../../assessments/repositories/assessment-question.repository';
-import { ParticipantRepository } from '../../participants/repositories/participant.repository';
-import { QuestionRepository } from '../../questions/repositories/question.repository';
+import { AssessmentRepository } from '@modules/assessments/repositories/assessment.repository';
+import { AssessmentSettingRepository } from '@modules/assessments/repositories/assessment-setting.repository';
+import { AssessmentParticipantRepository } from '@modules/assessments/repositories/assessment-participant.repository';
+import { AssessmentQuestionRepository } from '@modules/assessments/repositories/assessment-question.repository';
+import { ParticipantRepository } from '@modules/participants/repositories/participant.repository';
+import { QuestionRepository } from '@modules/questions/repositories/question.repository';
 import {
-  AnswerSheet,
   AnswerSheetStatus,
-} from '../../assessments/entities/answer-sheet.entity';
-import { AssessmentStatus } from '../../assessments/entities/assessment.entity';
+} from '@modules/assessments/entities/answer-sheet.entity';
+import { AssessmentStatus } from '@modules/assessments/entities/assessment.entity';
 import {
-  Mode,
   ParticipantIdentity,
   QuestionSelection,
   ShowResults,
-} from '../../assessments/entities/assessment-settings.entity';
-import { GradingStatus } from '../../assessments/entities/answer-entry.entity';
+} from '@modules/assessments/entities/assessment-settings.entity';
+import { GradingStatus } from '@modules/assessments/entities/answer-entry.entity';
 import {
   SESSION_EXPIRY_QUEUE,
   SessionExpiryJobData,
 } from '../jobs/session-expiry.processor';
 import { StartSessionDto } from '../dto/start-session.dto';
 import { SaveAnswerDto } from '../dto/save-answer.dto';
-import { ClientContextService } from '../../../common/context/client-context.service';
-import { Difficulty } from '../../questions/entities/question.entity';
+import { ClientContextService } from '@common/context/client-context.service';
+import { Difficulty } from '@modules/questions/entities/question.entity';
 
 @Injectable()
 export class RuntimeService {
@@ -77,6 +75,12 @@ export class RuntimeService {
    * Schedules auto-submit and warning jobs if timeLimit is set.
    *
    * Returns session with full question list (no correctAnswer exposed).
+   * 
+   * @param dto - StartSessionDto containing assessmentId and optional participantId
+   * @throws {NotFoundException} if assessment or participant does not exist
+   * @throws {BadRequestException} if assessment is not published or outside timing window
+   * @throws {ConflictException} if participant already started this assessment
+   * @throws {InternalServerErrorException} if session creation fails
    */
   async startSession(dto: StartSessionDto) {
     try {
@@ -238,6 +242,12 @@ export class RuntimeService {
    *
    * Creates a new AnswerEntry if first answer, updates if already answered.
    * gradingStatus set to PENDING — grading engine processes after submit.
+   * 
+   * @param sessionId - AnswerSheet UUID
+   * @param dto - SaveAnswerDto containing questionId and response object
+   * @throws {NotFoundException} if session or question does not exist
+   * @throws {BadRequestException} if session is not IN_PROGRESS or time limit expired
+   * @throws {InternalServerErrorException} if save operation fails
    */
   async saveAnswer(sessionId: string, dto: SaveAnswerDto) {
     try {
@@ -319,6 +329,11 @@ export class RuntimeService {
    * Sets status to SUBMITTED and submittedAt to now.
    * Cancels pending expiry jobs.
    * Grading engine processes entries in the next phase.
+   * 
+   * @param sessionId - AnswerSheet UUID
+   * @throws {NotFoundException} if session does not exist
+   * @throws {BadRequestException} if session is not IN_PROGRESS or not all questions are answered
+   * @throws {InternalServerErrorException} if submission or grading trigger fails
    */
   async submitSession(sessionId: string) {
     try {

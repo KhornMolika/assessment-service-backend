@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 
 import { Entity, Column, ManyToOne, OneToOne, OneToMany } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { Topic } from '@modules/topics/entities/topic.entity';
 import { AssessmentSetting } from './assessment-settings.entity';
@@ -29,6 +30,7 @@ export class Assessment extends ClientScopedEntity {
   })
   topic!: Topic;
 
+  @Exclude()
   @Column({ type: 'uuid' })
   topicId!: string;
 

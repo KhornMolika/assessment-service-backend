@@ -9,9 +9,18 @@ import { UpdateTopicDto } from './dto/update-topic.dto';
 import slugify from 'slugify';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 
+import { QuestionRepository } from '../questions/repositories/question.repository';
+import { QuestionBankRepository } from '../question-banks/repositories/question-bank.repository';
+import { AssessmentRepository } from '../assessments/repositories/assessment.repository';
+
 @Injectable()
 export class TopicsService {
-  constructor(private readonly topicRepository: TopicRepository) {}
+  constructor(
+    private readonly topicRepository: TopicRepository,
+    private readonly questionRepository: QuestionRepository,
+    private readonly questionBankRepository: QuestionBankRepository,
+    private readonly assessmentRepository: AssessmentRepository,
+  ) {}
 
   /*
   |--------------------------------------------------------------------------
@@ -24,7 +33,10 @@ export class TopicsService {
         name: dto.name,
       });
 
-      if (exists) throw new BadRequestException("Topic's name already exists");
+      if (exists)
+        throw new BadRequestException(
+          'The topic name you entered is already in use. Please create a different name.',
+        );
 
       const slug = this.generateSlug(dto.name);
 
@@ -94,6 +106,7 @@ export class TopicsService {
 
       // Do not return all questions raw in the response per API doc
       delete mapped.questions;
+      delete mapped.clientId;
 
       // Map question counts for nested banks/assessments if necessary
       if (mapped.questionBanks) {
@@ -161,6 +174,11 @@ export class TopicsService {
       await this.findById(id);
 
       await this.topicRepository.softDelete({ id });
+
+      // Cascade soft delete to children
+      await this.questionRepository.softDelete({ topic: { id } } as any);
+      await this.questionBankRepository.softDelete({ topic: { id } } as any);
+      await this.assessmentRepository.softDelete({ topic: { id } } as any);
 
       return;
     } catch (error) {
