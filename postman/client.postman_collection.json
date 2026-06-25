@@ -1169,6 +1169,40 @@
                   "response": []
                 },
                 {
+                  "name": "Replace Assessment Questions",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"questionIds\": [\"{{questionId}}\"]\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/assessments/{{assessmentId}}/questions",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "assessments",
+                        "{{assessmentId}}",
+                        "questions"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
                   "name": "Remove Question from Assessment",
                   "request": {
                     "method": "DELETE",
