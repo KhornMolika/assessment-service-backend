@@ -136,8 +136,24 @@ export class AssessmentsController {
   @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
   @ApiResponse({ status: 200, description: 'Questions retrieved successfully' })
   @Get('assessments/:id/questions')
-  getQuestions(@Param('id', ParseUUIDPipe) id: string) {
-    return this.assessmentService.getQuestions(id);
+  async getQuestions(@Param('id', ParseUUIDPipe) id: string) {
+    const questions = await this.assessmentService.getQuestions(id);
+    return questions.map(q => {
+      // Flatten the payload and omit null/empty snapshot fields to make it cleaner
+      const isSnapshotEmpty = !q.questionSnapshot || Object.keys(q.questionSnapshot).length === 0;
+      const snapshot = isSnapshotEmpty ? q.question : q.questionSnapshot;
+      
+      return {
+        id: q.id, // The assessmentQuestionId
+        assessmentId: q.assessmentId,
+        questionId: q.questionId,
+        order: q.order,
+        points: q.points,
+        question: snapshot, // Include the full active or snapshot question
+        createdAt: q.createdAt,
+        updatedAt: q.updatedAt,
+      };
+    });
   }
 
   /** POST /assessments/:id/questions — DRAFT only */
@@ -193,17 +209,17 @@ export class AssessmentsController {
     return this.assessmentService.replaceQuestions(id, dto);
   }
 
-  /** DELETE /assessments/:id/questions/:questionId — DRAFT only */
+  /** DELETE /assessments/:id/questions/:assessmentQuestionId — DRAFT only */
   @ApiOperation({ summary: 'Remove a question from an assessment (DRAFT only)' })
   @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiParam({ name: 'questionId', description: 'The UUID of the source question', example: '123e4567-e89b-12d3-a456-426614174001' })
+  @ApiParam({ name: 'assessmentQuestionId', description: 'The UUID of the assessment question', example: '123e4567-e89b-12d3-a456-426614174001' })
   @ApiResponse({ status: 200, description: 'Question removed successfully' })
-  @Delete('assessments/:id/questions/:questionId')
+  @Delete('assessments/:id/questions/:assessmentQuestionId')
   removeQuestion(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('questionId', ParseUUIDPipe) questionId: string,
+    @Param('assessmentQuestionId', ParseUUIDPipe) assessmentQuestionId: string,
   ) {
-    return this.assessmentService.removeQuestionByQuestionId(id, questionId);
+    return this.assessmentService.removeQuestion(id, assessmentQuestionId);
   }
 
   /** POST /assessments/:id/questions/generate — MANUAL only */
