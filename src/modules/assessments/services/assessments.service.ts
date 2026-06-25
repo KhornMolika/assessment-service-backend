@@ -396,6 +396,22 @@ export class AssessmentsService {
   }
 
   /**
+   * Removes one question from a DRAFT assessment by its source questionId.
+   */
+  async removeQuestionByQuestionId(assessmentId: string, questionId: string) {
+    const aq = await this.assessmentQuestions.findOne({
+      questionId,
+      assessmentId,
+    });
+    if (!aq) throw new NotFoundException('Assessment question not found');
+
+    await this.assessmentQuestions.softDelete({
+      id: aq.id,
+    });
+    return { assessmentQuestionId: aq.id, removedAt: new Date() };
+  }
+
+  /**
    * Removes one question from a DRAFT assessment.
    * Source Question is not deleted — only the join record is removed.
    * Throws 404 if assessmentQuestion not found for this assessment.

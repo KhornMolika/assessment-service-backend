@@ -193,17 +193,17 @@ export class AssessmentsController {
     return this.assessmentService.replaceQuestions(id, dto);
   }
 
-  /** DELETE /assessments/:id/questions/:assessmentQuestionId — DRAFT only */
+  /** DELETE /assessments/:id/questions/:questionId — DRAFT only */
   @ApiOperation({ summary: 'Remove a question from an assessment (DRAFT only)' })
   @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiParam({ name: 'assessmentQuestionId', description: 'The UUID of the assessment question', example: '123e4567-e89b-12d3-a456-426614174001' })
+  @ApiParam({ name: 'questionId', description: 'The UUID of the source question', example: '123e4567-e89b-12d3-a456-426614174001' })
   @ApiResponse({ status: 200, description: 'Question removed successfully' })
-  @Delete('assessments/:id/questions/:assessmentQuestionId')
+  @Delete('assessments/:id/questions/:questionId')
   removeQuestion(
     @Param('id', ParseUUIDPipe) id: string,
-    @Param('assessmentQuestionId', ParseUUIDPipe) assessmentQuestionId: string,
+    @Param('questionId', ParseUUIDPipe) questionId: string,
   ) {
-    return this.assessmentService.removeQuestion(id, assessmentQuestionId);
+    return this.assessmentService.removeQuestionByQuestionId(id, questionId);
   }
 
   /** POST /assessments/:id/questions/generate — MANUAL only */
