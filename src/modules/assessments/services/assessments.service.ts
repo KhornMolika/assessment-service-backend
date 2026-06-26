@@ -128,6 +128,7 @@ export class AssessmentsService {
    * Only allowed in DRAFT status — throws 409 otherwise.
    */
   async update(id: string, dto: UpdateAssessmentDto): Promise<Assessment> {
+    await this.assertDraft(id);
     await this.assessments.update({ id }, dto);
     return this.assessments.findOneWithDetails(id) as Promise<Assessment>;
   }
@@ -247,6 +248,8 @@ export class AssessmentsService {
    * Snapshot left empty — populated during publish().
    */
   async addQuestion(assessmentId: string, dto: AddAssessmentQuestionDto) {
+    await this.assertDraft(assessmentId);
+
     const question = await this.questions.findById(dto.questionId);
     if (!question) throw new NotFoundException('Question not found');
 
@@ -295,6 +298,8 @@ export class AssessmentsService {
    * Performs validation across all questions before performing saves.
    */
   async addQuestions(assessmentId: string, dtos: AddAssessmentQuestionDto[]) {
+    await this.assertDraft(assessmentId);
+
     const settings =
       await this.assessmentSettings.findByAssessment(assessmentId);
     if (!settings) {
@@ -376,6 +381,8 @@ export class AssessmentsService {
     assessmentId: string,
     dto: ReplaceAssessmentQuestionsDto,
   ) {
+    await this.assertDraft(assessmentId);
+
     const resolvedQuestions = await Promise.all(
       dto.questionIds.map((id) => this.questions.findById(id)),
     );
@@ -401,6 +408,8 @@ export class AssessmentsService {
    * Throws 404 if assessmentQuestion not found for this assessment.
    */
   async removeQuestion(assessmentId: string, assessmentQuestionId: string) {
+    await this.assertDraft(assessmentId);
+
     const aq = await this.assessmentQuestions.findOne({
       id: assessmentQuestionId,
       assessmentId,
