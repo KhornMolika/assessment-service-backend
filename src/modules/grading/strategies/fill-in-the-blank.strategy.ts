@@ -21,21 +21,29 @@ export class FillInTheBlankStrategy implements GradingStrategy {
       return { scoreAwarded: 0, maxScore, isCorrect: false };
     }
 
-    const pointsPerBlank = maxScore / totalBlanks;
     let correctCount = 0;
+    let emptyCount = 0;
 
     acceptedAnswers.forEach((accepted, index) => {
       const given = (participantAnswers[index] ?? '').trim().toLowerCase();
-      const isMatch = accepted.some((a) => a.trim().toLowerCase() === given);
-      if (isMatch) correctCount++;
+      if (!given) {
+        emptyCount++;
+      } else {
+        const isMatch = accepted.some((a) => a.trim().toLowerCase() === given);
+        if (isMatch) correctCount++;
+      }
     });
 
-    const scoreAwarded = parseFloat((correctCount * pointsPerBlank).toFixed(2));
+    const pointsPerBlank = maxScore / totalBlanks;
+    const correctScore = correctCount * pointsPerBlank;
+    const penaltyScore = emptyCount * (pointsPerBlank * 0.5);
+    const finalScore = Math.max(0, correctScore - penaltyScore);
+    const scoreAwarded = parseFloat(finalScore.toFixed(2));
 
     return {
       scoreAwarded,
       maxScore,
-      isCorrect: correctCount === totalBlanks,
+      isCorrect: scoreAwarded === maxScore,
     };
   }
 }

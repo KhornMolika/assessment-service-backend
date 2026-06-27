@@ -307,7 +307,7 @@ describe('GradingEngineService', () => {
 
     await service.gradeSession('session-6');
 
-    // 1 pair correct out of 2 -> 5 points
+    // 1 pair correct out of 2, 1 wrong guess (no penalty). Option A: 1 * 5 - 0 = 5 points
     expect(answerEntriesMock.update).toHaveBeenCalledWith(
       { id: 'entry-7' },
       { scoreAwarded: 5, maxScore: 10, gradingStatus: GradingStatus.AUTOMATIC },

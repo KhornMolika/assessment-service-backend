@@ -22,22 +22,34 @@ export class MatchingStrategy implements GradingStrategy {
       return { scoreAwarded: 0, maxScore, isCorrect: false };
     }
 
-    const pointsPerPair = maxScore / totalPairs;
 
-    // Build a lookup map from correctPairs
-    const correctMap = new Map(correctPairs.map((p) => [p.leftId, p.rightId]));
 
     let correctCount = 0;
-    participantPairs.forEach((p) => {
-      if (correctMap.get(p.leftId) === p.rightId) correctCount++;
+    let emptyCount = 0;
+
+    const participantPairsMap = new Map(
+      participantPairs.map((p) => [p.leftId, p.rightId]),
+    );
+
+    correctPairs.forEach((p) => {
+      const rightId = participantPairsMap.get(p.leftId);
+      if (!rightId || String(rightId).trim() === '') {
+        emptyCount++;
+      } else if (rightId === p.rightId) {
+        correctCount++;
+      }
     });
 
-    const scoreAwarded = parseFloat((correctCount * pointsPerPair).toFixed(2));
+    const pointsPerPair = maxScore / totalPairs;
+    const correctScore = correctCount * pointsPerPair;
+    const penaltyScore = emptyCount * (pointsPerPair * 0.5);
+    const finalScore = Math.max(0, correctScore - penaltyScore);
+    const scoreAwarded = parseFloat(finalScore.toFixed(2));
 
     return {
       scoreAwarded,
       maxScore,
-      isCorrect: correctCount === totalPairs,
+      isCorrect: scoreAwarded === maxScore,
     };
   }
 }
