@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ParticipantReportService } from './participant-report.service';
 import { ReportRepository } from '../repositories/report.repository';
 import { ParticipantRepository } from '../../participants/repositories/participant.repository';
-import { NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
 describe('ParticipantReportService', () => {
   let service: ParticipantReportService;
@@ -32,16 +35,24 @@ describe('ParticipantReportService', () => {
   describe('getParticipantReport', () => {
     it('should throw NotFoundException if participant not found', async () => {
       participantsRepo.findById.mockResolvedValue(null);
-      await expect(service.getParticipantReport('p1')).rejects.toThrow(NotFoundException);
+      await expect(service.getParticipantReport('p1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw InternalServerErrorException for unexpected errors', async () => {
       participantsRepo.findById.mockRejectedValue(new Error('DB Error'));
-      await expect(service.getParticipantReport('p1')).rejects.toThrow(InternalServerErrorException);
+      await expect(service.getParticipantReport('p1')).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
 
     it('should return default stats if null', async () => {
-      participantsRepo.findById.mockResolvedValue({ id: 'p1', name: 'John', email: 'john@example.com' });
+      participantsRepo.findById.mockResolvedValue({
+        id: 'p1',
+        name: 'John',
+        email: 'john@example.com',
+      });
       reportRepo.getParticipantStats.mockResolvedValue(null);
       reportRepo.getParticipantAssessments.mockResolvedValue([]);
 
@@ -52,7 +63,11 @@ describe('ParticipantReportService', () => {
     });
 
     it('should return stats and assessments', async () => {
-      participantsRepo.findById.mockResolvedValue({ id: 'p1', name: 'John', email: 'john@example.com' });
+      participantsRepo.findById.mockResolvedValue({
+        id: 'p1',
+        name: 'John',
+        email: 'john@example.com',
+      });
       reportRepo.getParticipantStats.mockResolvedValue({
         totalAssessmentsTaken: 5,
         totalPassed: 3,

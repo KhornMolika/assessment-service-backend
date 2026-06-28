@@ -9,20 +9,29 @@ class MatchPairDto {
   @IsNotEmpty()
   leftId!: string;
 
-  @ApiProperty({ example: 'right_1', description: 'ID of the matched right side option' })
+  @ApiProperty({
+    example: 'right_1',
+    description: 'ID of the matched right side option',
+  })
   @IsString()
   @IsNotEmpty()
   rightId!: string;
 }
 
 export class MatchingOptionsDto {
-  @ApiProperty({ type: () => [KeyedOptionDto], description: 'Options for the left side of the matching question' })
+  @ApiProperty({
+    type: () => [KeyedOptionDto],
+    description: 'Options for the left side of the matching question',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => KeyedOptionDto)
   leftSide!: KeyedOptionDto[];
 
-  @ApiProperty({ type: () => [KeyedOptionDto], description: 'Options for the right side of the matching question' })
+  @ApiProperty({
+    type: () => [KeyedOptionDto],
+    description: 'Options for the right side of the matching question',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => KeyedOptionDto)
@@ -30,7 +39,10 @@ export class MatchingOptionsDto {
 }
 
 export class MatchingAnswerDto {
-  @ApiProperty({ type: () => [MatchPairDto], description: 'Array of matched pairs' })
+  @ApiProperty({
+    type: () => [MatchPairDto],
+    description: 'Array of matched pairs',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MatchPairDto)

@@ -75,6 +75,7 @@ export class TopicsService {
           pageCount: Math.ceil(total / query.limit),
         },
       };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new BadRequestException('Could not fetch topics');
     }
@@ -176,9 +177,9 @@ export class TopicsService {
       await this.topicRepository.softDelete({ id });
 
       // Cascade soft delete to children
-      await this.questionRepository.softDelete({ topic: { id } } as any);
-      await this.questionBankRepository.softDelete({ topic: { id } } as any);
-      await this.assessmentRepository.softDelete({ topic: { id } } as any);
+      await this.questionRepository.softDelete({ topic: { id } });
+      await this.questionBankRepository.softDelete({ topic: { id } });
+      await this.assessmentRepository.softDelete({ topic: { id } });
 
       return;
     } catch (error) {

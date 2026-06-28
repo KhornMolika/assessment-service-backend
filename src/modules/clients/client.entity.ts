@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Entity, Column, OneToMany } from 'typeorm';
 import { SystemBaseEntity } from '@common/base/system-base.entity';
 

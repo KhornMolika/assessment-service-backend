@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { AIGradingProcessor } from './ai-grading.processor';
@@ -83,7 +82,9 @@ describe('AIGradingProcessor', () => {
         { clientId: 'client-uuid' },
         expect.any(Function),
       );
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(aiGradingMock.gradeEntry).toHaveBeenCalledWith(mockEntry);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(gradingEngineMock.recalculateSession).toHaveBeenCalledWith(
         'sheet-uuid',
       );

@@ -1,4 +1,8 @@
-import { RealtimeRedisService, SessionState, RoomMember } from './realtime-redis.service';
+import {
+  RealtimeRedisService,
+  SessionState,
+  RoomMember,
+} from './realtime-redis.service';
 
 describe('RealtimeRedisService', () => {
   let service: RealtimeRedisService;
@@ -22,7 +26,7 @@ describe('RealtimeRedisService', () => {
       zcard: jest.fn(),
     };
 
-    service = new RealtimeRedisService(redisMock as any);
+    service = new RealtimeRedisService(redisMock);
   });
 
   describe('Session State', () => {
@@ -37,8 +41,14 @@ describe('RealtimeRedisService', () => {
         startedAt: 'time',
       };
       await service.createSession(state);
-      expect(redisMock.hset).toHaveBeenCalledWith('realtime:session:a1', expect.any(Object));
-      expect(redisMock.expire).toHaveBeenCalledWith('realtime:session:a1', 14400);
+      expect(redisMock.hset).toHaveBeenCalledWith(
+        'realtime:session:a1',
+        expect.any(Object),
+      );
+      expect(redisMock.expire).toHaveBeenCalledWith(
+        'realtime:session:a1',
+        14400,
+      );
     });
 
     it('should return null if session not found', async () => {
@@ -62,7 +72,9 @@ describe('RealtimeRedisService', () => {
 
     it('should update session', async () => {
       await service.updateSession('a1', { status: 'ended' });
-      expect(redisMock.hset).toHaveBeenCalledWith('realtime:session:a1', { status: 'ended' });
+      expect(redisMock.hset).toHaveBeenCalledWith('realtime:session:a1', {
+        status: 'ended',
+      });
     });
 
     it('should delete session', async () => {
@@ -73,10 +85,23 @@ describe('RealtimeRedisService', () => {
 
   describe('Room Members', () => {
     it('should add member and name if provided', async () => {
-      const member: RoomMember = { socketId: 's1', participantId: 'p1', role: 'participant', name: 'John' };
+      const member: RoomMember = {
+        socketId: 's1',
+        participantId: 'p1',
+        role: 'participant',
+        name: 'John',
+      };
       await service.addMember('a1', member);
-      expect(redisMock.hset).toHaveBeenCalledWith('realtime:room:a1', 's1', JSON.stringify(member));
-      expect(redisMock.hset).toHaveBeenCalledWith('realtime:names:a1', 'p1', 'John');
+      expect(redisMock.hset).toHaveBeenCalledWith(
+        'realtime:room:a1',
+        's1',
+        JSON.stringify(member),
+      );
+      expect(redisMock.hset).toHaveBeenCalledWith(
+        'realtime:names:a1',
+        'p1',
+        'John',
+      );
     });
 
     it('should remove member', async () => {
@@ -114,7 +139,11 @@ describe('RealtimeRedisService', () => {
       redisMock.hexists.mockResolvedValue(0); // 0 means false
       const res = await service.storeAnswer('a1', 'q1', 'p1', { choice: 'A' });
       expect(res).toBe(true);
-      expect(redisMock.hset).toHaveBeenCalledWith('realtime:answers:a1:q1', 'p1', JSON.stringify({ choice: 'A' }));
+      expect(redisMock.hset).toHaveBeenCalledWith(
+        'realtime:answers:a1:q1',
+        'p1',
+        JSON.stringify({ choice: 'A' }),
+      );
     });
 
     it('should ignore answer if already answered', async () => {
@@ -141,7 +170,11 @@ describe('RealtimeRedisService', () => {
   describe('Scores', () => {
     it('should add score', async () => {
       await service.addScore('a1', 'p1', 10);
-      expect(redisMock.zincrby).toHaveBeenCalledWith('realtime:scores:a1', 10, 'p1');
+      expect(redisMock.zincrby).toHaveBeenCalledWith(
+        'realtime:scores:a1',
+        10,
+        'p1',
+      );
     });
 
     it('should get top scores', async () => {

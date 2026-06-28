@@ -24,6 +24,7 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
     const builder = this.qb('a')
       .leftJoinAndSelect('a.settings', 'settings')
       .leftJoinAndSelect('a.topic', 'topic')
+      .loadRelationCountAndMap('a.questionCount', 'a.questions')
       .andWhere('a.topicId = :topicId', { topicId })
       .andWhere('a.deletedAt IS NULL');
 
@@ -50,6 +51,7 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
     const builder = this.qb('a')
       .leftJoinAndSelect('a.settings', 'settings')
       .leftJoinAndSelect('a.topic', 'topic')
+      .loadRelationCountAndMap('a.questionCount', 'a.questions')
       .andWhere('a.deletedAt IS NULL');
 
     if (search?.trim()) {
@@ -79,6 +81,14 @@ export class AssessmentRepository extends ClientRepository<Assessment> {
       .andWhere('a.deletedAt IS NULL')
       .andWhere('questions.deletedAt IS NULL')
       .getOne();
+  }
+
+  /**
+   * Finds an assessment by ID across all clients.
+   * Useful for public endpoints where clientId is not available.
+   */
+  findByIdGlobal(id: string): Promise<Assessment | null> {
+    return this.repo.findOne({ where: { id }, relations: ['settings'] });
   }
 
   /**

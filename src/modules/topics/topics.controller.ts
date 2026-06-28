@@ -9,7 +9,13 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { TopicsService } from './topics.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
@@ -30,7 +36,10 @@ export class TopicsController {
 
   @Get()
   @ApiOperation({ summary: 'List all topics' })
-  @ApiResponse({ status: 200, description: 'List of topics retrieved successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of topics retrieved successfully.',
+  })
   async findAll(@Query() query: PaginationQueryDto) {
     return await this.topicService.findAll(query);
   }

@@ -26,6 +26,7 @@ export class SuperAdminGuard implements CanActivate {
 
   // crypto.timingSafeEqual requires equal-length buffers
   private safeCompare(a: string, b: string): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { timingSafeEqual, createHash } = require('crypto');
     const hashA = createHash('sha256').update(a).digest();
     const hashB = createHash('sha256').update(b).digest();

@@ -146,8 +146,37 @@ export class GradingEngineService {
         }
 
         try {
-          const response =
+          let response =
             (entry.response as unknown as Record<string, unknown>) ?? {};
+
+          // Normalize response format to match what strategies expect
+          if (questionType === 'TRUE_FALSE' || questionType === 'True/False') {
+            if (typeof response === 'boolean' || typeof response === 'string') {
+              response = { value: String(response) === 'true' };
+            } else if (response.choice !== undefined) {
+              response = { value: String(response.choice) === 'true' };
+            }
+          } else if (questionType === 'FILL_IN_THE_BLANK') {
+            if (Array.isArray(response)) {
+              response = { answers: response };
+            } else if (typeof response === 'object' && response !== null && !response.answers) {
+              const answersArr: string[] = [];
+              const len = Object.keys(response).length;
+              for (let i = 0; i < len; i++) {
+                answersArr.push(String((response as any)[String(i)] ?? ''));
+              }
+              response = { answers: answersArr };
+            } else if (typeof response === 'string') {
+              response = { answers: [response] };
+            }
+          } else if (questionType === 'SINGLE_CHOICE' && typeof response === 'string') {
+            response = { optionId: response };
+          } else if (questionType === 'MULTIPLE_CHOICE' && Array.isArray(response)) {
+            response = { optionIds: response };
+          } else if (questionType === 'ORDERING' && Array.isArray(response)) {
+            response = { sequence: response };
+          }
+
           const result = strategy.grade(response, correctAnswer, maxScore);
 
           await this.answerEntries.update(

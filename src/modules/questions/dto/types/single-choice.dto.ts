@@ -4,7 +4,10 @@ import { KeyedOptionDto } from './shared.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SingleChoiceOptionsDto {
-  @ApiProperty({ type: () => [KeyedOptionDto], description: 'List of available options' })
+  @ApiProperty({
+    type: () => [KeyedOptionDto],
+    description: 'List of available options',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => KeyedOptionDto)

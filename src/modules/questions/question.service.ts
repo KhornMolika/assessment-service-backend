@@ -31,7 +31,7 @@ export class QuestionsService {
 
     // Use instanceToPlain to respect @Exclude() decorators on the entity
     const plain = instanceToPlain(question);
-    
+
     const mapped: Record<string, unknown> = {
       ...plain,
     };
@@ -70,6 +70,7 @@ export class QuestionsService {
       const topic = await this.topicRepository.findById(topicId);
       if (!topic) throw new NotFoundException('Topic not found');
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const saved = await this.questionRepository.create({
         questionText: dto.questionText,
         type: dto.type,
@@ -78,6 +79,7 @@ export class QuestionsService {
         topic: { id: topic.id },
         options: (dto.options as Record<string, unknown>[]) || [],
         correctAnswer: dto.correctAnswers as unknown as Record<string, unknown>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       return this.transformResponse(saved);

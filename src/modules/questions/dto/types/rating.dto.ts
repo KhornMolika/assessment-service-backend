@@ -12,12 +12,18 @@ export class RatingOptionsDto {
   @Max(10)
   max: number = 5;
 
-  @ApiPropertyOptional({ example: 'Poor', description: 'Label for the lowest rating' })
+  @ApiPropertyOptional({
+    example: 'Poor',
+    description: 'Label for the lowest rating',
+  })
   @IsOptional()
   @IsString()
   lowLabel?: string;
 
-  @ApiPropertyOptional({ example: 'Excellent', description: 'Label for the highest rating' })
+  @ApiPropertyOptional({
+    example: 'Excellent',
+    description: 'Label for the highest rating',
+  })
   @IsOptional()
   @IsString()
   highLabel?: string;

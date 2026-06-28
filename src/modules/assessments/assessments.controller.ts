@@ -28,7 +28,14 @@ import { AssignParticipantDto } from './dto/assign-participant.dto';
 import { GradingEngineService } from '../grading/services/grading-engine.service';
 import { AIGradingService } from '@modules/ai/services/ai-grading.service';
 import { clientStorage } from '@common/context/client.storage';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { Public } from '../auth/guards/public.decorator';
 
 @ApiTags('Assessments')
 @ApiBearerAuth()
@@ -46,7 +53,10 @@ export class AssessmentsController {
 
   /** GET /assessments */
   @ApiOperation({ summary: 'Get a paginated list of all assessments globally' })
-  @ApiResponse({ status: 200, description: 'Assessments retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Assessments retrieved successfully',
+  })
   @Get('assessments')
   findAllGlobal(@Query() query: PaginationQueryDto) {
     return this.assessmentService.findAllGlobal(query);
@@ -54,8 +64,15 @@ export class AssessmentsController {
 
   /** GET /topics/:topicId/assessments */
   @ApiOperation({ summary: 'Get a paginated list of assessments by topic ID' })
-  @ApiParam({ name: 'topicId', description: 'The UUID of the topic', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Assessments retrieved successfully' })
+  @ApiParam({
+    name: 'topicId',
+    description: 'The UUID of the topic',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Assessments retrieved successfully',
+  })
   @Get('topics/:topicId/assessments')
   findAll(
     @Param('topicId', ParseUUIDPipe) topicId: string,
@@ -66,7 +83,11 @@ export class AssessmentsController {
 
   /** POST /topics/:topicId/assessments */
   @ApiOperation({ summary: 'Create an assessment for a given topic' })
-  @ApiParam({ name: 'topicId', description: 'The UUID of the topic', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'topicId',
+    description: 'The UUID of the topic',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 201, description: 'Assessment created successfully' })
   @Post('topics/:topicId/assessments')
   @HttpCode(HttpStatus.CREATED)
@@ -79,8 +100,15 @@ export class AssessmentsController {
 
   /** GET /assessments/:id */
   @ApiOperation({ summary: 'Get an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Assessment retrieved successfully' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Assessment retrieved successfully',
+  })
   @Get('assessments/:id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.assessmentService.findOne(id);
@@ -88,7 +116,11 @@ export class AssessmentsController {
 
   /** PATCH /assessments/:id — DRAFT only */
   @ApiOperation({ summary: 'Update an assessment by ID (DRAFT only)' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Assessment updated successfully' })
   @Patch('assessments/:id')
   update(
@@ -100,7 +132,11 @@ export class AssessmentsController {
 
   /** DELETE /assessments/:id */
   @ApiOperation({ summary: 'Delete an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Assessment deleted successfully' })
   @Delete('assessments/:id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -111,8 +147,15 @@ export class AssessmentsController {
 
   /** POST /assessments/:id/publish */
   @ApiOperation({ summary: 'Publish an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Assessment published successfully' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Assessment published successfully',
+  })
   @Post('assessments/:id/publish')
   @HttpCode(HttpStatus.OK)
   publish(@Param('id', ParseUUIDPipe) id: string) {
@@ -121,7 +164,11 @@ export class AssessmentsController {
 
   /** POST /assessments/:id/archive */
   @ApiOperation({ summary: 'Archive an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Assessment archived successfully' })
   @Post('assessments/:id/archive')
   @HttpCode(HttpStatus.OK)
@@ -133,16 +180,21 @@ export class AssessmentsController {
 
   /** GET /assessments/:id/questions */
   @ApiOperation({ summary: 'Get questions for an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Questions retrieved successfully' })
   @Get('assessments/:id/questions')
   async getQuestions(@Param('id', ParseUUIDPipe) id: string) {
     const questions = await this.assessmentService.getQuestions(id);
-    return questions.map(q => {
+    return questions.map((q) => {
       // Flatten the payload and omit null/empty snapshot fields to make it cleaner
-      const isSnapshotEmpty = !q.questionSnapshot || Object.keys(q.questionSnapshot).length === 0;
+      const isSnapshotEmpty =
+        !q.questionSnapshot || Object.keys(q.questionSnapshot).length === 0;
       const snapshot = isSnapshotEmpty ? q.question : q.questionSnapshot;
-      
+
       return {
         id: q.id, // The assessmentQuestionId
         assessmentId: q.assessmentId,
@@ -158,10 +210,15 @@ export class AssessmentsController {
 
   /** POST /assessments/:id/questions — DRAFT only */
   @ApiOperation({ summary: 'Add questions to an assessment (DRAFT only)' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 201, description: 'Questions added successfully' })
   @Post('assessments/:id/questions')
   @HttpCode(HttpStatus.CREATED)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async addQuestion(@Param('id', ParseUUIDPipe) id: string, @Body() body: any) {
     if (Array.isArray(body)) {
       const dtos = plainToInstance(AddAssessmentQuestionDto, body);
@@ -198,8 +255,14 @@ export class AssessmentsController {
   }
 
   /** PUT /assessments/:id/questions — replace all, DRAFT only */
-  @ApiOperation({ summary: 'Replace all questions in an assessment (DRAFT only)' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Replace all questions in an assessment (DRAFT only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Questions replaced successfully' })
   @Put('assessments/:id/questions')
   replaceQuestions(
@@ -210,9 +273,19 @@ export class AssessmentsController {
   }
 
   /** DELETE /assessments/:id/questions/:assessmentQuestionId — DRAFT only */
-  @ApiOperation({ summary: 'Remove a question from an assessment (DRAFT only)' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiParam({ name: 'assessmentQuestionId', description: 'The UUID of the assessment question', example: '123e4567-e89b-12d3-a456-426614174001' })
+  @ApiOperation({
+    summary: 'Remove a question from an assessment (DRAFT only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiParam({
+    name: 'assessmentQuestionId',
+    description: 'The UUID of the assessment question',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
   @ApiResponse({ status: 200, description: 'Question removed successfully' })
   @Delete('assessments/:id/questions/:assessmentQuestionId')
   removeQuestion(
@@ -236,7 +309,11 @@ export class AssessmentsController {
 
   /** GET /assessments/:id/settings */
   @ApiOperation({ summary: 'Get settings of an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Settings retrieved successfully' })
   @Get('assessments/:id/settings')
   getSettings(@Param('id', ParseUUIDPipe) id: string) {
@@ -245,7 +322,11 @@ export class AssessmentsController {
 
   /** PATCH /assessments/:id/settings */
   @ApiOperation({ summary: 'Update settings of an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Settings updated successfully' })
   @Patch('assessments/:id/settings')
   updateSettings(
@@ -259,8 +340,15 @@ export class AssessmentsController {
 
   /** GET /assessments/:id/participants */
   @ApiOperation({ summary: 'Get participants of an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Participants retrieved successfully' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Participants retrieved successfully',
+  })
   @Get('assessments/:id/participants')
   getParticipants(
     @Param('id', ParseUUIDPipe) id: string,
@@ -270,15 +358,28 @@ export class AssessmentsController {
   }
 
   /**
-   * POST /assessments/:id/participants
-   * Body varies by assessment's participantIdentity:
-   *   AUTHENTICATED: { name, email }
-   *   EXTERNAL:      { name, email, phone? }
-   *   ANONYMOUS:     rejected — handled at session start
+   * POST /assessments/:id/join
+   * Public endpoint for participants to join an assessment.
    */
-  @ApiOperation({ summary: 'Assign a participant to an assessment by ID' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 201, description: 'Participant assigned successfully' })
+  @Public()
+  @ApiOperation({ summary: 'Public endpoint to join a real-time assessment' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({ status: 201, description: 'Participant joined successfully' })
+  @Post('assessments/:id/join')
+  @HttpCode(HttpStatus.CREATED)
+  publicJoin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AssignParticipantDto,
+  ) {
+    return this.assessmentService.publicJoin(id, dto);
+  }
+
+  /**
+   * POST /assessments/:id/participants
   @Post('assessments/:id/participants')
   @HttpCode(HttpStatus.CREATED)
   assignParticipant(
@@ -290,8 +391,16 @@ export class AssessmentsController {
 
   /** DELETE /assessments/:id/participants/:participantId */
   @ApiOperation({ summary: 'Remove a participant from an assessment' })
-  @ApiParam({ name: 'id', description: 'The UUID of the assessment', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiParam({ name: 'participantId', description: 'The UUID of the participant', example: '123e4567-e89b-12d3-a456-426614174001' })
+  @ApiParam({
+    name: 'id',
+    description: 'The UUID of the assessment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiParam({
+    name: 'participantId',
+    description: 'The UUID of the participant',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
   @ApiResponse({ status: 200, description: 'Participant removed successfully' })
   @Delete('assessments/:id/participants/:participantId')
   removeParticipant(
@@ -302,9 +411,18 @@ export class AssessmentsController {
   }
 
   /** POST /assessments/:sessionId/recalculate — finalize manual grading or override */
-  @ApiOperation({ summary: 'Recalculate assessment session after manual grading/override' })
-  @ApiParam({ name: 'sessionId', description: 'The UUID of the session', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Session recalculated successfully' })
+  @ApiOperation({
+    summary: 'Recalculate assessment session after manual grading/override',
+  })
+  @ApiParam({
+    name: 'sessionId',
+    description: 'The UUID of the session',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session recalculated successfully',
+  })
   @Post('assessments/:sessionId/recalculate')
   @HttpCode(HttpStatus.OK)
   async recalculate(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
@@ -314,9 +432,20 @@ export class AssessmentsController {
 
   /** POST /assessments/:sessionId/entries/:entryId/ai-grading/retry */
   @ApiOperation({ summary: 'Retry AI grading for an assessment entry' })
-  @ApiParam({ name: 'sessionId', description: 'The UUID of the session', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiParam({ name: 'entryId', description: 'The UUID of the entry', example: '123e4567-e89b-12d3-a456-426614174001' })
-  @ApiResponse({ status: 202, description: 'AI grading retry queued successfully' })
+  @ApiParam({
+    name: 'sessionId',
+    description: 'The UUID of the session',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiParam({
+    name: 'entryId',
+    description: 'The UUID of the entry',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
+  @ApiResponse({
+    status: 202,
+    description: 'AI grading retry queued successfully',
+  })
   @Post('assessments/:sessionId/entries/:entryId/ai-grading/retry')
   @HttpCode(HttpStatus.ACCEPTED)
   async retryAiGrading(

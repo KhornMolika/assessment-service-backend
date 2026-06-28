@@ -4,13 +4,15 @@ import Redis from 'ioredis';
 
 export interface SessionState {
   assessmentId: string;
-  status: 'waiting' | 'active' | 'ended';
+  clientId: string;
+  status: 'waiting' | 'active' | 'revealed' | 'ended';
   currentQuestionId: string | null;
   currentQuestionIndex: number;
   totalQuestions: number;
   hostSocketId: string;
   startedAt: string;
   questionEndTime?: string | null;
+  isPreview?: boolean;
 }
 
 export interface RoomMember {
@@ -35,6 +37,10 @@ export class RealtimeRedisService {
     return `realtime:session:${assessmentId}`;
   }
 
+  private endedQuestionKey(assessmentId: string, questionId: string) {
+    return `realtime:ended-question:${assessmentId}:${questionId}`;
+  }
+
   /**
    * Creates a new real-time session state in Redis.
    * Called when host starts the session via REST.
@@ -43,6 +49,7 @@ export class RealtimeRedisService {
     const key = this.sessionKey(state.assessmentId);
     await this.redis.hset(key, {
       assessmentId: state.assessmentId,
+      clientId: state.clientId,
       status: state.status,
       currentQuestionId: state.currentQuestionId ?? '',
       currentQuestionIndex: String(state.currentQuestionIndex),
@@ -50,6 +57,7 @@ export class RealtimeRedisService {
       hostSocketId: state.hostSocketId,
       startedAt: state.startedAt,
       questionEndTime: state.questionEndTime ?? '',
+      isPreview: state.isPreview ? 'true' : 'false',
     });
     await this.redis.expire(key, this.TTL);
   }
@@ -65,6 +73,7 @@ export class RealtimeRedisService {
 
     return {
       assessmentId: data.assessmentId,
+      clientId: data.clientId,
       status: data.status as SessionState['status'],
       currentQuestionId: data.currentQuestionId || null,
       currentQuestionIndex: Number(data.currentQuestionIndex),
@@ -72,6 +81,7 @@ export class RealtimeRedisService {
       hostSocketId: data.hostSocketId,
       startedAt: data.startedAt,
       questionEndTime: data.questionEndTime || null,
+      isPreview: data.isPreview === 'true',
     };
   }
 
@@ -88,6 +98,20 @@ export class RealtimeRedisService {
       if (v !== undefined) update[k] = String(v);
     }
     await this.redis.hset(key, update);
+  }
+
+  async claimQuestionEnd(
+    assessmentId: string,
+    questionId: string,
+  ): Promise<boolean> {
+    const claimed = await this.redis.set(
+      this.endedQuestionKey(assessmentId, questionId),
+      '1',
+      'EX',
+      this.TTL,
+      'NX',
+    );
+    return claimed === 'OK';
   }
 
   /**

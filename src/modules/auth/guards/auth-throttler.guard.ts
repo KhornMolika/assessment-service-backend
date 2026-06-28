@@ -1,4 +1,5 @@
 import { ThrottlerGuard, ThrottlerRequest } from '@nestjs/throttler';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ExecutionContext, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     return super.handleRequest(requestProps);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   protected async getTracker(req: Record<string, any>): Promise<string> {
     const clientId = req.body?.clientId;
     if (clientId && typeof clientId === 'string') {

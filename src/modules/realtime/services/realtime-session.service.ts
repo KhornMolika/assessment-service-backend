@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Injectable,
   Logger,
@@ -22,12 +21,17 @@ import { MultipleChoiceStrategy } from '../../grading/strategies/multiple-choice
 import { TrueFalseStrategy } from '../../grading/strategies/true-false.strategy';
 import { OrderingStrategy } from '../../grading/strategies/ordering.strategy';
 import { MatchingStrategy } from '../../grading/strategies/matching.strategy';
+import { FillInTheBlankStrategy } from '../../grading/strategies/fill-in-the-blank.strategy';
 import { WebhookService } from '../../webhooks/webhook.service';
 import { QuestionType } from '../../questions/enums/question-type.enum';
 
-// Points awarded per correct answer — time bonus applied on top
-const BASE_POINTS = 1000;
-const TIME_BONUS_MAX = 500; // extra points for fast answers
+const REALTIME_SPEED_BONUS_RATIO = 0.5;
+const REALTIME_QUESTION_DURATION_SECONDS = 30;
+
+function roundRealtimeScore(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(value * 100) / 100;
+}
 
 @Injectable()
 export class RealtimeSessionService {
@@ -40,6 +44,7 @@ export class RealtimeSessionService {
     TRUE_FALSE: new TrueFalseStrategy(),
     ORDERING: new OrderingStrategy(),
     MATCHING: new MatchingStrategy(),
+    FILL_IN_THE_BLANK: new FillInTheBlankStrategy(),
   };
 
   constructor(
@@ -58,7 +63,10 @@ export class RealtimeSessionService {
   // START SESSION (REST endpoint calls this)
   // ---------------------------------------------------------------------------
 
-  async startSession(assessmentId: string): Promise<{
+  async startSession(
+    assessmentId: string,
+    reset = false,
+  ): Promise<{
     assessmentId: string;
     status: string;
     totalQuestions: number;
@@ -69,11 +77,25 @@ export class RealtimeSessionService {
       throw new BadRequestException('Assessment must be published to start');
     }
 
+    if (reset) {
+      await this.redis.cleanupSession(assessmentId);
+    }
+
     const existing = await this.redis.getSession(assessmentId);
     if (existing && existing.status !== 'ended') {
-      throw new BadRequestException(
-        'A session is already active for this assessment',
-      );
+      // Patch clientId if session was created before this field existed
+      if (!existing.clientId) {
+        await this.redis.updateSession(assessmentId, {
+          clientId: assessment.clientId,
+        });
+      }
+      const questions =
+        await this.assessmentQuestions.findByAssessment(assessmentId);
+      return {
+        assessmentId,
+        status: existing.status,
+        totalQuestions: questions.length,
+      };
     }
 
     const questions =
@@ -84,12 +106,14 @@ export class RealtimeSessionService {
 
     await this.redis.createSession({
       assessmentId,
+      clientId: assessment.clientId,
       status: 'waiting',
       currentQuestionId: null,
       currentQuestionIndex: -1,
       totalQuestions: questions.length,
       hostSocketId: '',
       startedAt: new Date().toISOString(),
+      isPreview: reset,
     });
 
     return {
@@ -156,7 +180,7 @@ export class RealtimeSessionService {
    * Starts a specific question or the next question in the sequence.
    * Only the session host can start a question.
    * Sets the session status to active and calculates the question end time.
-   * 
+   *
    * @param assessmentId - The ID of the assessment
    * @param socketId - The socket ID of the requester (must be host)
    * @param questionId - Optional ID of a specific question to start
@@ -177,8 +201,14 @@ export class RealtimeSessionService {
   }> {
     const session = await this.redis.getSession(assessmentId);
     if (!session) throw new NotFoundException('Session not found');
-    if (session.hostSocketId !== socketId) {
+    if (!session.isPreview && session.hostSocketId !== socketId) {
       throw new ForbiddenException('Only the host can start questions');
+    }
+    const participantCount = await this.redis.getParticipantCount(assessmentId);
+    if (participantCount === 0) {
+      throw new BadRequestException(
+        'At least one participant must join before the session can start',
+      );
     }
 
     const questions =
@@ -220,8 +250,11 @@ export class RealtimeSessionService {
       totalQuestions: questions.length,
       q: {
         id: targetQuestion.id,
+        assessmentQuestionId: targetQuestion.id,
         questionText: snapshot.questionText,
         type: snapshot.type,
+        difficulty: snapshot.difficulty,
+        points: targetQuestion.points,
       },
       options,
       endTime,
@@ -235,7 +268,7 @@ export class RealtimeSessionService {
   /**
    * Stores a participant's answer to the currently active question.
    * Returns tracking metrics (totalAnswered, totalParticipants).
-   * 
+   *
    * @param assessmentId - The ID of the assessment session
    * @param participantId - The ID of the participant submitting the answer
    * @param assessmentQuestionId - The ID of the question being answered
@@ -288,16 +321,53 @@ export class RealtimeSessionService {
   // ---------------------------------------------------------------------------
 
   async endQuestion(assessmentId: string): Promise<{
+    alreadyEnded?: boolean;
+    questionId: string;
     questionNumber: number;
     correctAnswer: any;
     stats: {
       optionId: string;
       count: number;
     }[];
+    participantResults: Record<
+      string,
+      {
+        questionId: string;
+        correct: boolean;
+        pointsEarned: number;
+        speedBonus: number;
+        totalScore: number;
+      }
+    >;
   }> {
     const session = await this.redis.getSession(assessmentId);
     if (!session || !session.currentQuestionId) {
       throw new BadRequestException('No active question to end');
+    }
+    if (session.status !== 'active') {
+      return {
+        alreadyEnded: true,
+        questionId: session.currentQuestionId,
+        questionNumber: session.currentQuestionIndex + 1,
+        correctAnswer: null,
+        stats: [],
+        participantResults: {},
+      };
+    }
+
+    const claimedEnd = await this.redis.claimQuestionEnd(
+      assessmentId,
+      session.currentQuestionId,
+    );
+    if (!claimedEnd) {
+      return {
+        alreadyEnded: true,
+        questionId: session.currentQuestionId,
+        questionNumber: session.currentQuestionIndex + 1,
+        correctAnswer: null,
+        stats: [],
+        participantResults: {},
+      };
     }
 
     const questions =
@@ -323,6 +393,16 @@ export class RealtimeSessionService {
     }
 
     // Award scores
+    const participantResults: Record<
+      string,
+      {
+        questionId: string;
+        correct: boolean;
+        pointsEarned: number;
+        speedBonus: number;
+        totalScore: number;
+      }
+    > = {};
     for (const [participantId, answer] of Object.entries(answers)) {
       const ans = answer;
       const scoreMultiplier = this.getScoreMultiplier(
@@ -330,25 +410,53 @@ export class RealtimeSessionService {
         ans,
         correctAnswer,
       );
+      const hasScore = scoreMultiplier > 0;
+      const isFullyCorrect = scoreMultiplier >= 1;
 
-      if (scoreMultiplier > 0) {
-        // Time bonus — faster answers get more points, scaled by correctness
-        const timeBonus = ans.timeTaken
-          ? Math.max(0, TIME_BONUS_MAX - Math.floor(ans.timeTaken / 100))
-          : 0;
-        const points = (BASE_POINTS + timeBonus) * scoreMultiplier;
+      const questionPoints = Number.isFinite(maxScore) ? maxScore : 0;
+      const timeTakenSeconds = Number(
+        ans.timeTaken ?? REALTIME_QUESTION_DURATION_SECONDS,
+      );
+      const timeRatio = Math.max(
+        0,
+        1 -
+          Math.min(timeTakenSeconds, REALTIME_QUESTION_DURATION_SECONDS) /
+            REALTIME_QUESTION_DURATION_SECONDS,
+      );
+      const rawSpeedBonus =
+        questionPoints * REALTIME_SPEED_BONUS_RATIO * timeRatio * scoreMultiplier;
+      const rawPoints = questionPoints * scoreMultiplier + rawSpeedBonus;
+      const speedBonus = hasScore ? roundRealtimeScore(rawSpeedBonus) : 0;
+      const pointsEarned = hasScore ? roundRealtimeScore(rawPoints) : 0;
+
+      if (pointsEarned > 0) {
         await this.redis.addScore(
           assessmentId,
           participantId,
-          Math.floor(points),
+          pointsEarned,
         );
       }
+
+      const rankAfterQuestion = await this.redis.getParticipantRank(
+        assessmentId,
+        participantId,
+      );
+
+      participantResults[participantId] = {
+        questionId: session.currentQuestionId,
+        correct: isFullyCorrect,
+        pointsEarned,
+        speedBonus,
+        totalScore: roundRealtimeScore(rankAfterQuestion.score),
+      };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const totalParticipants =
       await this.redis.getParticipantCount(assessmentId);
 
-    return {
+    const result = {
+      questionId: session.currentQuestionId,
       questionNumber: session.currentQuestionIndex + 1,
       correctAnswer: this.buildCorrectAnswerPayload(
         snapshot.type,
@@ -358,7 +466,12 @@ export class RealtimeSessionService {
         optionId,
         count,
       })),
+      participantResults,
     };
+
+    await this.redis.updateSession(assessmentId, { status: 'revealed' });
+
+    return result;
   }
 
   // ---------------------------------------------------------------------------
@@ -373,15 +486,37 @@ export class RealtimeSessionService {
       score: number;
     }[];
   }> {
-    const top5Raw = await this.redis.getTopScores(assessmentId, 5);
-    const top5 = await Promise.all(
-      top5Raw.map(async (entry) => ({
-        rank: entry.rank,
-        id: entry.participantId,
-        name: await this.redis.getName(assessmentId, entry.participantId),
-        score: entry.score,
+    const [topScoresRaw, members] = await Promise.all([
+      this.redis.getTopScores(assessmentId, 5),
+      this.redis.getMembers(assessmentId),
+    ]);
+    const participantMembers = members.filter(
+      (member) => member.role === 'participant' && member.participantId,
+    );
+    const scoreByParticipant = new Map(
+      topScoresRaw.map((entry) => [entry.participantId, entry.score]),
+    );
+
+    const ranked = await Promise.all(
+      participantMembers.map(async (member) => ({
+        id: member.participantId as string,
+        name:
+          member.name ||
+          (await this.redis.getName(
+            assessmentId,
+            member.participantId as string,
+          )),
+        score: scoreByParticipant.get(member.participantId as string) ?? 0,
       })),
     );
+
+    const top5 = ranked
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+      .slice(0, 5)
+      .map((entry, index) => ({
+        ...entry,
+        rank: index + 1,
+      }));
 
     return { top5 };
   }
@@ -393,6 +528,7 @@ export class RealtimeSessionService {
   async endSession(assessmentId: string): Promise<{
     leaderboard: { id: string; name: string; score: number; rank: number }[];
   }> {
+    const session = await this.redis.getSession(assessmentId);
     await this.redis.updateSession(assessmentId, { status: 'ended' });
 
     const allScores = await this.redis.getAllScores(assessmentId);
@@ -405,6 +541,11 @@ export class RealtimeSessionService {
         rank: entry.rank,
       })),
     );
+
+    if (session?.isPreview) {
+      await this.redis.cleanupSession(assessmentId);
+      return { leaderboard };
+    }
 
     // FLUSH REDIS TO POSTGRESQL FOR REPORTS
     try {
@@ -481,12 +622,23 @@ export class RealtimeSessionService {
             pAnswer,
             q.questionSnapshot?.correctAnswer,
           );
-          const timeBonus = pAnswer.timeTaken
-            ? Math.max(0, TIME_BONUS_MAX - Math.floor(pAnswer.timeTaken / 100))
+          const questionPoints = Number.isFinite(Number(q.points))
+            ? Number(q.points)
             : 0;
+          const timeTakenSeconds = Number(
+            pAnswer.timeTaken ?? REALTIME_QUESTION_DURATION_SECONDS,
+          );
+          const timeRatio = Math.max(
+            0,
+            1 -
+              Math.min(timeTakenSeconds, REALTIME_QUESTION_DURATION_SECONDS) /
+                REALTIME_QUESTION_DURATION_SECONDS,
+          );
+          const timeBonus =
+            questionPoints * REALTIME_SPEED_BONUS_RATIO * timeRatio;
           const entryScore =
             scoreMultiplier > 0
-              ? Math.floor((BASE_POINTS + timeBonus) * scoreMultiplier)
+              ? Number(((questionPoints + timeBonus) * scoreMultiplier).toFixed(2))
               : 0;
 
           await this.answerEntries.save({
@@ -603,14 +755,31 @@ export class RealtimeSessionService {
     let responsePayload: Record<string, any> = {};
 
     if (type === 'SINGLE_CHOICE') {
-      responsePayload = { optionId: answer.choice };
+      responsePayload = { optionId: answer.choice ?? answer.response };
     } else if (type === 'TRUE_FALSE') {
       // The TrueFalse strategy expects a boolean value in the payload
-      responsePayload = { value: answer.choice === 'true' };
+      const val = answer.choice ?? answer.response;
+      responsePayload = { value: String(val) === 'true' };
     } else if (type === 'MULTIPLE_CHOICE') {
-      responsePayload = answer.response ?? {};
+      const resp = answer.response;
+      responsePayload = Array.isArray(resp) ? { optionIds: resp } : resp ?? {};
     } else if (type === 'ORDERING' || type === 'MATCHING') {
       responsePayload = answer.response ?? {};
+    } else if (type === 'FILL_IN_THE_BLANK') {
+      const resp = answer.response;
+      let answersArr: string[] = [];
+      if (Array.isArray(resp)) {
+        answersArr = resp;
+      } else if (typeof resp === 'object' && resp !== null) {
+        // e.g. { "0": "javascript", "1": "tes" }
+        const len = Object.keys(resp).length;
+        for (let i = 0; i < len; i++) {
+          answersArr.push(String(resp[String(i)] ?? ''));
+        }
+      } else if (typeof resp === 'string') {
+        answersArr = [resp];
+      }
+      responsePayload = { answers: answersArr };
     }
 
     try {

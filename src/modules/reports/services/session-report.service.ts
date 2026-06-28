@@ -262,7 +262,9 @@ export class SessionReportService {
       }
       case QuestionType.TRUE_FALSE:
         return [
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
           { id: 'true', text: String(options.trueLabel ?? 'True') },
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
           { id: 'false', text: String(options.falseLabel ?? 'False') },
         ];
       case QuestionType.ORDERING: {

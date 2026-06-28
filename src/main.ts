@@ -39,7 +39,8 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('FSA Assessment Service API')
-    .setDescription(`
+    .setDescription(
+      `
       ## Authentication
       All standard endpoints require a Bearer token obtained from \`POST /auth/token\`.
       Administrative endpoints require the \`x-admin-api-key\` header.
@@ -62,7 +63,8 @@ async function bootstrap() {
         "timestamp": "2026-01-15T09:23:01.123Z"
       }
       \`\`\`
-        `)
+        `,
+    )
     .setVersion('1.0')
     .addTag('Health')
     .addTag('Auth')
@@ -91,12 +93,17 @@ async function bootstrap() {
     }),
   );
 
-  const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? (process.env.ALLOWED_ORIGINS ?? '').split(',').map(o => o.trim()).filter(Boolean)
-    : ['http://localhost:3001', 'https://app.apidog.com'];
+  const allowedOrigins =
+    process.env.NODE_ENV === 'production'
+      ? (process.env.ALLOWED_ORIGINS ?? '')
+          .split(',')
+          .map((o) => o.trim())
+          .filter(Boolean)
+      : ['http://localhost:3001', 'https://app.apidog.com'];
 
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : ['http://localhost:3000'],
+    origin:
+      allowedOrigins.length > 0 ? allowedOrigins : ['http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-api-key'],
     credentials: true,
@@ -104,4 +111,5 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3001);
 }
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap();
