@@ -1,6 +1,21 @@
 import { GradeResult, GradingStrategy } from './grading-strategy.interface';
 import { Logger } from '@nestjs/common';
 
+type MatchingPair = {
+  leftId?: string;
+  left?: string;
+  rightId?: string;
+  right?: string;
+};
+
+function isMatchingPair(value: unknown): value is MatchingPair {
+  return typeof value === 'object' && value !== null;
+}
+
+function pairKey(pair: MatchingPair): [string | undefined, string | undefined] {
+  return [pair.leftId ?? pair.left, pair.rightId ?? pair.right];
+}
+
 export class MatchingStrategy implements GradingStrategy {
   private readonly logger = new Logger(MatchingStrategy.name);
   /**
@@ -14,16 +29,22 @@ export class MatchingStrategy implements GradingStrategy {
     correctAnswer: Record<string, unknown>,
     maxScore: number,
   ): GradeResult {
-    let participantPairs =
-      (response['pairs'] as any[]) ?? [];
-      
-    if (participantPairs.length === 0 && response && typeof response === 'object') {
+    let participantPairs = Array.isArray(response['pairs'])
+      ? response['pairs'].filter(isMatchingPair)
+      : [];
+
+    if (
+      participantPairs.length === 0 &&
+      response &&
+      typeof response === 'object'
+    ) {
       participantPairs = Object.entries(response)
         .filter(([key]) => key !== 'pairs')
         .map(([leftId, rightId]) => ({ leftId, rightId: String(rightId) }));
     }
-    const correctPairs =
-      (correctAnswer['pairs'] as any[]) ?? [];
+    const correctPairs = Array.isArray(correctAnswer['pairs'])
+      ? correctAnswer['pairs'].filter(isMatchingPair)
+      : [];
 
     const totalPairs = correctPairs.length;
     if (totalPairs === 0) {
@@ -37,13 +58,11 @@ export class MatchingStrategy implements GradingStrategy {
     let emptyCount = 0;
 
     const participantPairsMap = new Map(
-      participantPairs.map((p) => [p.leftId || p.left, p.rightId || p.right]),
+      participantPairs.map((pair) => pairKey(pair)),
     );
 
     correctPairs.forEach((p) => {
-      const cLeftId = p.leftId || p.left;
-      const cRightId = p.rightId || p.right;
-      
+      const [cLeftId, cRightId] = pairKey(p);
       const rightId = participantPairsMap.get(cLeftId);
       if (!rightId || String(rightId).trim() === '') {
         emptyCount++;
@@ -52,7 +71,9 @@ export class MatchingStrategy implements GradingStrategy {
       }
     });
 
-    this.logger.debug(`correctCount: ${correctCount}, emptyCount: ${emptyCount}, totalPairs: ${totalPairs}`);
+    this.logger.debug(
+      `correctCount: ${correctCount}, emptyCount: ${emptyCount}, totalPairs: ${totalPairs}`,
+    );
 
     const pointsPerPair = maxScore / totalPairs;
     const correctScore = correctCount * pointsPerPair;

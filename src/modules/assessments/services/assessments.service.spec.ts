@@ -24,6 +24,7 @@ import { AssessmentSetting } from '../entities/assessment-settings.entity';
 import { Participant } from '../../participants/entities/participant.entity';
 import { AssessmentParticipant } from '../entities/assessment-participant.entity';
 import { CreateAssessmentDto } from '../dto/create-assessment.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('AssessmentsService', () => {
   let service: AssessmentsService;
@@ -104,6 +105,7 @@ describe('AssessmentsService', () => {
         { provide: QuestionRepository, useValue: questionsMock },
         { provide: QuestionBankRepository, useValue: questionBanksMock },
         { provide: ParticipantRepository, useValue: participantsMock },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 
@@ -558,20 +560,30 @@ describe('AssessmentsService', () => {
       expect(result.participantId).toBe('p1');
     });
 
-    it('should throw BadRequestException if ANONYMOUS', async () => {
+    it('should assign an anonymous participant', async () => {
       assessmentsMock.findById!.mockResolvedValue({
         id: '1',
       } as unknown as Assessment);
       assessmentSettingsMock.findByAssessment!.mockResolvedValue({
         participantIdentity: ParticipantIdentity.ANONYMOUS,
       } as unknown as AssessmentSetting);
+      participantsMock.findOne!.mockResolvedValue(null);
+      participantsMock.save!.mockResolvedValue({
+        id: 'p1',
+      } as unknown as Participant);
+      assessmentParticipantsMock.findOne!.mockResolvedValue(null);
+      assessmentParticipantsMock.save!.mockResolvedValue({
+        assessmentId: '1',
+        participantId: 'p1',
+      } as unknown as AssessmentParticipant);
 
-      await expect(
-        service.assignParticipant('1', {
-          name: 'Test',
-          email: 'test@test.com',
+      const result = await service.assignParticipant('1', {});
+      expect(participantsMock.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Anonymous Participant',
         }),
-      ).rejects.toThrow(BadRequestException);
+      );
+      expect(result.participantId).toBe('p1');
     });
   });
 });

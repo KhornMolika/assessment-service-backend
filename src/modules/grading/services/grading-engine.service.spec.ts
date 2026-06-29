@@ -154,10 +154,10 @@ describe('GradingEngineService', () => {
 
     await service.gradeSession('session-2');
 
-    // ratio = Math.max(0, (1 - 1) / 2) = 0 -> score 0
+    // ratio = 1 / 2 = 0.5 -> score 5
     expect(answerEntriesMock.update).toHaveBeenCalledWith(
       { id: 'entry-3' },
-      { scoreAwarded: 0, maxScore: 10, gradingStatus: GradingStatus.AUTOMATIC },
+      { scoreAwarded: 5, maxScore: 10, gradingStatus: GradingStatus.AUTOMATIC },
     );
   });
 

@@ -96,6 +96,7 @@ describe('WebhookProcessor', () => {
   });
 
   it('should throw an error if fetch fails so Bull retries', async () => {
+    jest.spyOn(processor['logger'], 'error').mockImplementation(() => {});
     mockClientRepo.findByClientId.mockResolvedValue({
       id: '1',
       webhookUrl: 'https://example.com/webhook',

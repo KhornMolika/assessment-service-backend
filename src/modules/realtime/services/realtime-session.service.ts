@@ -424,17 +424,16 @@ export class RealtimeSessionService {
             REALTIME_QUESTION_DURATION_SECONDS,
       );
       const rawSpeedBonus =
-        questionPoints * REALTIME_SPEED_BONUS_RATIO * timeRatio * scoreMultiplier;
+        questionPoints *
+        REALTIME_SPEED_BONUS_RATIO *
+        timeRatio *
+        scoreMultiplier;
       const rawPoints = questionPoints * scoreMultiplier + rawSpeedBonus;
       const speedBonus = hasScore ? roundRealtimeScore(rawSpeedBonus) : 0;
       const pointsEarned = hasScore ? roundRealtimeScore(rawPoints) : 0;
 
       if (pointsEarned > 0) {
-        await this.redis.addScore(
-          assessmentId,
-          participantId,
-          pointsEarned,
-        );
+        await this.redis.addScore(assessmentId, participantId, pointsEarned);
       }
 
       const rankAfterQuestion = await this.redis.getParticipantRank(
@@ -638,7 +637,9 @@ export class RealtimeSessionService {
             questionPoints * REALTIME_SPEED_BONUS_RATIO * timeRatio;
           const entryScore =
             scoreMultiplier > 0
-              ? Number(((questionPoints + timeBonus) * scoreMultiplier).toFixed(2))
+              ? Number(
+                  ((questionPoints + timeBonus) * scoreMultiplier).toFixed(2),
+                )
               : 0;
 
           await this.answerEntries.save({
@@ -745,31 +746,61 @@ export class RealtimeSessionService {
    */
   private getScoreMultiplier(
     type: string,
-    answer: { choice?: string; response?: Record<string, any> },
-    correctAnswer: any,
+    answer: { choice?: string; response?: unknown },
+    correctAnswer: unknown,
   ): number {
     if (!correctAnswer) return 0;
     const strategy = this.strategies[type as keyof typeof this.strategies];
     if (!strategy) return 0;
 
-    let responsePayload: Record<string, any> = {};
+    let responsePayload: Record<string, unknown> = {};
+    const correctPayload = this.normalizeCorrectAnswerPayload(
+      type,
+      correctAnswer,
+    );
 
     if (type === 'SINGLE_CHOICE') {
-      responsePayload = { optionId: answer.choice ?? answer.response };
+      responsePayload = {
+        optionId:
+          answer.choice ??
+          this.getRecordValue(answer.response, 'optionId') ??
+          this.getRecordValue(answer.response, 'id') ??
+          answer.response,
+      };
     } else if (type === 'TRUE_FALSE') {
       // The TrueFalse strategy expects a boolean value in the payload
-      const val = answer.choice ?? answer.response;
-      responsePayload = { value: String(val) === 'true' };
+      const val: unknown =
+        answer.choice ??
+        this.getRecordValue(answer.response, 'value') ??
+        answer.response;
+      responsePayload = {
+        value: val === true || (typeof val === 'string' && val === 'true'),
+      };
     } else if (type === 'MULTIPLE_CHOICE') {
-      const resp = answer.response;
-      responsePayload = Array.isArray(resp) ? { optionIds: resp } : resp ?? {};
+      responsePayload = {
+        optionIds:
+          this.extractStringArray(answer.response, [
+            'optionIds',
+            'correctOptionIds',
+            'selectedOptionIds',
+            'ids',
+          ]) ?? (answer.choice ? [answer.choice] : []),
+      };
     } else if (type === 'ORDERING' || type === 'MATCHING') {
-      responsePayload = answer.response ?? {};
+      responsePayload = this.toRecord(answer.response);
     } else if (type === 'FILL_IN_THE_BLANK') {
       const resp = answer.response;
       let answersArr: string[] = [];
       if (Array.isArray(resp)) {
-        answersArr = resp;
+        answersArr = resp.map((value) => String(value));
+      } else if (
+        typeof resp === 'object' &&
+        resp !== null &&
+        Array.isArray(this.getRecordValue(resp, 'answers'))
+      ) {
+        answersArr = (this.getRecordValue(resp, 'answers') as unknown[]).map(
+          (value) => String(value),
+        );
       } else if (typeof resp === 'object' && resp !== null) {
         // e.g. { "0": "javascript", "1": "tes" }
         const len = Object.keys(resp).length;
@@ -783,11 +814,90 @@ export class RealtimeSessionService {
     }
 
     try {
-      const result = strategy.grade(responsePayload, correctAnswer, 1.0);
+      const result = strategy.grade(responsePayload, correctPayload, 1.0);
       return Math.max(0, result.scoreAwarded);
     } catch {
       return 0;
     }
+  }
+
+  private normalizeCorrectAnswerPayload(
+    type: string,
+    correctAnswer: unknown,
+  ): Record<string, unknown> {
+    if (type === 'SINGLE_CHOICE') {
+      return {
+        optionId:
+          this.getRecordValue(correctAnswer, 'optionId') ??
+          this.extractStringArray(correctAnswer, [
+            'optionIds',
+            'correctOptionIds',
+          ])?.[0] ??
+          (typeof correctAnswer === 'string' ? correctAnswer : undefined),
+      };
+    }
+
+    if (type === 'MULTIPLE_CHOICE') {
+      return {
+        optionIds:
+          this.extractStringArray(correctAnswer, [
+            'optionIds',
+            'correctOptionIds',
+            'ids',
+          ]) ?? [],
+      };
+    }
+
+    if (type === 'TRUE_FALSE') {
+      return {
+        value: this.getRecordValue(correctAnswer, 'value') ?? correctAnswer,
+      };
+    }
+
+    if (type === 'ORDERING') {
+      return {
+        sequence:
+          this.extractStringArray(correctAnswer, ['sequence', 'optionIds']) ??
+          [],
+      };
+    }
+
+    if (type === 'FILL_IN_THE_BLANK') {
+      return {
+        answers: this.getRecordValue(correctAnswer, 'answers') ?? correctAnswer,
+      };
+    }
+
+    return this.toRecord(correctAnswer);
+  }
+
+  private toRecord(value: unknown): Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  }
+
+  private getRecordValue(value: unknown, key: string): unknown {
+    return this.toRecord(value)[key];
+  }
+
+  private extractStringArray(
+    value: unknown,
+    keys: string[],
+  ): string[] | undefined {
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item));
+    }
+
+    const record = this.toRecord(value);
+    for (const key of keys) {
+      const nested = record[key];
+      if (Array.isArray(nested)) {
+        return nested.map((item) => String(item));
+      }
+    }
+
+    return undefined;
   }
 
   private buildCorrectAnswerPayload(type: string, correctAnswer: any): any {

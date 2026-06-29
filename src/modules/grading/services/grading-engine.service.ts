@@ -146,38 +146,68 @@ export class GradingEngineService {
         }
 
         try {
-          let response =
-            (entry.response as unknown as Record<string, unknown>) ?? {};
+          let response = entry.response as unknown;
 
           // Normalize response format to match what strategies expect
           if (questionType === 'TRUE_FALSE' || questionType === 'True/False') {
             if (typeof response === 'boolean' || typeof response === 'string') {
               response = { value: String(response) === 'true' };
-            } else if (response.choice !== undefined) {
-              response = { value: String(response.choice) === 'true' };
+            } else if (
+              typeof response === 'object' &&
+              response !== null &&
+              'choice' in response
+            ) {
+              const choice = response.choice;
+              response = {
+                value:
+                  choice === true ||
+                  (typeof choice === 'string' && choice === 'true'),
+              };
             }
           } else if (questionType === 'FILL_IN_THE_BLANK') {
             if (Array.isArray(response)) {
               response = { answers: response };
-            } else if (typeof response === 'object' && response !== null && !response.answers) {
+            } else if (
+              typeof response === 'object' &&
+              response !== null &&
+              !('answers' in response)
+            ) {
               const answersArr: string[] = [];
               const len = Object.keys(response).length;
               for (let i = 0; i < len; i++) {
-                answersArr.push(String((response as any)[String(i)] ?? ''));
+                const responseRecord = response as Record<string, unknown>;
+                const value = responseRecord[String(i)];
+                answersArr.push(
+                  typeof value === 'string' ||
+                    typeof value === 'number' ||
+                    typeof value === 'boolean'
+                    ? String(value)
+                    : '',
+                );
               }
               response = { answers: answersArr };
             } else if (typeof response === 'string') {
               response = { answers: [response] };
             }
-          } else if (questionType === 'SINGLE_CHOICE' && typeof response === 'string') {
+          } else if (
+            questionType === 'SINGLE_CHOICE' &&
+            typeof response === 'string'
+          ) {
             response = { optionId: response };
-          } else if (questionType === 'MULTIPLE_CHOICE' && Array.isArray(response)) {
+          } else if (
+            questionType === 'MULTIPLE_CHOICE' &&
+            Array.isArray(response)
+          ) {
             response = { optionIds: response };
           } else if (questionType === 'ORDERING' && Array.isArray(response)) {
             response = { sequence: response };
           }
 
-          const result = strategy.grade(response, correctAnswer, maxScore);
+          const result = strategy.grade(
+            response as Record<string, unknown>,
+            correctAnswer,
+            maxScore,
+          );
 
           await this.answerEntries.update(
             { id: entry.id },

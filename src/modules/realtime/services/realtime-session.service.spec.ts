@@ -43,7 +43,9 @@ describe('RealtimeSessionService', () => {
       getAnswerCount: jest.fn(),
       getParticipantCount: jest.fn(),
       getAnswers: jest.fn(),
+      claimQuestionEnd: jest.fn(),
       addScore: jest.fn(),
+      getParticipantRank: jest.fn(),
       getTopScores: jest.fn(),
       getName: jest.fn(),
       getAllScores: jest.fn(),
@@ -103,14 +105,19 @@ describe('RealtimeSessionService', () => {
       );
     });
 
-    it('should throw if session already active', async () => {
+    it('should return existing session if already active', async () => {
       assessmentsMock.findById.mockResolvedValue({
         status: AssessmentStatus.PUBLISHED,
       });
       redisMock.getSession.mockResolvedValue({ status: 'waiting' });
-      await expect(service.startSession('a1')).rejects.toThrow(
-        BadRequestException,
-      );
+      assessmentQuestionsMock.findByAssessment.mockResolvedValue([
+        { id: 'q1' },
+      ]);
+      await expect(service.startSession('a1')).resolves.toEqual({
+        assessmentId: 'a1',
+        status: 'waiting',
+        totalQuestions: 1,
+      });
     });
 
     it('should throw if no questions', async () => {
@@ -280,7 +287,9 @@ describe('RealtimeSessionService', () => {
       redisMock.getSession.mockResolvedValue({
         currentQuestionId: 'q1',
         currentQuestionIndex: 0,
+        status: 'active',
       });
+      redisMock.claimQuestionEnd.mockResolvedValue(true);
       assessmentQuestionsMock.findByAssessment.mockResolvedValue([
         {
           id: 'q1',
@@ -296,6 +305,13 @@ describe('RealtimeSessionService', () => {
         p2: { choice: 'opt2' }, // wrong
       });
       redisMock.getParticipantCount.mockResolvedValue(2);
+      redisMock.getParticipantRank.mockImplementation(
+        (_assessmentId: string, participantId: string) =>
+          Promise.resolve({
+            rank: participantId === 'p1' ? 1 : 2,
+            score: participantId === 'p1' ? 10 : 0,
+          }),
+      );
 
       const res = await service.endQuestion('a1');
       expect(res.stats).toHaveLength(2);
@@ -307,12 +323,140 @@ describe('RealtimeSessionService', () => {
       // p2 shouldn't get a score added because wrong answer
       expect(redisMock.addScore).toHaveBeenCalledTimes(1);
     });
+
+    it('should award partial score for fill-in-the-blank answers', async () => {
+      redisMock.getSession.mockResolvedValue({
+        currentQuestionId: 'q1',
+        currentQuestionIndex: 0,
+        status: 'active',
+      });
+      redisMock.claimQuestionEnd.mockResolvedValue(true);
+      assessmentQuestionsMock.findByAssessment.mockResolvedValue([
+        {
+          id: 'q1',
+          points: 10,
+          questionSnapshot: {
+            type: 'FILL_IN_THE_BLANK',
+            correctAnswer: {
+              answers: [['javascript'], ['test']],
+            },
+          },
+        },
+      ]);
+      redisMock.getAnswers.mockResolvedValue({
+        p1: { response: { answers: ['javascript', 'wrong'] }, timeTaken: 0 },
+      });
+      redisMock.getParticipantCount.mockResolvedValue(1);
+      redisMock.getParticipantRank.mockResolvedValue({
+        rank: 1,
+        score: 7.5,
+      });
+
+      const res = await service.endQuestion('a1');
+
+      expect(redisMock.addScore).toHaveBeenCalledWith('a1', 'p1', 7.5);
+      expect(res.participantResults.p1).toEqual(
+        expect.objectContaining({
+          correct: false,
+          pointsEarned: 7.5,
+          speedBonus: 2.5,
+          totalScore: 7.5,
+        }),
+      );
+    });
+
+    it('should award full score for multiple-choice when all correct options are selected', async () => {
+      redisMock.getSession.mockResolvedValue({
+        currentQuestionId: 'q1',
+        currentQuestionIndex: 0,
+        status: 'active',
+      });
+      redisMock.claimQuestionEnd.mockResolvedValue(true);
+      assessmentQuestionsMock.findByAssessment.mockResolvedValue([
+        {
+          id: 'q1',
+          points: 10,
+          questionSnapshot: {
+            type: 'MULTIPLE_CHOICE',
+            correctAnswer: { optionIds: ['FETCH', 'GET'] },
+          },
+        },
+      ]);
+      redisMock.getAnswers.mockResolvedValue({
+        p1: {
+          response: { optionIds: ['FETCH', 'GET'] },
+          timeTaken: 0,
+        },
+      });
+      redisMock.getParticipantCount.mockResolvedValue(1);
+      redisMock.getParticipantRank.mockResolvedValue({
+        rank: 1,
+        score: 15,
+      });
+
+      const res = await service.endQuestion('a1');
+
+      expect(redisMock.addScore).toHaveBeenCalledWith('a1', 'p1', 15);
+      expect(res.participantResults.p1).toEqual(
+        expect.objectContaining({
+          correct: true,
+          pointsEarned: 15,
+          speedBonus: 5,
+          totalScore: 15,
+        }),
+      );
+    });
+
+    it('should award partial multiple-choice credit without wrong answers canceling correct ones', async () => {
+      redisMock.getSession.mockResolvedValue({
+        currentQuestionId: 'q1',
+        currentQuestionIndex: 0,
+        status: 'active',
+      });
+      redisMock.claimQuestionEnd.mockResolvedValue(true);
+      assessmentQuestionsMock.findByAssessment.mockResolvedValue([
+        {
+          id: 'q1',
+          points: 10,
+          questionSnapshot: {
+            type: 'MULTIPLE_CHOICE',
+            correctAnswer: { optionIds: ['FETCH', 'GET'] },
+          },
+        },
+      ]);
+      redisMock.getAnswers.mockResolvedValue({
+        p1: {
+          response: { optionIds: ['FETCH', 'POST'] },
+          timeTaken: 0,
+        },
+      });
+      redisMock.getParticipantCount.mockResolvedValue(1);
+      redisMock.getParticipantRank.mockResolvedValue({
+        rank: 1,
+        score: 7.5,
+      });
+
+      const res = await service.endQuestion('a1');
+
+      expect(redisMock.addScore).toHaveBeenCalledWith('a1', 'p1', 7.5);
+      expect(res.participantResults.p1).toEqual(
+        expect.objectContaining({
+          correct: false,
+          pointsEarned: 7.5,
+          speedBonus: 2.5,
+          totalScore: 7.5,
+        }),
+      );
+    });
   });
 
   describe('getRankData', () => {
     it('should return top 5', async () => {
       redisMock.getTopScores.mockResolvedValue([
         { rank: 1, participantId: 'p1', score: 100 },
+      ]);
+      redisMock.getMembers.mockResolvedValue([
+        { role: 'participant', participantId: 'p1', name: 'John' },
       ]);
       redisMock.getName.mockResolvedValue('John');
 
@@ -366,6 +510,7 @@ describe('RealtimeSessionService', () => {
 
     it('should handle errors gracefully during flush', async () => {
       jest.useFakeTimers();
+      jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
       redisMock.getAllScores.mockResolvedValue([
         { participantId: 'p1', score: 100, rank: 1 },
       ]);

@@ -1,5 +1,17 @@
 import { GradeResult, GradingStrategy } from './grading-strategy.interface';
 
+function normalizeAcceptedAnswers(value: unknown): string[][] {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((entry) => {
+    if (Array.isArray(entry)) {
+      return entry.map((answer) => String(answer));
+    }
+
+    return [String(entry)];
+  });
+}
+
 export class FillInTheBlankStrategy implements GradingStrategy {
   /**
    * Participant: { answers: ["dependency injection", "controllers"] }
@@ -13,8 +25,10 @@ export class FillInTheBlankStrategy implements GradingStrategy {
     correctAnswer: Record<string, unknown>,
     maxScore: number,
   ): GradeResult {
-    const participantAnswers = (response['answers'] as string[]) ?? [];
-    const acceptedAnswers = (correctAnswer['answers'] as string[][]) ?? [];
+    const participantAnswers = Array.isArray(response['answers'])
+      ? response['answers'].map((answer) => String(answer))
+      : [];
+    const acceptedAnswers = normalizeAcceptedAnswers(correctAnswer['answers']);
 
     const totalBlanks = acceptedAnswers.length;
     if (totalBlanks === 0) {

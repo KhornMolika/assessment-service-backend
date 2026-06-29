@@ -53,6 +53,7 @@ describe('AIGradingProcessor', () => {
     };
 
     it('should throw an error if AnswerEntry is not found', async () => {
+      jest.spyOn(processor['logger'], 'error').mockImplementation(() => {});
       answerEntriesMock.findOne.mockResolvedValue(null);
 
       await expect(processor.handleGrade(mockJob)).rejects.toThrow(
