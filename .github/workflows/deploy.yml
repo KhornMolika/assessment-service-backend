@@ -42,21 +42,19 @@ jobs:
           docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
       - name: Deploy to Compute Engine
-        uses: google-github-actions/ssh-compute@v1
-        with:
-          instance_name: 'assessment-service'
-          zone: 'asia-southeast1-a'
-          command: |
+        run: |
+          gcloud compute ssh assessment-service --zone=asia-southeast1-a --command="
             sudo docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
             sudo docker stop ${{ env.SERVICE_NAME }} || true
             sudo docker rm ${{ env.SERVICE_NAME }} || true
             sudo docker run -d --name ${{ env.SERVICE_NAME }} \
               --restart unless-stopped \
               --network traefik-public \
-              --label "traefik.enable=true" \
-              --label "traefik.http.routers.backend.rule=Host(\`assessment-backend.molika.app\`)" \
-              --label "traefik.http.routers.backend.entrypoints=websecure" \
-              --label "traefik.http.routers.backend.tls.certresolver=myresolver" \
-              --label "traefik.http.services.backend.loadbalancer.server.port=3000" \
+              --label 'traefik.enable=true' \
+              --label 'traefik.http.routers.backend.rule=Host(\`assessment-backend.molika.app\`)' \
+              --label 'traefik.http.routers.backend.entrypoints=websecure' \
+              --label 'traefik.http.routers.backend.tls.certresolver=myresolver' \
+              --label 'traefik.http.services.backend.loadbalancer.server.port=3001' \
               docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
             sudo docker system prune -af
+          "
