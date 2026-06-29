@@ -50,5 +50,13 @@ jobs:
             sudo docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
             sudo docker stop ${{ env.SERVICE_NAME }} || true
             sudo docker rm ${{ env.SERVICE_NAME }} || true
-            sudo docker run -d --name ${{ env.SERVICE_NAME }} --restart unless-stopped -p 3001:3000 docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+            sudo docker run -d --name ${{ env.SERVICE_NAME }} \
+              --restart unless-stopped \
+              --network traefik-public \
+              --label "traefik.enable=true" \
+              --label "traefik.http.routers.backend.rule=Host(\`assessment-backend.molika.app\`)" \
+              --label "traefik.http.routers.backend.entrypoints=websecure" \
+              --label "traefik.http.routers.backend.tls.certresolver=myresolver" \
+              --label "traefik.http.services.backend.loadbalancer.server.port=3000" \
+              docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
             sudo docker system prune -af
