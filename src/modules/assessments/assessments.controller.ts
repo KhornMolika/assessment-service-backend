@@ -28,6 +28,8 @@ import { AssignParticipantDto } from './dto/assign-participant.dto';
 import { GradingEngineService } from '../grading/services/grading-engine.service';
 import { AIGradingService } from '@modules/ai/services/ai-grading.service';
 import { clientStorage } from '@common/context/client.storage';
+import { AnswerEntryRepository } from '@modules/runtime/repositories/answer-entry.repository';
+import { GradingStatus } from './entities/answer-entry.entity';
 import {
   ApiTags,
   ApiOperation,
@@ -47,6 +49,7 @@ export class AssessmentsController {
     private readonly gradingEngine: GradingEngineService,
     @Inject(forwardRef(() => AIGradingService))
     private readonly aiGradingService: AIGradingService,
+    private readonly answerEntries: AnswerEntryRepository,
   ) {}
 
   // CRUD ----------------------------------------------------------------------
@@ -426,8 +429,66 @@ export class AssessmentsController {
   @Post('assessments/:sessionId/recalculate')
   @HttpCode(HttpStatus.OK)
   async recalculate(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
-    await this.gradingEngine.recalculateSession(sessionId);
-    return { sessionId, recalculatedAt: new Date() };
+    const result = await this.gradingEngine.recalculateSession(sessionId);
+    return { ...result, recalculatedAt: new Date() };
+  }
+
+  /** PATCH /assessments/:sessionId/entries/:entryId/review — save manual score */
+  @ApiOperation({
+    summary: 'Save manual review score for an answer entry',
+  })
+  @ApiParam({
+    name: 'sessionId',
+    description: 'The UUID of the session',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiParam({
+    name: 'entryId',
+    description: 'The UUID of the answer entry',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Manual review saved successfully',
+  })
+  @Patch('assessments/:sessionId/entries/:entryId/review')
+  @HttpCode(HttpStatus.OK)
+  async saveManualReview(
+    @Param('sessionId', ParseUUIDPipe) sessionId: string,
+    @Param('entryId', ParseUUIDPipe) entryId: string,
+    @Body() body: { scoreAwarded?: number },
+  ) {
+    const entry = await this.answerEntries.findById(entryId, [
+      'assessmentQuestion',
+    ]);
+    if (!entry || entry.answerSheetId !== sessionId) {
+      throw new BadRequestException('Answer entry not found for this session');
+    }
+
+    const scoreAwarded = Number(body.scoreAwarded);
+    const maxScore = Number(entry.assessmentQuestion?.points ?? entry.maxScore);
+    if (!Number.isFinite(scoreAwarded) || scoreAwarded < 0) {
+      throw new BadRequestException('Score awarded must be zero or greater');
+    }
+    if (Number.isFinite(maxScore) && scoreAwarded > maxScore) {
+      throw new BadRequestException('Score awarded cannot exceed max score');
+    }
+
+    await this.answerEntries.update(
+      { id: entryId, answerSheetId: sessionId },
+      {
+        scoreAwarded,
+        maxScore: Number.isFinite(maxScore) ? maxScore : entry.maxScore,
+        gradingStatus: GradingStatus.MANUAL_REVISED,
+      },
+    );
+    return {
+      entryId,
+      sessionId,
+      scoreAwarded,
+      gradingStatus: GradingStatus.MANUAL_REVISED,
+      savedAt: new Date(),
+    };
   }
 
   /** POST /assessments/:sessionId/entries/:entryId/ai-grading/retry */

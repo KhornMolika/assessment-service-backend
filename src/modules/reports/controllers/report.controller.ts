@@ -53,6 +53,27 @@ export class ReportController {
   }
 
   /**
+   * GET /sessions/:sessionId/report
+   * Full session report resolved directly by answer sheet/session id.
+   */
+  @ApiOperation({
+    summary: 'Get full session report by session id',
+  })
+  @ApiParam({
+    name: 'sessionId',
+    description: 'The UUID of the session',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Full session report retrieved successfully',
+  })
+  @Get('sessions/:sessionId/report')
+  getSessionReportById(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
+    return this.reportService.getSessionReportById(sessionId);
+  }
+
+  /**
    * GET /assessments/:assessmentId/report
    * Aggregated report for all participants in one assessment.
    * Includes stats, per-question breakdown, score distribution,

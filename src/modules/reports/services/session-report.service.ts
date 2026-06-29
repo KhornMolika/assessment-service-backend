@@ -25,7 +25,7 @@ export class SessionReportService {
    * Includes per-question detail, AI grading notes, human overrides.
    * Throws 404 if session not found for this assessment and client.
    */
-  async getSessionReport(assessmentId: string, sessionId: string) {
+  async getSessionReport(assessmentId: string | null, sessionId: string) {
     try {
       const sheet: AnswerSheet | null = await this.reportRepo.getSessionDetail(
         sessionId,
@@ -151,7 +151,7 @@ export class SessionReportService {
         data: {
           session: {
             id: sheet.id,
-            assessmentId,
+            assessmentId: sheet.assessmentId,
             assessmentTitle: assessment?.name ?? null,
             participantId: participant?.id ?? null,
             participantName: participant?.name ?? null,

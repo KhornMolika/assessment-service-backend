@@ -17,6 +17,7 @@ import { AssessmentQuestionRepository } from './repositories/assessment-question
 import { AssessmentSettingRepository } from './repositories/assessment-setting.repository';
 import { AssessmentParticipantRepository } from './repositories/assessment-participant.repository';
 import { GradingModule } from '../grading/grading.module';
+import { AnswerEntryRepository } from '../runtime/repositories/answer-entry.repository';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { GradingModule } from '../grading/grading.module';
     AssessmentQuestionRepository,
     AssessmentSettingRepository,
     AssessmentParticipantRepository,
+    AnswerEntryRepository,
     AssessmentsService,
   ],
   exports: [

@@ -31,7 +31,11 @@ export class RealtimeController {
   startSession(
     @Param('assessmentId', ParseUUIDPipe) assessmentId: string,
     @Query('reset') reset?: string,
+    @Query('preview') preview?: string,
   ) {
-    return this.sessionService.startSession(assessmentId, reset === 'true');
+    return this.sessionService.startSession(assessmentId, {
+      reset: reset === 'true',
+      preview: preview === 'true',
+    });
   }
 }

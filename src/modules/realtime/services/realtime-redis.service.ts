@@ -173,7 +173,12 @@ export class RealtimeRedisService {
    */
   async getParticipantCount(assessmentId: string): Promise<number> {
     const members = await this.getMembers(assessmentId);
-    return members.filter((m) => m.role === 'participant').length;
+    const uniqueParticipants = new Set(
+      members
+        .filter((m) => m.role === 'participant' && m.participantId)
+        .map((m) => m.participantId),
+    );
+    return uniqueParticipants.size;
   }
 
   /**

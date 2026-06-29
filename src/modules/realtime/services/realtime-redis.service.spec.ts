@@ -121,7 +121,7 @@ describe('RealtimeRedisService', () => {
 
     it('should return participant count', async () => {
       redisMock.hgetall.mockResolvedValue({
-        s1: JSON.stringify({ role: 'participant' }),
+        s1: JSON.stringify({ role: 'participant', participantId: 'p1' }),
         s2: JSON.stringify({ role: 'host' }),
       });
       expect(await service.getParticipantCount('a1')).toBe(1);

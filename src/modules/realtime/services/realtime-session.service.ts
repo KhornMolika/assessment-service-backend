@@ -65,12 +65,15 @@ export class RealtimeSessionService {
 
   async startSession(
     assessmentId: string,
-    reset = false,
+    options: boolean | { reset?: boolean; preview?: boolean } = false,
   ): Promise<{
     assessmentId: string;
     status: string;
     totalQuestions: number;
   }> {
+    const reset = typeof options === 'boolean' ? options : !!options.reset;
+    const preview = typeof options === 'boolean' ? options : !!options.preview;
+
     const assessment = await this.assessments.findById(assessmentId);
     if (!assessment) throw new NotFoundException('Assessment not found');
     if (assessment.status !== AssessmentStatus.PUBLISHED) {
@@ -113,7 +116,7 @@ export class RealtimeSessionService {
       totalQuestions: questions.length,
       hostSocketId: '',
       startedAt: new Date().toISOString(),
-      isPreview: reset,
+      isPreview: preview,
     });
 
     return {
@@ -160,11 +163,17 @@ export class RealtimeSessionService {
     }
 
     const members = await this.redis.getMembers(assessmentId);
-    const participants = members.filter((m) => m.role === 'participant');
+    const uniqueParticipants = Array.from(
+      new Map(
+        members
+          .filter((m) => m.role === 'participant' && m.participantId)
+          .map((m) => [m.participantId, m]),
+      ).values(),
+    );
 
     return {
-      count: participants.length,
-      participants: participants.map((m) => ({
+      count: uniqueParticipants.length,
+      participants: uniqueParticipants.map((m) => ({
         id: m.participantId,
         name: m.name,
         status: 'CONNECTED',
@@ -329,6 +338,8 @@ export class RealtimeSessionService {
       optionId: string;
       count: number;
     }[];
+    totalAnswered?: number;
+    totalParticipants?: number;
     participantResults: Record<
       string,
       {
@@ -351,6 +362,8 @@ export class RealtimeSessionService {
         questionNumber: session.currentQuestionIndex + 1,
         correctAnswer: null,
         stats: [],
+        totalAnswered: 0,
+        totalParticipants: 0,
         participantResults: {},
       };
     }
@@ -366,6 +379,8 @@ export class RealtimeSessionService {
         questionNumber: session.currentQuestionIndex + 1,
         correctAnswer: null,
         stats: [],
+        totalAnswered: 0,
+        totalParticipants: 0,
         participantResults: {},
       };
     }
@@ -385,11 +400,22 @@ export class RealtimeSessionService {
       session.currentQuestionId,
     );
 
-    // Compute distribution
+    // Compute distribution. Multiple-choice responses can contain several
+    // option ids, so each selected option should receive one vote.
     const distribution: Record<string, number> = {};
     for (const answer of Object.values(answers)) {
-      const choice = answer.choice ?? 'other';
-      distribution[choice] = (distribution[choice] ?? 0) + 1;
+      const selectedOptionIds = this.getSelectedOptionIds(
+        snapshot.type,
+        answer,
+      );
+      if (selectedOptionIds.length === 0) {
+        distribution.other = (distribution.other ?? 0) + 1;
+        continue;
+      }
+
+      for (const optionId of selectedOptionIds) {
+        distribution[optionId] = (distribution[optionId] ?? 0) + 1;
+      }
     }
 
     // Award scores
@@ -450,7 +476,6 @@ export class RealtimeSessionService {
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const totalParticipants =
       await this.redis.getParticipantCount(assessmentId);
 
@@ -465,6 +490,8 @@ export class RealtimeSessionService {
         optionId,
         count,
       })),
+      totalAnswered: Object.keys(answers).length,
+      totalParticipants,
       participantResults,
     };
 
@@ -489,8 +516,14 @@ export class RealtimeSessionService {
       this.redis.getTopScores(assessmentId, 5),
       this.redis.getMembers(assessmentId),
     ]);
-    const participantMembers = members.filter(
-      (member) => member.role === 'participant' && member.participantId,
+    const participantMembers = Array.from(
+      new Map(
+        members
+          .filter(
+            (member) => member.role === 'participant' && member.participantId,
+          )
+          .map((member) => [member.participantId, member]),
+      ).values(),
     );
     const scoreByParticipant = new Map(
       topScoresRaw.map((entry) => [entry.participantId, entry.score]),
@@ -533,7 +566,7 @@ export class RealtimeSessionService {
     const allScores = await this.redis.getAllScores(assessmentId);
 
     const leaderboard = await Promise.all(
-      allScores.slice(0, 3).map(async (entry) => ({
+      allScores.map(async (entry) => ({
         id: entry.participantId,
         name: await this.redis.getName(assessmentId, entry.participantId),
         score: entry.score,
@@ -819,6 +852,41 @@ export class RealtimeSessionService {
     } catch {
       return 0;
     }
+  }
+
+  private getSelectedOptionIds(
+    type: string,
+    answer: { choice?: string; response?: unknown },
+  ): string[] {
+    if (type === 'MULTIPLE_CHOICE') {
+      return (
+        this.extractStringArray(answer.response, [
+          'optionIds',
+          'correctOptionIds',
+          'selectedOptionIds',
+          'ids',
+        ]) ?? (answer.choice ? [answer.choice] : [])
+      ).filter(Boolean);
+    }
+
+    if (type === 'SINGLE_CHOICE') {
+      const value =
+        answer.choice ??
+        this.getRecordValue(answer.response, 'optionId') ??
+        this.getRecordValue(answer.response, 'id') ??
+        answer.response;
+      return typeof value === 'string' ? [value] : [];
+    }
+
+    if (type === 'TRUE_FALSE') {
+      const value =
+        answer.choice ??
+        this.getRecordValue(answer.response, 'value') ??
+        answer.response;
+      return [String(value)];
+    }
+
+    return answer.choice ? [answer.choice] : [];
   }
 
   private normalizeCorrectAnswerPayload(

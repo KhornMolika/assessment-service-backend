@@ -86,6 +86,7 @@ describe('RuntimeService', () => {
     };
     questionsMock = {
       findRandomForDynamic: jest.fn(),
+      findByIdsPreservingOrder: jest.fn(),
     };
     expiryQueueMock = {
       add: jest.fn(),
@@ -188,7 +189,49 @@ describe('RuntimeService', () => {
       expect(answerSheetsMock.save).toHaveBeenCalled();
     });
 
-    it('should throw ConflictException if already started', async () => {
+    it('should resume an in-progress session if already started', async () => {
+      assessmentsMock.findById!.mockResolvedValue({
+        id: '1',
+        status: AssessmentStatus.PUBLISHED,
+      } as unknown as Assessment);
+      assessmentSettingsMock.findByAssessment!.mockResolvedValue({
+        participantIdentity: ParticipantIdentity.AUTHENTICATED,
+        questionSelection: QuestionSelection.MANUAL,
+        isShuffle: false,
+      } as unknown as AssessmentSetting);
+      assessmentParticipantsMock.findOneWithSheet!.mockResolvedValue({
+        answerSheet: {
+          id: 's1',
+          assessmentId: '1',
+          status: AnswerSheetStatus.IN_PROGRESS,
+          startedAt: new Date('2026-01-01T10:00:00Z'),
+        },
+      } as unknown as AssessmentParticipant);
+      assessmentQuestionsMock.findByAssessment!.mockResolvedValue([
+        {
+          id: 'aq1',
+          points: 1,
+          questionSnapshot: {
+            id: 'q1',
+            type: 'SHORT_ANSWER',
+            questionText: 'Question?',
+            difficulty: 'EASY',
+            options: null,
+          },
+        } as unknown as AssessmentQuestion,
+      ]);
+
+      await expect(
+        service.startSession({ assessmentId: '1', participantId: 'p1' }),
+      ).resolves.toMatchObject({
+        sessionId: 's1',
+        assessmentId: '1',
+        totalQuestions: 1,
+      });
+      expect(answerSheetsMock.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException if already submitted', async () => {
       assessmentsMock.findById!.mockResolvedValue({
         id: '1',
         status: AssessmentStatus.PUBLISHED,
@@ -197,7 +240,7 @@ describe('RuntimeService', () => {
         participantIdentity: ParticipantIdentity.AUTHENTICATED,
       } as unknown as AssessmentSetting);
       assessmentParticipantsMock.findOneWithSheet!.mockResolvedValue({
-        answerSheet: { id: 's1' },
+        answerSheet: { id: 's1', status: AnswerSheetStatus.SUBMITTED },
       } as unknown as AssessmentParticipant);
 
       await expect(
