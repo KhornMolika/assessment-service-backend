@@ -603,6 +603,10 @@ export class AssessmentsService {
       }
     }
 
+    if (effectiveMode === Mode.REAL_TIME && current.mode !== Mode.REAL_TIME) {
+      await this.assertNoBlockedQuestionTypes(assessmentId);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     await this.assessmentSettings.update({ id: current.id }, dto as any);
     return this.assessmentSettings.findByAssessment(assessmentId);
