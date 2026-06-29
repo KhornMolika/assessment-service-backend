@@ -769,6 +769,14 @@ export class RealtimeSessionService {
           rightSide: options.rightSide,
         } as any;
 
+      case 'FILL_IN_THE_BLANK':
+        return {
+          template: options.template,
+        } as any;
+
+      case 'RATING':
+        return options;
+
       default:
         return null;
     }
