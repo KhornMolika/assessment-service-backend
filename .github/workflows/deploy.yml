@@ -50,6 +50,7 @@ jobs:
             sudo docker run -d --name ${{ env.SERVICE_NAME }} \
               --restart unless-stopped \
               --network traefik-public \
+              --env-file /opt/assessment-backend/.env \
               --label 'traefik.enable=true' \
               --label 'traefik.http.routers.backend.rule=Host(\`assessment-backend.molika.app\`)' \
               --label 'traefik.http.routers.backend.entrypoints=websecure' \
