@@ -4,7 +4,7 @@ import { QuestionBank } from './question-bank.entity';
 import { Question } from '@modules/questions/entities/question.entity';
 
 @Entity()
-@Index(['questionBank', 'question'], { unique: true })
+@Index(['questionBank', 'question'], { unique: true, where: '"deletedAt" IS NULL' })
 export class QuestionBankQuestion extends ClientScopedEntity {
   @Column('uuid')
   questionBankId!: string;

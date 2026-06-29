@@ -11,7 +11,7 @@ export enum TopicVisibility {
 }
 
 @Entity()
-@Index(['clientId', 'name'], { unique: true })
+@Index(['clientId', 'name'], { unique: true, where: '"deletedAt" IS NULL' })
 export class Topic extends ClientScopedEntity {
   @Column({
     type: 'varchar',
