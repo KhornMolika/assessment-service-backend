@@ -49,7 +49,7 @@ jobs:
 
       - name: Clear OS Login SSH Keys to prevent 32 KiB limit
         run: |
-          for FINGERPRINT in $(gcloud compute os-login ssh-keys list --format="value(fingerprint)"); do
+          for FINGERPRINT in $(gcloud compute os-login ssh-keys list --format="value(key)"); do
             gcloud compute os-login ssh-keys remove --key="$FINGERPRINT" --quiet || true
           done
 
