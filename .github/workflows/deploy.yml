@@ -41,6 +41,13 @@ jobs:
         run: |
           docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
+      - name: Create .env file
+        run: echo "${{ secrets.ENV }}" > .env
+
+      - name: Copy .env to Compute Engine
+        run: |
+          gcloud compute scp .env assessment-service:~/assessment-backend.env --zone=asia-southeast1-a
+
       - name: Deploy to Compute Engine
         run: |
           gcloud compute ssh assessment-service --zone=asia-southeast1-a --command="
@@ -50,7 +57,7 @@ jobs:
             sudo docker run -d --name ${{ env.SERVICE_NAME }} \
               --restart unless-stopped \
               --network traefik-public \
-              --env-file /opt/assessment-backend/.env \
+              --env-file ~/assessment-backend.env \
               --label 'traefik.enable=true' \
               --label 'traefik.http.routers.backend.rule=Host(\`assessment-backend.molika.app\`)' \
               --label 'traefik.http.routers.backend.entrypoints=websecure' \
