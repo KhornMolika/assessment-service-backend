@@ -7,6 +7,7 @@ import {
   Entity,
   Column,
   ManyToOne,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   OneToMany,
   Index,
   CreateDateColumn,
@@ -25,7 +26,10 @@ export enum AssessmentParticipantStatus {
 }
 
 @Entity()
-@Index(['assessmentId', 'participantId'], { unique: true })
+@Index(['assessmentId', 'participantId'], {
+  unique: true,
+  where: '"deletedAt" IS NULL',
+})
 export class AssessmentParticipant extends ClientScopedEntity {
   @ManyToOne(() => Assessment, (a) => a.participants, { onDelete: 'CASCADE' })
   assessment!: Assessment;

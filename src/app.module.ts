@@ -22,6 +22,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import Redis from 'ioredis';
@@ -62,13 +63,17 @@ import { AppController } from './app.controller';
 
     CacheModule,
 
+    EventEmitterModule.forRoot(),
+
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         storage: new ThrottlerStorageRedisService(
           new Redis({
             host: process.env.REDIS_HOST ?? 'localhost',
-            port: Number(process.env.REDIS_PORT) ?? 6379,
+            port: process.env.REDIS_PORT
+              ? Number(process.env.REDIS_PORT)
+              : 6379,
             keyPrefix: 'throttle:',
           }),
         ),

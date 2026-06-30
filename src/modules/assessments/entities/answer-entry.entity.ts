@@ -20,6 +20,7 @@ export enum GradingStatus {
 
 @Entity()
 @Index(['answerSheetId', 'assessmentQuestionId'], {
+  unique: true,
   where: '"deletedAt" IS NULL',
 })
 export class AnswerEntry extends ClientScopedEntity {

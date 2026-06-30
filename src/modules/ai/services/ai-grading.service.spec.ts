@@ -130,6 +130,7 @@ describe('AIGradingService', () => {
 
       const result = await service.gradeEntry(mockEntry);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jobsRepoMock.update).toHaveBeenNthCalledWith(
         1,
         { id: 'job-uuid' },
@@ -140,6 +141,7 @@ describe('AIGradingService', () => {
         },
       );
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jobsRepoMock.update).toHaveBeenNthCalledWith(
         2,
         { id: 'job-uuid' },
@@ -185,6 +187,7 @@ describe('AIGradingService', () => {
         InternalServerErrorException,
       );
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jobsRepoMock.update).toHaveBeenNthCalledWith(
         2,
         { id: 'job-uuid' },
@@ -253,6 +256,7 @@ describe('AIGradingService', () => {
 
       expect(result.sessionId).toBe('session-uuid');
       expect(result.evaluation.suggestedScore).toBe(9);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jobsRepoMock.update).toHaveBeenNthCalledWith(
         1,
         { id: 'job-uuid' },

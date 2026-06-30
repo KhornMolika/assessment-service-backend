@@ -12,6 +12,7 @@ describe('ClientsModule (e2e)', () => {
   let clientDbId: string;
   let clientSecret: string;
   let jwtToken: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let adminToken: string;
 
   beforeAll(async () => {
@@ -158,7 +159,9 @@ describe('ClientsModule (e2e)', () => {
         })
         .expect(200);
 
-      expect(response.body.data.webhookUrl).toBe('https://own-update.com/webhook');
+      expect(response.body.data.webhookUrl).toBe(
+        'https://own-update.com/webhook',
+      );
     });
 
     it('PATCH /:id - should update the client name and webhook settings (Admin Only)', async () => {

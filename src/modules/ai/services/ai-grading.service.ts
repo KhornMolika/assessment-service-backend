@@ -198,8 +198,11 @@ export class AIGradingService {
     };
   }
 
-  private extractResponseText(response: Record<string, any> | undefined) {
+  private extractResponseText(
+    response: Record<string, any> | string | undefined,
+  ) {
     if (!response) return '';
+    if (typeof response === 'string') return response.trim();
     if (typeof response.text === 'string') return response.text.trim();
     if (typeof response.answer === 'string') return response.answer.trim();
     if (typeof response.value === 'string') return response.value.trim();

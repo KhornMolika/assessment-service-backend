@@ -19,7 +19,7 @@ export const databaseConfig: TypeOrmModuleAsyncOptions = {
 
     autoLoadEntities: true,
 
-    synchronize: false,
+    synchronize: configService.get<string>('DB_SYNC') === 'true',
 
     logging: false,
 

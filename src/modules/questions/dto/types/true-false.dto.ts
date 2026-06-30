@@ -14,7 +14,10 @@ export class TrueFalseOptionsDto {
 }
 
 export class TrueFalseAnswerDto {
-  @ApiProperty({ example: true, description: 'Boolean value indicating true or false' })
+  @ApiProperty({
+    example: true,
+    description: 'Boolean value indicating true or false',
+  })
   @IsBoolean()
   value!: boolean;
 }

@@ -38,8 +38,8 @@ async function createIsolatedClientAndToken(app: INestApplication) {
   const timestamp = Date.now();
   const adminClientRes = await request(app.getHttpServer())
     .post('/api/v1/clients')
-      .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
-      .send({
+    .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
+    .send({
       name: `Assess E2E Client ${timestamp}`,
       slug: `assess-e2e-${timestamp}`,
       allowedOrigins: ['https://test.com'],
@@ -75,6 +75,7 @@ describe('AssessmentsModule (e2e)', () => {
   let adminToken: string;
   let topicId: string;
   let assessmentId: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let questionId: string;
 
   beforeAll(async () => {

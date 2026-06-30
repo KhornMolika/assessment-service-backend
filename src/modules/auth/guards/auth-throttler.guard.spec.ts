@@ -12,9 +12,14 @@ describe('AuthThrottlerGuard', () => {
     const mockReflector: Reflector = {} as any;
 
     guard = new AuthThrottlerGuard(mockOptions, mockStorage, mockReflector);
-    
+
     // Mock the super.handleRequest method to avoid executing actual throttler logic
-    jest.spyOn(Object.getPrototypeOf(AuthThrottlerGuard.prototype), 'handleRequest').mockResolvedValue(true);
+    jest
+      .spyOn(
+        Object.getPrototypeOf(AuthThrottlerGuard.prototype),
+        'handleRequest',
+      )
+      .mockResolvedValue(true);
   });
 
   it('should be defined', () => {
@@ -30,7 +35,9 @@ describe('AuthThrottlerGuard', () => {
       const result = await (guard as any).handleRequest(requestProps);
 
       expect(result).toBe(true);
-      expect(Object.getPrototypeOf(AuthThrottlerGuard.prototype).handleRequest).not.toHaveBeenCalled();
+      expect(
+        Object.getPrototypeOf(AuthThrottlerGuard.prototype).handleRequest,
+      ).not.toHaveBeenCalled();
     });
 
     it('calls super.handleRequest if throttler name is auth', async () => {
@@ -41,7 +48,9 @@ describe('AuthThrottlerGuard', () => {
       const result = await (guard as any).handleRequest(requestProps);
 
       expect(result).toBe(true); // From our mock
-      expect(Object.getPrototypeOf(AuthThrottlerGuard.prototype).handleRequest).toHaveBeenCalledWith(requestProps);
+      expect(
+        Object.getPrototypeOf(AuthThrottlerGuard.prototype).handleRequest,
+      ).toHaveBeenCalledWith(requestProps);
     });
 
     it('calls super.handleRequest if throttler name is authBurst', async () => {
@@ -52,7 +61,9 @@ describe('AuthThrottlerGuard', () => {
       const result = await (guard as any).handleRequest(requestProps);
 
       expect(result).toBe(true); // From our mock
-      expect(Object.getPrototypeOf(AuthThrottlerGuard.prototype).handleRequest).toHaveBeenCalledWith(requestProps);
+      expect(
+        Object.getPrototypeOf(AuthThrottlerGuard.prototype).handleRequest,
+      ).toHaveBeenCalledWith(requestProps);
     });
   });
 

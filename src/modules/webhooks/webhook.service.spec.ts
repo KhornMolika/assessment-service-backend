@@ -2,7 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bull';
 import {
   WebhookService,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   WebhookPayload,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   WebhookJobData,
 } from './webhook.service';
 

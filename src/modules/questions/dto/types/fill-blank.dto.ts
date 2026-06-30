@@ -9,14 +9,24 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FillBlankOptionsDto {
-  @ApiProperty({ example: 'NestJS is a [blank_1] framework built on [blank_2].', description: 'Template string with blanks' })
+  @ApiProperty({
+    example: 'NestJS is a [blank_1] framework built on [blank_2].',
+    description: 'Template string with blanks',
+  })
   @IsString()
   @IsNotEmpty()
   template!: string; // e.g., "NestJS is a [blank_1] framework built on [blank_2]."
 }
 
 export class FillBlankAnswerDto {
-  @ApiProperty({ example: [['Node.js', 'backend'], ['TypeScript', 'V8']], description: 'Answers for each blank. Index 0 corresponds to [blank_1], index 1 to [blank_2].' })
+  @ApiProperty({
+    example: [
+      ['Node.js', 'backend'],
+      ['TypeScript', 'V8'],
+    ],
+    description:
+      'Answers for each blank. Index 0 corresponds to [blank_1], index 1 to [blank_2].',
+  })
   @IsArray()
   @IsArrayOfStringArrays({
     message:

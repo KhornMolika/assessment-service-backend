@@ -24,6 +24,7 @@ export class SessionExpiryProcessor {
    * added in the real-time phase.
    */
   @Process('warning')
+  // eslint-disable-next-line @typescript-eslint/require-await
   async handleWarning(job: Job<SessionExpiryJobData>) {
     const { sessionId } = job.data;
     this.logger.warn(`Session ${sessionId} expiring in 5 minutes`);

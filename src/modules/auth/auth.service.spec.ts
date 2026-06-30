@@ -3,7 +3,11 @@ import { AuthService } from './auth.service';
 import { ClientService } from '../clients/client.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { BadRequestException, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  UnauthorizedException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { TokenRequestDto } from './dto/token-request.dto';
 
 describe('AuthService', () => {
@@ -41,7 +45,7 @@ describe('AuthService', () => {
     clientService = module.get(ClientService);
     jwtService = module.get(JwtService);
     configService = module.get(ConfigService);
-    
+
     // Silence the logger to prevent expected errors from cluttering test output
     jest.spyOn(service['logger'], 'error').mockImplementation(() => {});
   });
@@ -75,7 +79,12 @@ describe('AuthService', () => {
         expires_in: 3600,
       });
 
-      expect(clientService.verifySecret).toHaveBeenCalledWith('valid_client', 'valid_secret');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(clientService.verifySecret).toHaveBeenCalledWith(
+        'valid_client',
+        'valid_secret',
+      );
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(jwtService.signAsync).toHaveBeenCalledWith(
         {
           sub: 'valid_client',
@@ -89,22 +98,28 @@ describe('AuthService', () => {
     it('throws BadRequestException for wrong grant_type', async () => {
       const invalidDto: TokenRequestDto = {
         ...validDto,
-        grant_type: 'password' as any,
+        grant_type: 'password',
       };
 
-      await expect(service.token(invalidDto)).rejects.toThrow(BadRequestException);
+      await expect(service.token(invalidDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws UnauthorizedException for wrong secret or inactive client', async () => {
       clientService.verifySecret.mockResolvedValue(null);
 
-      await expect(service.token(validDto)).rejects.toThrow(UnauthorizedException);
+      await expect(service.token(validDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws InternalServerErrorException for unexpected errors', async () => {
       clientService.verifySecret.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.token(validDto)).rejects.toThrow(InternalServerErrorException);
+      await expect(service.token(validDto)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 });

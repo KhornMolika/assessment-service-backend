@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AssessmentRepository } from '../repositories/assessment.repository';
 import { AssessmentQuestionRepository } from '../repositories/assessment-question.repository';
 import { AssessmentSettingRepository } from '../repositories/assessment-setting.repository';
@@ -28,6 +29,7 @@ import {
   ShowResults,
 } from '../entities/assessment-settings.entity';
 import { UpdateAssessmentSettingDto } from '../dto/update-assessment-setting.dto';
+import { clientStorage } from '../../../common/context/client.storage';
 
 // Question types blocked in REAL_TIME assessments (require async grading)
 const REAL_TIME_BLOCKED_TYPES = [
@@ -45,6 +47,7 @@ export class AssessmentsService {
     private readonly questions: QuestionRepository,
     private readonly questionBanks: QuestionBankRepository,
     private readonly participants: ParticipantRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -201,7 +204,15 @@ export class AssessmentsService {
       { status: AssessmentStatus.PUBLISHED },
     );
 
-    return this.assessments.findOneWithDetails(id) as Promise<Assessment>;
+    const result = (await this.assessments.findOneWithDetails(
+      id,
+    )) as Assessment;
+    this.eventEmitter.emit('assessment.status.updated', {
+      clientId: result.clientId,
+      assessmentId: id,
+      status: AssessmentStatus.PUBLISHED,
+    });
+    return result;
   }
 
   /**
@@ -224,7 +235,15 @@ export class AssessmentsService {
       { status: AssessmentStatus.ARCHIVED },
     );
 
-    return this.assessments.findOneWithDetails(id) as Promise<Assessment>;
+    const result = (await this.assessments.findOneWithDetails(
+      id,
+    )) as Assessment;
+    this.eventEmitter.emit('assessment.status.updated', {
+      clientId: result.clientId,
+      assessmentId: id,
+      status: AssessmentStatus.ARCHIVED,
+    });
+    return result;
   }
 
   // ---------------------------------------------------------------------------
@@ -562,10 +581,9 @@ export class AssessmentsService {
       }
 
       if (distribution) {
-        const distributionTotal = (Object.values(distribution) as unknown[]).reduce(
-          (sum: number, n: unknown) => sum + (Number(n) || 0),
-          0,
-        );
+        const distributionTotal = (
+          Object.values(distribution) as unknown[]
+        ).reduce((sum: number, n: unknown) => sum + (Number(n) || 0), 0);
         if (distributionTotal !== total) {
           throw new BadRequestException(
             `selectionRules.distribution sum (${String(distributionTotal)}) must equal ` +
@@ -585,6 +603,11 @@ export class AssessmentsService {
       }
     }
 
+    if (effectiveMode === Mode.REAL_TIME && current.mode !== Mode.REAL_TIME) {
+      await this.assertNoBlockedQuestionTypes(assessmentId);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     await this.assessmentSettings.update({ id: current.id }, dto as any);
     return this.assessmentSettings.findByAssessment(assessmentId);
   }
@@ -646,31 +669,31 @@ export class AssessmentsService {
       );
     }
 
-    // ANONYMOUS — no pre-assignment, handled at session start
-    if (settings.participantIdentity === ParticipantIdentity.ANONYMOUS) {
-      throw new BadRequestException(
-        'ANONYMOUS assessments do not require pre-assignment. ' +
-          'Participants are created automatically when the session starts.',
-      );
+    // AUTHENTICATED and EXTERNAL both require name + email
+    if (settings.participantIdentity !== ParticipantIdentity.ANONYMOUS) {
+      if (!dto.name || !dto.email) {
+        throw new BadRequestException(
+          'name and email are required for this assessment',
+        );
+      }
     }
 
-    // AUTHENTICATED and EXTERNAL both require name + email
-    if (!dto.name || !dto.email) {
-      throw new BadRequestException(
-        'name and email are required for this assessment',
-      );
-    }
+    // Determine fallback values for anonymous
+    const participantName = dto.name || 'Anonymous Participant';
+    const participantEmail =
+      dto.email ||
+      `anon_${Date.now()}_${Math.random().toString(36).substring(7)}@anonymous.local`;
 
     // Find existing participant by email within this client
     // Avoids duplicate records for the same person across multiple assessments
     let participant = await this.participants.findOne({
-      email: dto.email,
+      email: participantEmail,
     });
 
     if (!participant) {
       participant = await this.participants.save({
-        name: dto.name,
-        email: dto.email,
+        name: participantName,
+        email: participantEmail,
         phone: dto.phone,
       });
     }
@@ -682,14 +705,37 @@ export class AssessmentsService {
     });
 
     if (existing) {
-      throw new ConflictException(
-        'Participant already assigned to this assessment',
-      );
+      return existing;
     }
 
     return this.assessmentParticipants.save({
       assessmentId,
       participantId: participant.id,
+    });
+  }
+
+  /**
+   * Public endpoint to join an assessment.
+   * Gets the clientId from the assessment directly without a JWT,
+   * then impersonates the client context to assign the participant.
+   */
+  async publicJoin(assessmentId: string, dto: AssignParticipantDto) {
+    const assessment = await this.assessments.findByIdGlobal(assessmentId);
+    if (!assessment) {
+      throw new NotFoundException('Assessment not found');
+    }
+
+    return new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      clientStorage.run({ clientId: assessment.clientId }, async () => {
+        try {
+          const result = await this.assignParticipant(assessmentId, dto);
+          resolve(result);
+        } catch (error) {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+          reject(error);
+        }
+      });
     });
   }
 

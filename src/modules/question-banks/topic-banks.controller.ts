@@ -10,7 +10,13 @@ import {
 import { QuestionBanksService } from './question-banks.service';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Question Banks')
 @ApiBearerAuth()
@@ -21,7 +27,10 @@ export class TopicBanksController {
   @Post()
   @ApiOperation({ summary: 'Create a new question bank in a topic' })
   @ApiParam({ name: 'topicId', description: 'Topic UUID' })
-  @ApiResponse({ status: 201, description: 'Question bank created successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Question bank created successfully.',
+  })
   async create(
     @Param('topicId', ParseUUIDPipe) topicId: string,
     @Body() dto: CreateQuestionBankDto,
@@ -32,7 +41,10 @@ export class TopicBanksController {
   @Get()
   @ApiOperation({ summary: 'List all question banks for a topic' })
   @ApiParam({ name: 'topicId', description: 'Topic UUID' })
-  @ApiResponse({ status: 200, description: 'List of question banks retrieved successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of question banks retrieved successfully.',
+  })
   async findAll(
     @Param('topicId', ParseUUIDPipe) topicId: string,
     @Query() query: PaginationQueryDto,

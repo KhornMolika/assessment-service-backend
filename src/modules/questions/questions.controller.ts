@@ -12,7 +12,13 @@ import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { QuestionsService } from './question.service';
 import { QuestionSchemaValidationPipe } from '@common/pipes/question-schema-validation.pipe';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Questions')
 @ApiBearerAuth()
@@ -22,7 +28,10 @@ export class QuestionsController {
 
   @Get()
   @ApiOperation({ summary: 'Get a paginated list of all questions globally' })
-  @ApiResponse({ status: 200, description: 'List of questions retrieved successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of questions retrieved successfully.',
+  })
   async findAll(@Query() query: PaginationQueryDto) {
     return await this.questionsService.findAll(query);
   }

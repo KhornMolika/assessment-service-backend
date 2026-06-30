@@ -30,6 +30,7 @@ export class ParticipantsService {
           pageCount: Math.ceil(total / query.limit),
         },
       };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new BadRequestException('Could not fetch participants');
     }

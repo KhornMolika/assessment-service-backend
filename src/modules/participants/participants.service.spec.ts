@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
   NotFoundException,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ConflictException,
 } from '@nestjs/common';
 import { ParticipantsService } from './participants.service';

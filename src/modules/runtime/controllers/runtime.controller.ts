@@ -25,7 +25,10 @@ export class RuntimeController {
    * participantId omitted for ANONYMOUS assessments.
    */
   @ApiOperation({ summary: 'Starts an assessment session' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Session started successfully' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Session started successfully',
+  })
   @Post('sessions/start')
   @HttpCode(HttpStatus.CREATED)
   startSession(@Body() dto: StartSessionDto) {
@@ -39,8 +42,16 @@ export class RuntimeController {
    * response shape varies by question type.
    */
   @ApiOperation({ summary: 'Saves or updates an answer' })
-  @ApiParam({ name: 'sessionId', type: 'string', format: 'uuid', description: 'The ID of the session' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Answer saved successfully' })
+  @ApiParam({
+    name: 'sessionId',
+    type: 'string',
+    format: 'uuid',
+    description: 'The ID of the session',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Answer saved successfully',
+  })
   @Post('sessions/:sessionId/answers')
   @HttpCode(HttpStatus.OK)
   saveAnswer(
@@ -56,8 +67,16 @@ export class RuntimeController {
    * All questions must be answered before calling this.
    */
   @ApiOperation({ summary: 'Submits a completed session' })
-  @ApiParam({ name: 'sessionId', type: 'string', format: 'uuid', description: 'The ID of the session' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Session submitted successfully' })
+  @ApiParam({
+    name: 'sessionId',
+    type: 'string',
+    format: 'uuid',
+    description: 'The ID of the session',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Session submitted successfully',
+  })
   @Post('sessions/:sessionId/submit')
   @HttpCode(HttpStatus.OK)
   submitSession(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
@@ -68,9 +87,19 @@ export class RuntimeController {
    * GET /runtime/sessions/:sessionId/result
    * Returns result based on assessment's showResults setting.
    */
-  @ApiOperation({ summary: 'Returns result based on assessment showResults setting' })
-  @ApiParam({ name: 'sessionId', type: 'string', format: 'uuid', description: 'The ID of the session' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Result returned successfully' })
+  @ApiOperation({
+    summary: 'Returns result based on assessment showResults setting',
+  })
+  @ApiParam({
+    name: 'sessionId',
+    type: 'string',
+    format: 'uuid',
+    description: 'The ID of the session',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Result returned successfully',
+  })
   @Get('sessions/:sessionId/result')
   getResult(@Param('sessionId', ParseUUIDPipe) sessionId: string) {
     return this.runtimeService.getResult(sessionId);

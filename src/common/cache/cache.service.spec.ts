@@ -1,5 +1,7 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Test, TestingModule } from '@nestjs/testing';
 import { CacheService } from './cache.service';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getRedisToken } from '@nestjs-modules/ioredis';
 
 describe('CacheService', () => {
@@ -14,7 +16,7 @@ describe('CacheService', () => {
       keys: jest.fn(),
     };
 
-    service = new CacheService(redisMock as any);
+    service = new CacheService(redisMock);
   });
 
   afterEach(() => {
@@ -31,7 +33,7 @@ describe('CacheService', () => {
       const factory = jest.fn();
 
       const result = await service.getOrSet('key1', 60, factory);
-      
+
       expect(result).toEqual({ foo: 'bar' });
       expect(redisMock.get).toHaveBeenCalledWith('key1');
       expect(factory).not.toHaveBeenCalled();
@@ -55,8 +57,10 @@ describe('CacheService', () => {
       const error = new Error('Factory Failed');
       const factory = jest.fn().mockRejectedValue(error);
 
-      await expect(service.getOrSet('key3', 60, factory)).rejects.toThrow('Factory Failed');
-      
+      await expect(service.getOrSet('key3', 60, factory)).rejects.toThrow(
+        'Factory Failed',
+      );
+
       expect(redisMock.get).toHaveBeenCalledWith('key3');
       expect(factory).toHaveBeenCalled();
       expect(redisMock.setex).not.toHaveBeenCalled();
@@ -66,8 +70,10 @@ describe('CacheService', () => {
       redisMock.get.mockResolvedValue('invalid json');
       const factory = jest.fn();
 
-      await expect(service.getOrSet('key4', 60, factory)).rejects.toThrow(SyntaxError);
-      
+      await expect(service.getOrSet('key4', 60, factory)).rejects.toThrow(
+        SyntaxError,
+      );
+
       expect(redisMock.get).toHaveBeenCalledWith('key4');
       expect(factory).not.toHaveBeenCalled();
     });
@@ -76,7 +82,9 @@ describe('CacheService', () => {
       redisMock.get.mockRejectedValue(new Error('Redis Get Error'));
       const factory = jest.fn();
 
-      await expect(service.getOrSet('key5', 60, factory)).rejects.toThrow('Redis Get Error');
+      await expect(service.getOrSet('key5', 60, factory)).rejects.toThrow(
+        'Redis Get Error',
+      );
       expect(factory).not.toHaveBeenCalled();
     });
 
@@ -85,7 +93,9 @@ describe('CacheService', () => {
       redisMock.setex.mockRejectedValue(new Error('Redis Set Error'));
       const factory = jest.fn().mockResolvedValue('val');
 
-      await expect(service.getOrSet('key6', 60, factory)).rejects.toThrow('Redis Set Error');
+      await expect(service.getOrSet('key6', 60, factory)).rejects.toThrow(
+        'Redis Set Error',
+      );
     });
   });
 
@@ -125,14 +135,18 @@ describe('CacheService', () => {
 
     it('should propagate redis keys error', async () => {
       redisMock.keys.mockRejectedValue(new Error('Redis Keys Error'));
-      await expect(service.invalidatePattern('prefix:*')).rejects.toThrow('Redis Keys Error');
+      await expect(service.invalidatePattern('prefix:*')).rejects.toThrow(
+        'Redis Keys Error',
+      );
       expect(redisMock.del).not.toHaveBeenCalled();
     });
 
     it('should propagate redis del error during invalidatePattern', async () => {
       redisMock.keys.mockResolvedValue(['prefix:1']);
       redisMock.del.mockRejectedValue(new Error('Redis Del Error'));
-      await expect(service.invalidatePattern('prefix:*')).rejects.toThrow('Redis Del Error');
+      await expect(service.invalidatePattern('prefix:*')).rejects.toThrow(
+        'Redis Del Error',
+      );
     });
   });
 });

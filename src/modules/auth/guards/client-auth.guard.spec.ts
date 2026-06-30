@@ -23,9 +23,11 @@ describe('ClientAuthGuard', () => {
 
     guard = module.get<ClientAuthGuard>(ClientAuthGuard);
     reflector = module.get(Reflector);
-    
+
     // Mock super.canActivate to prevent actual Passport JWT strategy execution during unit tests
-    jest.spyOn(Object.getPrototypeOf(ClientAuthGuard.prototype), 'canActivate').mockReturnValue(true);
+    jest
+      .spyOn(Object.getPrototypeOf(ClientAuthGuard.prototype), 'canActivate')
+      .mockReturnValue(true);
   });
 
   const mockExecutionContext = (): ExecutionContext => {
@@ -49,6 +51,7 @@ describe('ClientAuthGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(true);
 
       expect(guard.canActivate(context)).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(reflector.getAllAndOverride).toHaveBeenCalledWith(IS_PUBLIC_KEY, [
         context.getHandler(),
         context.getClass(),
@@ -77,14 +80,18 @@ describe('ClientAuthGuard', () => {
     it('throws UnauthorizedException if client is missing', () => {
       const context = mockExecutionContext();
 
-      expect(() => guard.handleRequest(null, null, null, context)).toThrow(UnauthorizedException);
+      expect(() => guard.handleRequest(null, null, null, context)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws the provided err if present', () => {
       const context = mockExecutionContext();
       const customErr = new Error('Custom error');
 
-      expect(() => guard.handleRequest(customErr, null, null, context)).toThrow(customErr);
+      expect(() => guard.handleRequest(customErr, null, null, context)).toThrow(
+        customErr,
+      );
     });
   });
 });
