@@ -47,6 +47,12 @@ jobs:
           ${{ secrets.ENV }}
           EOF
 
+      - name: Clear OS Login SSH Keys to prevent 32 KiB limit
+        run: |
+          for FINGERPRINT in $(gcloud compute os-login ssh-keys list --format="value(fingerprint)"); do
+            gcloud compute os-login ssh-keys remove --fingerprint="$FINGERPRINT" --quiet || true
+          done
+
       - name: Copy .env to Compute Engine
         run: |
           gcloud compute scp .env assessment-service:~/assessment-backend.env --zone=asia-southeast1-a
