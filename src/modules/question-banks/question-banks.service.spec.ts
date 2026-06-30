@@ -184,7 +184,10 @@ describe('QuestionBanksService', () => {
         [{ id: '1', name: 'Topic Bank', questions: [{}] }],
         1,
       ]);
-      const result = await service.findTopicBanks('topic-1', { page: 1, limit: 10 });
+      const result = await service.findTopicBanks('topic-1', {
+        page: 1,
+        limit: 10,
+      });
       expect(result.data.length).toBe(1);
       expect(result.data[0].questionCount).toBe(1);
       expect(result.meta.topicId).toBe('topic-1');
@@ -194,14 +197,19 @@ describe('QuestionBanksService', () => {
   describe('update', () => {
     it('should throw NotFoundException if bank not found', async () => {
       bankRepositoryMock.findById.mockResolvedValue(null);
-      await expect(service.update('1', { name: 'New' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('1', { name: 'New' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should update bank successfully', async () => {
       bankRepositoryMock.findById.mockResolvedValue({ id: '1', name: 'Old' });
       bankRepositoryMock.update.mockResolvedValue(undefined);
       const result = await service.update('1', { name: 'New' });
-      expect(bankRepositoryMock.update).toHaveBeenCalledWith({ id: '1' }, { name: 'New' });
+      expect(bankRepositoryMock.update).toHaveBeenCalledWith(
+        { id: '1' },
+        { name: 'New' },
+      );
       expect(result.id).toBe('1');
     });
   });
@@ -223,7 +231,9 @@ describe('QuestionBanksService', () => {
   describe('getBankQuestions', () => {
     it('should throw NotFoundException if bank not found', async () => {
       bankRepositoryMock.findById.mockResolvedValue(null);
-      await expect(service.getBankQuestions('1', { page: 1, limit: 10 } as any)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.getBankQuestions('1', { page: 1, limit: 10 } as any),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should return paginated bank questions', async () => {
@@ -232,11 +242,13 @@ describe('QuestionBanksService', () => {
         [{ id: 'jq1', question: { id: 'q1', text: 'Q1' } }],
         1,
       ]);
-      const result = await service.getBankQuestions('1', { page: 1, limit: 10 } as any);
+      const result = await service.getBankQuestions('1', {
+        page: 1,
+        limit: 10,
+      } as any);
       expect(result.data.length).toBe(1);
       expect(result.data[0].id).toBe('q1');
       expect(result.meta.total).toBe(1);
     });
   });
 });
-

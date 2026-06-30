@@ -54,12 +54,17 @@ describe('JwtStrategy', () => {
     };
 
     it('returns client for valid payload (cache hit)', async () => {
-      const mockClient = { id: 'db-id', clientId: 'client-123', isActive: true } as Client;
+      const mockClient = {
+        id: 'db-id',
+        clientId: 'client-123',
+        isActive: true,
+      } as Client;
       cacheService.getOrSet.mockResolvedValue(mockClient);
 
       const result = await strategy.validate(payload);
 
       expect(result).toEqual(mockClient);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(cacheService.getOrSet).toHaveBeenCalledWith(
         'client:client-123',
         3600,
@@ -68,7 +73,11 @@ describe('JwtStrategy', () => {
     });
 
     it('hits DB on cache miss and returns client', async () => {
-      const mockClient = { id: 'db-id', clientId: 'client-123', isActive: true } as Client;
+      const mockClient = {
+        id: 'db-id',
+        clientId: 'client-123',
+        isActive: true,
+      } as Client;
 
       cacheService.getOrSet.mockImplementation(async (key, ttl, factory) => {
         return await factory();
@@ -79,6 +88,7 @@ describe('JwtStrategy', () => {
       const result = await strategy.validate(payload);
 
       expect(result).toEqual(mockClient);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(clientRepo.findByClientId).toHaveBeenCalledWith('client-123');
     });
 
@@ -89,25 +99,35 @@ describe('JwtStrategy', () => {
 
       clientRepo.findByClientId.mockResolvedValue(null);
 
-      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws UnauthorizedException if client is inactive', async () => {
-      const mockClient = { id: 'db-id', clientId: 'client-123', isActive: false } as Client;
-      
+      const mockClient = {
+        id: 'db-id',
+        clientId: 'client-123',
+        isActive: false,
+      } as Client;
+
       cacheService.getOrSet.mockImplementation(async (key, ttl, factory) => {
         return await factory();
       });
 
       clientRepo.findByClientId.mockResolvedValue(mockClient);
 
-      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws UnauthorizedException if cache directly returns null', async () => {
       cacheService.getOrSet.mockResolvedValue(null);
 
-      await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(strategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

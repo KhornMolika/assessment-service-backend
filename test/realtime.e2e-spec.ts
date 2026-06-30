@@ -80,10 +80,12 @@ describe('RealtimeGateway (e2e)', () => {
   afterAll(async () => {
     if (hostSocket) hostSocket.disconnect();
     if (participantSocket) participantSocket.disconnect();
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     await redisClient.disconnect();
     await app.close();
   });
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   afterEach(async () => {
     if (hostSocket) hostSocket.removeAllListeners();
     if (participantSocket) participantSocket.removeAllListeners();

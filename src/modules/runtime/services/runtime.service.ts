@@ -19,9 +19,7 @@ import { AssessmentParticipantRepository } from '@modules/assessments/repositori
 import { AssessmentQuestionRepository } from '@modules/assessments/repositories/assessment-question.repository';
 import { ParticipantRepository } from '@modules/participants/repositories/participant.repository';
 import { QuestionRepository } from '@modules/questions/repositories/question.repository';
-import {
-  AnswerSheetStatus,
-} from '@modules/assessments/entities/answer-sheet.entity';
+import { AnswerSheetStatus } from '@modules/assessments/entities/answer-sheet.entity';
 import { AssessmentStatus } from '@modules/assessments/entities/assessment.entity';
 import {
   ParticipantIdentity,
@@ -68,18 +66,18 @@ export class RuntimeService {
    *   - endsAt has not passed (if set)
    *   - Participant is assigned (AUTHENTICATED/EXTERNAL)
    *   - OR creates participant on the fly (ANONYMOUS)
-   *   - No existing AnswerSheet (one attempt only)
+   *   - No completed AnswerSheet (one attempt only)
    *
    * Creates AnswerSheet with IN_PROGRESS status.
    * For DYNAMIC assessments, selects questions per selectionRules.
    * Schedules auto-submit and warning jobs if timeLimit is set.
    *
    * Returns session with full question list (no correctAnswer exposed).
-   * 
+   *
    * @param dto - StartSessionDto containing assessmentId and optional participantId
    * @throws {NotFoundException} if assessment or participant does not exist
    * @throws {BadRequestException} if assessment is not published or outside timing window
-   * @throws {ConflictException} if participant already started this assessment
+   * @throws {ConflictException} if participant already completed this assessment
    * @throws {InternalServerErrorException} if session creation fails
    */
   async startSession(dto: StartSessionDto) {
@@ -113,7 +111,9 @@ export class RuntimeService {
       }
 
       // 4. Resolve assessment participant
-      let assessmentParticipant: import('../../assessments/entities/assessment-participant.entity').AssessmentParticipant | null = null;
+      let assessmentParticipant:
+        | import('../../assessments/entities/assessment-participant.entity').AssessmentParticipant
+        | null = null;
 
       if (settings.participantIdentity === ParticipantIdentity.ANONYMOUS) {
         // ANONYMOUS — create participant and assignment on the fly
@@ -153,8 +153,18 @@ export class RuntimeService {
           });
         }
 
-        // 5. Enforce one attempt only
+        // 5. Resume unfinished attempts, but enforce one completed attempt.
         if (assessmentParticipant.answerSheet) {
+          if (
+            assessmentParticipant.answerSheet.status ===
+            AnswerSheetStatus.IN_PROGRESS
+          ) {
+            return this.buildStartSessionResponse(
+              assessmentParticipant.answerSheet,
+              settings,
+            );
+          }
+
           throw new ConflictException(
             'You have already started this assessment',
           );
@@ -199,23 +209,7 @@ export class RuntimeService {
         await this.scheduleExpiryJobs(sheet.id, settings.timeLimit);
       }
 
-      // 9. Build response — strip correctAnswer from all questions
-      const questions = this.buildSessionQuestions(
-        sessionQuestions,
-        settings.questionSelection,
-        settings.isShuffle,
-      );
-
-      return {
-        sessionId: sheet.id,
-        assessmentId: dto.assessmentId,
-        startedAt: sheet.startedAt,
-        expiresAt: settings.timeLimit
-          ? new Date(now.getTime() + settings.timeLimit * 60 * 1000)
-          : null,
-        totalQuestions: questions.length,
-        questions,
-      };
+      return this.formatStartSessionResponse(sheet, settings, sessionQuestions);
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -242,7 +236,7 @@ export class RuntimeService {
    *
    * Creates a new AnswerEntry if first answer, updates if already answered.
    * gradingStatus set to PENDING — grading engine processes after submit.
-   * 
+   *
    * @param sessionId - AnswerSheet UUID
    * @param dto - SaveAnswerDto containing questionId and response object
    * @throws {NotFoundException} if session or question does not exist
@@ -329,7 +323,7 @@ export class RuntimeService {
    * Sets status to SUBMITTED and submittedAt to now.
    * Cancels pending expiry jobs.
    * Grading engine processes entries in the next phase.
-   * 
+   *
    * @param sessionId - AnswerSheet UUID
    * @throws {NotFoundException} if session does not exist
    * @throws {BadRequestException} if session is not IN_PROGRESS or not all questions are answered
@@ -453,6 +447,8 @@ export class RuntimeService {
         }
       }
 
+      const entries = await this.answerEntries.findBySheet(sessionId);
+
       // IMMEDIATELY — return full result
       return {
         sessionId,
@@ -466,6 +462,7 @@ export class RuntimeService {
         submittedAt: sheet.submittedAt,
         gradingComplete: sheet.status === AnswerSheetStatus.GRADED,
         requiresReview: sheet.status === AnswerSheetStatus.REQUIRES_REVIEW,
+        entries,
       };
     } catch (error) {
       if (
@@ -480,6 +477,57 @@ export class RuntimeService {
   // ---------------------------------------------------------------------------
   // PRIVATE HELPERS
   // ---------------------------------------------------------------------------
+
+  private async buildStartSessionResponse(
+    sheet: import('../../assessments/entities/answer-sheet.entity').AnswerSheet,
+    settings: import('../../assessments/entities/assessment-settings.entity').AssessmentSetting,
+  ) {
+    let sessionQuestions: (
+      | import('../../assessments/entities/assessment-question.entity').AssessmentQuestion
+      | import('../../questions/entities/question.entity').Question
+    )[];
+
+    if (settings.questionSelection === QuestionSelection.MANUAL) {
+      sessionQuestions = await this.assessmentQuestions.findByAssessment(
+        sheet.assessmentId,
+      );
+    } else {
+      sessionQuestions = await this.questions.findByIdsPreservingOrder(
+        sheet.selectedQuestionIds ?? [],
+      );
+    }
+
+    return this.formatStartSessionResponse(sheet, settings, sessionQuestions);
+  }
+
+  private formatStartSessionResponse(
+    sheet: import('../../assessments/entities/answer-sheet.entity').AnswerSheet,
+    settings: import('../../assessments/entities/assessment-settings.entity').AssessmentSetting,
+    sessionQuestions: (
+      | import('../../assessments/entities/assessment-question.entity').AssessmentQuestion
+      | import('../../questions/entities/question.entity').Question
+    )[],
+  ) {
+    const startedAt = sheet.startedAt ?? new Date();
+    const questions = this.buildSessionQuestions(
+      sessionQuestions,
+      settings.questionSelection,
+      settings.isShuffle,
+    );
+
+    return {
+      sessionId: sheet.id,
+      assessmentId: sheet.assessmentId,
+      startedAt,
+      expiresAt: settings.timeLimit
+        ? new Date(
+            new Date(startedAt).getTime() + settings.timeLimit * 60 * 1000,
+          )
+        : null,
+      totalQuestions: questions.length,
+      questions,
+    };
+  }
 
   /**
    * Selects questions dynamically per selectionRules.

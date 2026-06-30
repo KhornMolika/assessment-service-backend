@@ -154,10 +154,10 @@ describe('GradingEngineService', () => {
 
     await service.gradeSession('session-2');
 
-    // ratio = Math.max(0, (1 - 1) / 2) = 0 -> score 0
+    // ratio = 1 / 2 = 0.5 -> score 5
     expect(answerEntriesMock.update).toHaveBeenCalledWith(
       { id: 'entry-3' },
-      { scoreAwarded: 0, maxScore: 10, gradingStatus: GradingStatus.AUTOMATIC },
+      { scoreAwarded: 5, maxScore: 10, gradingStatus: GradingStatus.AUTOMATIC },
     );
   });
 
@@ -223,10 +223,10 @@ describe('GradingEngineService', () => {
 
     await service.gradeSession('session-4');
 
-    // 1 item correct out of 3 -> ratio = 1/3 * 12 points = 4 points
+    // 1 item correct out of 3 -> all-or-nothing scoring = 0 points
     expect(answerEntriesMock.update).toHaveBeenCalledWith(
       { id: 'entry-5' },
-      { scoreAwarded: 4, maxScore: 12, gradingStatus: GradingStatus.AUTOMATIC },
+      { scoreAwarded: 0, maxScore: 12, gradingStatus: GradingStatus.AUTOMATIC },
     );
   });
 
@@ -307,7 +307,7 @@ describe('GradingEngineService', () => {
 
     await service.gradeSession('session-6');
 
-    // 1 pair correct out of 2 -> 5 points
+    // 1 pair correct out of 2, 1 wrong guess (no penalty). Option A: 1 * 5 - 0 = 5 points
     expect(answerEntriesMock.update).toHaveBeenCalledWith(
       { id: 'entry-7' },
       { scoreAwarded: 5, maxScore: 10, gradingStatus: GradingStatus.AUTOMATIC },

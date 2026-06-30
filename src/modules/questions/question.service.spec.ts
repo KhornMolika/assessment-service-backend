@@ -85,9 +85,8 @@ describe('QuestionsService', () => {
       } as unknown as CreateQuestionDto);
 
       expect(result!.id).toBe('q1');
-      expect(result!.text).toBe('test');
+      expect(result!.questionText).toBe('test');
       expect(result!.correctAnswers).toBe('A');
-      expect(result!.questionText).toBeUndefined();
       expect(questionRepositoryMock.create).toHaveBeenCalled();
     });
   });
@@ -105,11 +104,12 @@ describe('QuestionsService', () => {
       } as any);
 
       expect(result.data).toHaveLength(1);
-      expect(result.data[0]!.text).toBe('test');
+      expect(result.data[0]!.questionText).toBe('test');
       expect(result.meta.total).toBe(1);
       expect(questionRepositoryMock.findPaginated).toHaveBeenCalledWith(
         { page: 1, limit: 10, topicId: 'topic-1' },
         ['questionText'],
+        ['topic'],
       );
     });
   });
@@ -126,7 +126,7 @@ describe('QuestionsService', () => {
         questionText: 'test',
       } as unknown as Question);
       const result = await service.findById('q1');
-      expect(result!.text).toBe('test');
+      expect(result!.questionText).toBe('test');
     });
   });
 
@@ -150,7 +150,7 @@ describe('QuestionsService', () => {
         { id: 'q1' },
         { questionText: 'updated' },
       );
-      expect(result!.text).toBe('updated');
+      expect(result!.questionText).toBe('updated');
     });
   });
 

@@ -5,8 +5,7 @@ export class OrderingStrategy implements GradingStrategy {
    * Participant: { sequence: ["opt_1", "opt_3", "opt_2"] }
    * Answer:      { sequence: ["opt_1", "opt_2", "opt_3"] }
    *
-   * One point per correctly placed item.
-   * Points per item = maxScore / totalItems.
+   * All-or-nothing scoring. The entire sequence must be perfectly ordered.
    */
   grade(
     response: Record<string, unknown>,
@@ -21,19 +20,20 @@ export class OrderingStrategy implements GradingStrategy {
       return { scoreAwarded: 0, maxScore, isCorrect: false };
     }
 
-    const pointsPerItem = maxScore / totalItems;
-    let correctCount = 0;
-
-    correctSeq.forEach((id, index) => {
-      if (participantSeq[index] === id) correctCount++;
-    });
-
-    const scoreAwarded = parseFloat((correctCount * pointsPerItem).toFixed(2));
+    let isCorrect = participantSeq.length === totalItems;
+    if (isCorrect) {
+      for (let i = 0; i < totalItems; i++) {
+        if (participantSeq[i] !== correctSeq[i]) {
+          isCorrect = false;
+          break;
+        }
+      }
+    }
 
     return {
-      scoreAwarded,
+      scoreAwarded: isCorrect ? maxScore : 0,
       maxScore,
-      isCorrect: correctCount === totalItems,
+      isCorrect,
     };
   }
 }

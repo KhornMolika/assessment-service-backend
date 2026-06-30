@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { ClientScopedEntity } from '@common/base/client-scoped.entity';
 import { QuestionBank } from '@modules/question-banks/entities/question-bank.entity';
@@ -10,7 +11,7 @@ export enum TopicVisibility {
 }
 
 @Entity()
-@Index(['clientId', 'name'], { unique: true })
+@Index(['clientId', 'name'], { unique: true, where: '"deletedAt" IS NULL' })
 export class Topic extends ClientScopedEntity {
   @Column({
     type: 'varchar',

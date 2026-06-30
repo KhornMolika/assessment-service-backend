@@ -5,6 +5,7 @@ import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 
 describe('SuperAdminGuard', () => {
   let guard: SuperAdminGuard;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let configService: jest.Mocked<ConfigService>;
 
   beforeEach(async () => {
@@ -24,7 +25,9 @@ describe('SuperAdminGuard', () => {
     configService = module.get(ConfigService);
   });
 
-  const mockExecutionContext = (headers: Record<string, string>): ExecutionContext => {
+  const mockExecutionContext = (
+    headers: Record<string, string>,
+  ): ExecutionContext => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({

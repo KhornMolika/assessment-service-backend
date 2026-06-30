@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import {
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { SessionReportService } from './session-report.service';
 import { ReportRepository } from '../repositories/report.repository';
 import { GradingStatus } from '@modules/assessments/entities/answer-entry.entity';
@@ -114,7 +117,8 @@ describe('SessionReportService', () => {
       expect(result.data.session.id).toBe('s1');
       expect(result.data.questions).toHaveLength(0);
       expect(result.data.session.scorePercent).toBeNull();
-    });    it('should throw InternalServerErrorException on unexpected DB error', async () => {
+    });
+    it('should throw InternalServerErrorException on unexpected DB error', async () => {
       reportRepoMock.getSessionDetail.mockRejectedValue(new Error('DB Error'));
       await expect(service.getSessionReport('a1', 's1')).rejects.toThrow(
         InternalServerErrorException,
@@ -132,13 +136,24 @@ describe('SessionReportService', () => {
               order: 2,
               questionSnapshot: {
                 type: 'SHORT_ANSWER',
-                correctAnswer: { modelAnswerReference: 'xyz', keyPointsExpected: ['A'] }
-              }
+                correctAnswer: {
+                  modelAnswerReference: 'xyz',
+                  keyPointsExpected: ['A'],
+                },
+              },
             },
             aiJobs: [
-              { status: AIGradingJobStatus.COMPLETED, processedAt: new Date('2023-01-01T00:01:00Z'), reasoning: 'old' },
-              { status: AIGradingJobStatus.COMPLETED, processedAt: new Date('2023-01-01T00:02:00Z'), reasoning: '{bad json' }
-            ]
+              {
+                status: AIGradingJobStatus.COMPLETED,
+                processedAt: new Date('2023-01-01T00:01:00Z'),
+                reasoning: 'old',
+              },
+              {
+                status: AIGradingJobStatus.COMPLETED,
+                processedAt: new Date('2023-01-01T00:02:00Z'),
+                reasoning: '{bad json',
+              },
+            ],
           },
           {
             id: 'e3',
@@ -146,63 +161,74 @@ describe('SessionReportService', () => {
               order: 1, // tests sorting
               questionSnapshot: {
                 type: 'MATCHING',
-                options: [{ leftSide: [{id:'l1', text:'L'}], rightSide: [{id:'r1', text:'R'}], pairs: [{leftId:'l1', rightId:'r1'}] }],
-                correctAnswer: { pairs: [{leftId:'l1', rightId:'r1'}] }
-              }
-            }
+                options: [
+                  {
+                    leftSide: [{ id: 'l1', text: 'L' }],
+                    rightSide: [{ id: 'r1', text: 'R' }],
+                    pairs: [{ leftId: 'l1', rightId: 'r1' }],
+                  },
+                ],
+                correctAnswer: { pairs: [{ leftId: 'l1', rightId: 'r1' }] },
+              },
+            },
           },
           {
             id: 'e4',
             assessmentQuestion: {
               questionSnapshot: {
                 type: 'ORDERING',
-                options: { items: [{id:'1', text:'First'}] },
-                correctAnswer: { sequence: ['1'] }
-              }
-            }
+                options: { items: [{ id: '1', text: 'First' }] },
+                correctAnswer: { sequence: ['1'] },
+              },
+            },
           },
           {
             id: 'e5',
             assessmentQuestion: {
               questionSnapshot: {
                 type: 'FILL_IN_THE_BLANK',
-                correctAnswer: { answers: ['blank'] }
-              }
-            }
+                correctAnswer: { answers: ['blank'] },
+              },
+            },
           },
           {
             id: 'e6',
             assessmentQuestion: {
               questionSnapshot: {
                 type: 'MULTIPLE_CHOICE',
-                correctAnswer: { optionIds: ['a'] }
-              }
-            }
+                correctAnswer: { optionIds: ['a'] },
+              },
+            },
           },
           {
             id: 'e7',
             assessmentQuestion: {
               questionSnapshot: {
                 type: 'RATING',
-                options: { max: 5 }
-              }
-            }
-          }
-        ]
+                options: { max: 5 },
+              },
+            },
+          },
+        ],
       });
 
       const result = await service.getSessionReport('a1', 's2');
       expect(result.data.questions).toHaveLength(6);
-      
+
       // Order should be e3 (order 1), e2 (order 2), e4, e5, e6, e7 (null orders go first or last depending on sort)
       // e2 is SHORT_ANSWER with bad json
-      const shortAnswer = result.data.questions.find(q => q.type === 'SHORT_ANSWER');
+      const shortAnswer = result.data.questions.find(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+        (q) => q.type === 'SHORT_ANSWER',
+      );
       expect(shortAnswer?.aiGrading?.reasoning).toBe('{bad json');
-      
-      const matching = result.data.questions.find(q => q.type === 'MATCHING');
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+      const matching = result.data.questions.find((q) => q.type === 'MATCHING');
       expect(matching?.options?.[0]?.pairs).toHaveLength(1);
-      
-      const ordering = result.data.questions.find(q => q.type === 'ORDERING');
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+      const ordering = result.data.questions.find((q) => q.type === 'ORDERING');
       expect(ordering?.options).toHaveLength(1);
     });
   });

@@ -25,7 +25,11 @@ export class AuthController {
   @ApiOperation({
     summary: 'OAuth2 client credentials grant — returns Bearer token',
   })
-  @ApiResponse({ status: 200, description: 'Token generated successfully', type: TokenResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Token generated successfully',
+    type: TokenResponseDto,
+  })
   async token(@Body() dto: TokenRequestDto): Promise<TokenResponseDto> {
     return this.authService.token(dto);
   }

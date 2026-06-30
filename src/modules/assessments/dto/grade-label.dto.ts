@@ -10,7 +10,12 @@ export class GradeLabelDto {
   @IsString()
   name!: string;
 
-  @ApiProperty({ example: 90, description: 'The minimum score percentage to qualify for this grade', minimum: 0, maximum: 100 })
+  @ApiProperty({
+    example: 90,
+    description: 'The minimum score percentage to qualify for this grade',
+    minimum: 0,
+    maximum: 100,
+  })
   @IsInt()
   @Min(0)
   @Max(100)

@@ -11,6 +11,7 @@ import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { TopicRepository } from '../topics/repositories/topic.repository';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { QuestionBankQuestion } from './entities/question-bank-question.entity';
 import { QuestionBankQuestionRepository } from './repositories/question-bank-question.repository';
 
@@ -65,7 +66,6 @@ export class QuestionBanksService {
 
       mappedData.forEach((m) => {
         delete m.questions;
-        delete m.topicId;
         delete m.clientId;
       });
 
@@ -78,6 +78,7 @@ export class QuestionBanksService {
           pageCount: Math.ceil(total / query.limit),
         },
       };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new BadRequestException('Could not fetch question banks');
     }
@@ -134,7 +135,6 @@ export class QuestionBanksService {
       // Cleanup
       mappedData.forEach((m) => {
         delete m.questions;
-        delete m.topicId;
         delete m.clientId;
       });
 
@@ -148,6 +148,7 @@ export class QuestionBanksService {
           topicId,
         },
       };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new BadRequestException('Could not fetch question banks');
     }
@@ -155,7 +156,10 @@ export class QuestionBanksService {
 
   async findById(id: string) {
     try {
-      const bank: any = await this.bankRepository.findById(id, ['questions', 'topic']);
+      const bank: any = await this.bankRepository.findById(id, [
+        'questions',
+        'topic',
+      ]);
       if (!bank) throw new NotFoundException('Question bank not found');
 
       bank.questionCount = bank.questions?.length || 0;
@@ -270,6 +274,7 @@ export class QuestionBanksService {
         questionId,
         addedAt: new Date().toISOString(),
       };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new BadRequestException('Failed to add question to bank');
     }

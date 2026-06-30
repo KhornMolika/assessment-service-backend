@@ -6,7 +6,9 @@ import { TransformInterceptor } from './../src/common/interceptors/transform.int
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import Redis from 'ioredis';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ThrottlerGuard } from '@nestjs/throttler';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { AuthThrottlerGuard } from './../src/modules/auth/guards/auth-throttler.guard';
 
 describe('AuthModule (e2e)', () => {
@@ -196,6 +198,5 @@ describe('AuthModule (e2e)', () => {
       expect(payload).toHaveProperty('scopes');
       expect(Array.isArray(payload.scopes)).toBe(true);
     });
-
-    });
   });
+});

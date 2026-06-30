@@ -15,6 +15,10 @@ export class ReportService {
     return this.sessionReports.getSessionReport(assessmentId, sessionId);
   }
 
+  getSessionReportById(sessionId: string) {
+    return this.sessionReports.getSessionReport(null, sessionId);
+  }
+
   getAssessmentReport(assessmentId: string, page: number, limit: number) {
     return this.assessmentReports.getAssessmentReport(
       assessmentId,

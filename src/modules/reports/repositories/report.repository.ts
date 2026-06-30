@@ -105,9 +105,9 @@ export class ReportRepository {
    */
   async getSessionDetail(
     sessionId: string,
-    assessmentId: string,
+    assessmentId?: string | null,
   ): Promise<AnswerSheet | null> {
-    return this.dataSource
+    const builder = this.dataSource
       .getRepository(AnswerSheet)
       .createQueryBuilder('sheet')
       .leftJoinAndSelect('sheet.entries', 'entries')
@@ -118,10 +118,14 @@ export class ReportRepository {
       .leftJoinAndSelect('sheet.assessment', 'assessment')
       .leftJoinAndSelect('assessment.settings', 'settings')
       .where('sheet.id = :sessionId', { sessionId })
-      .andWhere('sheet.assessmentId = :assessmentId', { assessmentId })
       .andWhere('sheet.clientId = :clientId', { clientId: this.clientId })
-      .andWhere('sheet.deletedAt IS NULL')
-      .getOne();
+      .andWhere('sheet.deletedAt IS NULL');
+
+    if (assessmentId) {
+      builder.andWhere('sheet.assessmentId = :assessmentId', { assessmentId });
+    }
+
+    return builder.getOne();
   }
 
   // ---------------------------------------------------------------------------

@@ -30,8 +30,10 @@ interface QuestionSnapshot {
 }
 
 interface GradeLabel {
-  name: string;
-  min: number;
+  name?: string;
+  grade?: string;
+  min?: number;
+  minPercent?: number;
 }
 
 @Injectable()
@@ -146,9 +148,68 @@ export class GradingEngineService {
         }
 
         try {
-          const response =
-            (entry.response as unknown as Record<string, unknown>) ?? {};
-          const result = strategy.grade(response, correctAnswer, maxScore);
+          let response = entry.response as unknown;
+
+          // Normalize response format to match what strategies expect
+          if (questionType === 'TRUE_FALSE' || questionType === 'True/False') {
+            if (typeof response === 'boolean' || typeof response === 'string') {
+              response = { value: String(response) === 'true' };
+            } else if (
+              typeof response === 'object' &&
+              response !== null &&
+              'choice' in response
+            ) {
+              const choice = response.choice;
+              response = {
+                value:
+                  choice === true ||
+                  (typeof choice === 'string' && choice === 'true'),
+              };
+            }
+          } else if (questionType === 'FILL_IN_THE_BLANK') {
+            if (Array.isArray(response)) {
+              response = { answers: response };
+            } else if (
+              typeof response === 'object' &&
+              response !== null &&
+              !('answers' in response)
+            ) {
+              const answersArr: string[] = [];
+              const len = Object.keys(response).length;
+              for (let i = 0; i < len; i++) {
+                const responseRecord = response as Record<string, unknown>;
+                const value = responseRecord[String(i)];
+                answersArr.push(
+                  typeof value === 'string' ||
+                    typeof value === 'number' ||
+                    typeof value === 'boolean'
+                    ? String(value)
+                    : '',
+                );
+              }
+              response = { answers: answersArr };
+            } else if (typeof response === 'string') {
+              response = { answers: [response] };
+            }
+          } else if (
+            questionType === 'SINGLE_CHOICE' &&
+            typeof response === 'string'
+          ) {
+            response = { optionId: response };
+          } else if (
+            questionType === 'MULTIPLE_CHOICE' &&
+            Array.isArray(response)
+          ) {
+            response = { optionIds: response };
+          } else if (questionType === 'ORDERING' && Array.isArray(response)) {
+            response = { sequence: response };
+          }
+
+          const result = strategy.grade(
+            response as Record<string, unknown>,
+            correctAnswer,
+            maxScore,
+          );
 
           await this.answerEntries.update(
             { id: entry.id },
@@ -235,7 +296,15 @@ export class GradingEngineService {
    * after AI grading completes or a human overrides a score.
    * Reads current scoreAwarded values from entries — does not re-run strategies.
    */
-  async recalculateSession(sessionId: string): Promise<void> {
+  async recalculateSession(sessionId: string): Promise<{
+    sessionId: string;
+    totalScore: number;
+    maxScore: number;
+    scorePercent: number;
+    grade: string;
+    isPassed: boolean;
+    status: AnswerSheetStatus;
+  }> {
     try {
       const sheet = await this.answerSheets.findOneWithEntries(sessionId);
       if (!sheet) throw new NotFoundException('Session not found');
@@ -272,12 +341,15 @@ export class GradingEngineService {
 
       const gradeLabels =
         (settings?.gradeLabels as unknown as GradeLabel[]) ?? [];
-      const grade = this.computeGradeLabel(scorePercent, gradeLabels);
+      const grade =
+        this.computeGradeLabel(scorePercent, gradeLabels) ??
+        (isPassed ? 'Pass' : 'Fail');
+      const roundedTotalScore = parseFloat(totalScoreAwarded.toFixed(2));
 
       await this.answerSheets.update(
         { id: sessionId },
         {
-          totalScore: parseFloat(totalScoreAwarded.toFixed(2)),
+          totalScore: roundedTotalScore,
           grade,
           isPassed,
           status: sheetStatus,
@@ -303,6 +375,16 @@ export class GradingEngineService {
           grade,
         });
       }
+
+      return {
+        sessionId,
+        totalScore: roundedTotalScore,
+        maxScore: totalMaxScore,
+        scorePercent: parseFloat(scorePercent.toFixed(2)),
+        grade,
+        isPassed,
+        status: sheetStatus,
+      };
     } catch (error) {
       this.logger.error(`Failed to recalculate session ${sessionId}`, error);
       throw new InternalServerErrorException(
@@ -327,8 +409,17 @@ export class GradingEngineService {
   ): string | undefined {
     if (!gradeLabels || gradeLabels.length === 0) return undefined;
 
+    const normalized = gradeLabels
+      .map((label) => ({
+        name: label.name ?? label.grade,
+        min: Number(label.min ?? label.minPercent),
+      }))
+      .filter((label): label is { name: string; min: number } => {
+        return Boolean(label.name) && Number.isFinite(label.min);
+      });
+
     // Sort descending by min so highest threshold is checked first
-    const sorted = [...gradeLabels].sort((a, b) => b.min - a.min);
+    const sorted = normalized.sort((a, b) => b.min - a.min);
 
     for (const label of sorted) {
       if (scorePercent >= label.min) {

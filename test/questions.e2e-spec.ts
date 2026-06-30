@@ -25,8 +25,8 @@ async function createIsolatedClientAndToken(app: INestApplication) {
   const timestamp = Date.now();
   const adminClientRes = await request(app.getHttpServer())
     .post('/api/v1/clients')
-      .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
-      .send({
+    .set('x-admin-api-key', 'test-admin-api-key-12345678901234567890')
+    .send({
       name: `Questions E2E Client ${timestamp}`,
       slug: `questions-e2e-${timestamp}`,
       allowedOrigins: ['https://test.com'],
