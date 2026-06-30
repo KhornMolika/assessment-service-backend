@@ -447,6 +447,8 @@ export class RuntimeService {
         }
       }
 
+      const entries = await this.answerEntries.findBySheet(sessionId);
+
       // IMMEDIATELY — return full result
       return {
         sessionId,
@@ -460,6 +462,7 @@ export class RuntimeService {
         submittedAt: sheet.submittedAt,
         gradingComplete: sheet.status === AnswerSheetStatus.GRADED,
         requiresReview: sheet.status === AnswerSheetStatus.REQUIRES_REVIEW,
+        entries,
       };
     } catch (error) {
       if (

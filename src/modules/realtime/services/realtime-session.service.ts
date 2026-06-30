@@ -939,9 +939,11 @@ export class RealtimeSessionService {
     }
 
     if (type === 'FILL_IN_THE_BLANK') {
-      return {
-        answers: this.getRecordValue(correctAnswer, 'answers') ?? correctAnswer,
-      };
+      const answers = this.getRecordValue(correctAnswer, 'answers');
+      if (Array.isArray(answers) && answers.length > 0) {
+        return { template: answers.map((_, i) => `[blank_${i + 1}]`).join(' ') };
+      }
+      return {};
     }
 
     return this.toRecord(correctAnswer);
