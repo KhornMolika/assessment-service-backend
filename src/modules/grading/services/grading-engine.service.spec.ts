@@ -223,10 +223,10 @@ describe('GradingEngineService', () => {
 
     await service.gradeSession('session-4');
 
-    // 1 item correct out of 3 -> ratio = 1/3 * 12 points = 4 points
+    // 1 item correct out of 3 -> all-or-nothing scoring = 0 points
     expect(answerEntriesMock.update).toHaveBeenCalledWith(
       { id: 'entry-5' },
-      { scoreAwarded: 4, maxScore: 12, gradingStatus: GradingStatus.AUTOMATIC },
+      { scoreAwarded: 0, maxScore: 12, gradingStatus: GradingStatus.AUTOMATIC },
     );
   });
 
