@@ -42,7 +42,10 @@ jobs:
           docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
       - name: Create .env file
-        run: echo "${{ secrets.ENV }}" > .env
+        run: |
+          cat << 'EOF' > .env
+          ${{ secrets.ENV }}
+          EOF
 
       - name: Copy .env to Compute Engine
         run: |

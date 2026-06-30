@@ -11,7 +11,10 @@ import { Question } from '@modules/questions/entities/question.entity';
 import { QuestionType } from '@modules/questions/enums/question-type.enum';
 
 @Entity()
-@Index(['assessment', 'question'], { unique: true, where: '"deletedAt" IS NULL' })
+@Index(['assessment', 'question'], {
+  unique: true,
+  where: '"deletedAt" IS NULL',
+})
 @Index(['assessmentId', 'questionType'])
 export class AssessmentQuestion extends ClientScopedEntity {
   @ManyToOne(() => Assessment, (a) => a.questions, { onDelete: 'CASCADE' })

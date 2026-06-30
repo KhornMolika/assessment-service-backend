@@ -198,7 +198,9 @@ export class AIGradingService {
     };
   }
 
-  private extractResponseText(response: Record<string, any> | string | undefined) {
+  private extractResponseText(
+    response: Record<string, any> | string | undefined,
+  ) {
     if (!response) return '';
     if (typeof response === 'string') return response.trim();
     if (typeof response.text === 'string') return response.text.trim();
