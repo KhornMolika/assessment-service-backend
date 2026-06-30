@@ -50,7 +50,13 @@ jobs:
       - name: Clear OS Login SSH Keys to prevent 32 KiB limit
         run: |
           for FINGERPRINT in $(gcloud compute os-login ssh-keys list --format="value(key)"); do
-            gcloud compute os-login ssh-keys remove --key="$FINGERPRINT" --quiet || true
+            for i in {1..5}; do
+              if gcloud compute os-login ssh-keys remove --key="$FINGERPRINT" --quiet; then
+                break
+              fi
+              echo "Retry $i for $FINGERPRINT..."
+              sleep $((RANDOM % 3 + 2))
+            done
           done
 
       - name: Copy .env to Compute Engine
