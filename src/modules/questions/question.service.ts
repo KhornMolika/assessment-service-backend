@@ -48,10 +48,7 @@ export class QuestionsService {
     }
 
     // Keep the topic object as requested, do not flatten it into topicId
-    // and remove topicId if it somehow exists
-    if (mapped.topicId) {
-      delete mapped.topicId;
-    }
+    // but leave topicId intact for the frontend to use
 
     return mapped;
   }

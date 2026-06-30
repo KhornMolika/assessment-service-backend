@@ -66,7 +66,6 @@ export class QuestionBanksService {
 
       mappedData.forEach((m) => {
         delete m.questions;
-        delete m.topicId;
         delete m.clientId;
       });
 
@@ -136,7 +135,6 @@ export class QuestionBanksService {
       // Cleanup
       mappedData.forEach((m) => {
         delete m.questions;
-        delete m.topicId;
         delete m.clientId;
       });
 
