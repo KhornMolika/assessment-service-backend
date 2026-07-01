@@ -37,7 +37,10 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   // socketId → assessmentId (for disconnect handling)
   private readonly socketRooms = new Map<string, string>();
-  private readonly questionTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly questionTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
 
   constructor(private readonly sessionService: RealtimeSessionService) {}
 
@@ -389,18 +392,14 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to end question in room ${sessionCode}`,
-        error,
-      );
+      this.logger.error(`Failed to end question in room ${sessionCode}`, error);
     }
   }
 
   private async endSession(sessionCode: string): Promise<void> {
     try {
       this.clearQuestionTimer(sessionCode);
-      const { leaderboard } =
-        await this.sessionService.endSession(sessionCode);
+      const { leaderboard } = await this.sessionService.endSession(sessionCode);
 
       this.server
         .to(sessionCode)
@@ -411,10 +410,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
       this.logger.log(`Session ended for room ${sessionCode}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to end session for room ${sessionCode}`,
-        error,
-      );
+      this.logger.error(`Failed to end session for room ${sessionCode}`, error);
     }
   }
 
@@ -426,7 +422,9 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     const participants = Array.from(
       new Map(
         members
-          .filter((member) => member.role === 'participant' && member.participantId)
+          .filter(
+            (member) => member.role === 'participant' && member.participantId,
+          )
           .map((member) => [member.participantId, member]),
       ).values(),
     ).map((member) => ({
@@ -456,10 +454,9 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     };
 
     if (session.currentQuestionId) {
-      const questions =
-        await this.sessionService['assessmentQuestions'].findByAssessment(
-          session.assessmentId,
-        );
+      const questions = await this.sessionService[
+        'assessmentQuestions'
+      ].findByAssessment(session.assessmentId);
       const targetQuestion = questions.find(
         (question: any) => question.id === session.currentQuestionId,
       );

@@ -114,7 +114,7 @@ export class RealtimeSessionService {
   async getSessionInfo(sessionCode: string) {
     const session = await this.redis.getSession(sessionCode);
     if (!session || session.status === 'ended') return null;
-    
+
     // Fetch minimal assessment info to show on join screen
     const assessment = await this.assessments.findById(session.assessmentId);
     if (!assessment) return null;
@@ -222,8 +222,9 @@ export class RealtimeSessionService {
       );
     }
 
-    const questions =
-      await this.assessmentQuestions.findByAssessment(session!.assessmentId);
+    const questions = await this.assessmentQuestions.findByAssessment(
+      session.assessmentId,
+    );
 
     let nextIndex: number;
     let targetQuestion: any;
@@ -324,8 +325,7 @@ export class RealtimeSessionService {
       sessionCode,
       assessmentQuestionId,
     );
-    const totalParticipants =
-      await this.redis.getParticipantCount(sessionCode);
+    const totalParticipants = await this.redis.getParticipantCount(sessionCode);
 
     return { stored, totalAnswered, totalParticipants };
   }
@@ -397,8 +397,9 @@ export class RealtimeSessionService {
       );
     }
 
-    const questions =
-      await this.assessmentQuestions.findByAssessment(session!.assessmentId);
+    const questions = await this.assessmentQuestions.findByAssessment(
+      session.assessmentId,
+    );
     const currentAQ = questions.find((q) => q.id === session.currentQuestionId);
     if (!currentAQ) throw new NotFoundException('Current question not found');
 
@@ -488,8 +489,7 @@ export class RealtimeSessionService {
       };
     }
 
-    const totalParticipants =
-      await this.redis.getParticipantCount(sessionCode);
+    const totalParticipants = await this.redis.getParticipantCount(sessionCode);
 
     const result = {
       questionId: session.currentQuestionId,
@@ -594,10 +594,12 @@ export class RealtimeSessionService {
     // FLUSH REDIS TO POSTGRESQL FOR REPORTS
     try {
       const assessment = await this.assessments.findById(session!.assessmentId);
-      const settings =
-        await this.assessmentSettings.findByAssessment(session!.assessmentId);
-      const questions =
-        await this.assessmentQuestions.findByAssessment(session!.assessmentId);
+      const settings = await this.assessmentSettings.findByAssessment(
+        session!.assessmentId,
+      );
+      const questions = await this.assessmentQuestions.findByAssessment(
+        session!.assessmentId,
+      );
 
       const clientId = assessment?.clientId;
       const passMark = settings?.passMark ?? null;
@@ -768,8 +770,14 @@ export class RealtimeSessionService {
 
       case 'TRUE_FALSE':
         return [
-          { id: 'true', text: this.getRecordValue(options, 'trueLabel') ?? 'True' },
-          { id: 'false', text: this.getRecordValue(options, 'falseLabel') ?? 'False' },
+          {
+            id: 'true',
+            text: this.getRecordValue(options, 'trueLabel') ?? 'True',
+          },
+          {
+            id: 'false',
+            text: this.getRecordValue(options, 'falseLabel') ?? 'False',
+          },
         ];
 
       case 'ORDERING':
@@ -1144,7 +1152,9 @@ export class RealtimeSessionService {
             (typeof correctAnswer === 'boolean' ? correctAnswer : undefined),
         };
       case 'ORDERING':
-        return { sequence: correctAnswer.sequence ?? correctAnswer.optionIds ?? [] };
+        return {
+          sequence: correctAnswer.sequence ?? correctAnswer.optionIds ?? [],
+        };
       case 'MATCHING':
         return { pairs: correctAnswer.pairs ?? [] };
       case 'FILL_IN_THE_BLANK':
