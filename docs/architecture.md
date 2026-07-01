@@ -126,6 +126,7 @@ graph TD
 This ERD maps the core database schema in PostgreSQL. It shows how multi-tenant Clients own Topics, which in turn contain Questions, Banks, and Assessments. It traces the lifecycle from assessment configuration (AssessmentSettings) to participant enrollment (AssessmentParticipant), and finally to runtime execution via AnswerSheets and AnswerEntries, which link directly back to snapshotted AssessmentQuestions.
 
 ```mermaid
+%%{init: { 'theme': 'base', 'themeVariables': { 'textColor': '#0ea5e9', 'lineColor': '#38bdf8', 'primaryTextColor': '#0ea5e9' } } }%%
 erDiagram
     CLIENT ||--o{ TOPIC : owns
     TOPIC ||--o{ QUESTION : contains

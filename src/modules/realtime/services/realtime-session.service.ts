@@ -67,6 +67,7 @@ export class RealtimeSessionService {
     assessmentId: string,
     options: boolean | { reset?: boolean; preview?: boolean } = false,
   ): Promise<{
+    sessionCode: string;
     assessmentId: string;
     status: string;
     totalQuestions: number;
@@ -80,26 +81,8 @@ export class RealtimeSessionService {
       throw new BadRequestException('Assessment must be published to start');
     }
 
-    if (reset) {
-      await this.redis.cleanupSession(assessmentId);
-    }
-
-    const existing = await this.redis.getSession(assessmentId);
-    if (existing && existing.status !== 'ended') {
-      // Patch clientId if session was created before this field existed
-      if (!existing.clientId) {
-        await this.redis.updateSession(assessmentId, {
-          clientId: assessment.clientId,
-        });
-      }
-      const questions =
-        await this.assessmentQuestions.findByAssessment(assessmentId);
-      return {
-        assessmentId,
-        status: existing.status,
-        totalQuestions: questions.length,
-      };
-    }
+    // Generate a unique 6-digit session PIN
+    const sessionCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     const questions =
       await this.assessmentQuestions.findByAssessment(assessmentId);
@@ -108,6 +91,7 @@ export class RealtimeSessionService {
     }
 
     await this.redis.createSession({
+      sessionCode,
       assessmentId,
       clientId: assessment.clientId,
       status: 'waiting',
@@ -120,9 +104,26 @@ export class RealtimeSessionService {
     });
 
     return {
+      sessionCode,
       assessmentId,
       status: 'waiting',
       totalQuestions: questions.length,
+    };
+  }
+
+  async getSessionInfo(sessionCode: string) {
+    const session = await this.redis.getSession(sessionCode);
+    if (!session || session.status === 'ended') return null;
+    
+    // Fetch minimal assessment info to show on join screen
+    const assessment = await this.assessments.findById(session.assessmentId);
+    if (!assessment) return null;
+
+    return {
+      sessionCode: session.sessionCode,
+      assessmentId: session.assessmentId,
+      title: assessment.name,
+      status: session.status,
     };
   }
 
@@ -131,7 +132,7 @@ export class RealtimeSessionService {
   // ---------------------------------------------------------------------------
 
   async joinRoom(
-    assessmentId: string,
+    sessionCode: string,
     socketId: string,
     participantId: string | null,
     role: 'host' | 'participant',
@@ -144,14 +145,14 @@ export class RealtimeSessionService {
       status: string;
     }[];
   }> {
-    const session = await this.redis.getSession(assessmentId);
+    const session = await this.redis.getSession(sessionCode);
     if (!session) {
       throw new NotFoundException(
         'Session not found — host must start the session first',
       );
     }
 
-    await this.redis.addMember(assessmentId, {
+    await this.redis.addMember(sessionCode, {
       socketId,
       participantId,
       role,
@@ -159,10 +160,10 @@ export class RealtimeSessionService {
     });
 
     if (role === 'host') {
-      await this.redis.updateSession(assessmentId, { hostSocketId: socketId });
+      await this.redis.updateSession(sessionCode, { hostSocketId: socketId });
     }
 
-    const members = await this.redis.getMembers(assessmentId);
+    const members = await this.redis.getMembers(sessionCode);
     const uniqueParticipants = Array.from(
       new Map(
         members
@@ -190,7 +191,7 @@ export class RealtimeSessionService {
    * Only the session host can start a question.
    * Sets the session status to active and calculates the question end time.
    *
-   * @param assessmentId - The ID of the assessment
+   * @param sessionCode - The ID of the assessment
    * @param socketId - The socket ID of the requester (must be host)
    * @param questionId - Optional ID of a specific question to start
    * @throws {NotFoundException} if session or question not found
@@ -198,7 +199,7 @@ export class RealtimeSessionService {
    * @throws {BadRequestException} if no more questions available
    */
   async startQuestion(
-    assessmentId: string,
+    sessionCode: string,
     socketId: string,
     questionId?: string,
   ): Promise<{
@@ -208,12 +209,12 @@ export class RealtimeSessionService {
     options: any[] | null;
     endTime: string;
   }> {
-    const session = await this.redis.getSession(assessmentId);
+    const session = await this.redis.getSession(sessionCode);
     if (!session) throw new NotFoundException('Session not found');
     if (!session.isPreview && session.hostSocketId !== socketId) {
       throw new ForbiddenException('Only the host can start questions');
     }
-    const participantCount = await this.redis.getParticipantCount(assessmentId);
+    const participantCount = await this.redis.getParticipantCount(sessionCode);
     if (participantCount === 0) {
       throw new BadRequestException(
         'At least one participant must join before the session can start',
@@ -221,7 +222,7 @@ export class RealtimeSessionService {
     }
 
     const questions =
-      await this.assessmentQuestions.findByAssessment(assessmentId);
+      await this.assessmentQuestions.findByAssessment(session!.assessmentId);
 
     let nextIndex: number;
     let targetQuestion: any;
@@ -244,7 +245,7 @@ export class RealtimeSessionService {
     const endTime = new Date(Date.now() + timeLimit * 1000).toISOString();
 
     // Update session state
-    await this.redis.updateSession(assessmentId, {
+    await this.redis.updateSession(sessionCode, {
       status: 'active',
       currentQuestionId: targetQuestion.id,
       currentQuestionIndex: nextIndex,
@@ -278,7 +279,7 @@ export class RealtimeSessionService {
    * Stores a participant's answer to the currently active question.
    * Returns tracking metrics (totalAnswered, totalParticipants).
    *
-   * @param assessmentId - The ID of the assessment session
+   * @param sessionCode - The ID of the assessment session
    * @param participantId - The ID of the participant submitting the answer
    * @param assessmentQuestionId - The ID of the question being answered
    * @param choice - Optional selected option ID (for choice-based questions)
@@ -288,7 +289,7 @@ export class RealtimeSessionService {
    * @throws {BadRequestException} if session is not active or wrong question
    */
   async submitAnswer(
-    assessmentId: string,
+    sessionCode: string,
     participantId: string,
     assessmentQuestionId: string,
     choice?: string,
@@ -299,7 +300,7 @@ export class RealtimeSessionService {
     totalAnswered: number;
     totalParticipants: number;
   }> {
-    const session = await this.redis.getSession(assessmentId);
+    const session = await this.redis.getSession(sessionCode);
     if (!session) throw new NotFoundException('Session not found');
     if (session.status !== 'active') {
       throw new BadRequestException('No active question');
@@ -309,18 +310,18 @@ export class RealtimeSessionService {
     }
 
     const stored = await this.redis.storeAnswer(
-      assessmentId,
+      sessionCode,
       assessmentQuestionId,
       participantId,
       { choice, response, timeTaken },
     );
 
     const totalAnswered = await this.redis.getAnswerCount(
-      assessmentId,
+      sessionCode,
       assessmentQuestionId,
     );
     const totalParticipants =
-      await this.redis.getParticipantCount(assessmentId);
+      await this.redis.getParticipantCount(sessionCode);
 
     return { stored, totalAnswered, totalParticipants };
   }
@@ -329,7 +330,7 @@ export class RealtimeSessionService {
   // END QUESTION — Q_RESULTS
   // ---------------------------------------------------------------------------
 
-  async endQuestion(assessmentId: string): Promise<{
+  async endQuestion(sessionCode: string): Promise<{
     alreadyEnded?: boolean;
     questionId: string;
     questionNumber: number;
@@ -351,7 +352,7 @@ export class RealtimeSessionService {
       }
     >;
   }> {
-    const session = await this.redis.getSession(assessmentId);
+    const session = await this.redis.getSession(sessionCode);
     if (!session || !session.currentQuestionId) {
       throw new BadRequestException('No active question to end');
     }
@@ -369,7 +370,7 @@ export class RealtimeSessionService {
     }
 
     const claimedEnd = await this.redis.claimQuestionEnd(
-      assessmentId,
+      sessionCode,
       session.currentQuestionId,
     );
     if (!claimedEnd) {
@@ -386,7 +387,7 @@ export class RealtimeSessionService {
     }
 
     const questions =
-      await this.assessmentQuestions.findByAssessment(assessmentId);
+      await this.assessmentQuestions.findByAssessment(session!.assessmentId);
     const currentAQ = questions.find((q) => q.id === session.currentQuestionId);
     if (!currentAQ) throw new NotFoundException('Current question not found');
 
@@ -396,7 +397,7 @@ export class RealtimeSessionService {
 
     // Get all answers for this question
     const answers = await this.redis.getAnswers(
-      assessmentId,
+      sessionCode,
       session.currentQuestionId,
     );
 
@@ -459,11 +460,11 @@ export class RealtimeSessionService {
       const pointsEarned = hasScore ? roundRealtimeScore(rawPoints) : 0;
 
       if (pointsEarned > 0) {
-        await this.redis.addScore(assessmentId, participantId, pointsEarned);
+        await this.redis.addScore(sessionCode, participantId, pointsEarned);
       }
 
       const rankAfterQuestion = await this.redis.getParticipantRank(
-        assessmentId,
+        sessionCode,
         participantId,
       );
 
@@ -477,7 +478,7 @@ export class RealtimeSessionService {
     }
 
     const totalParticipants =
-      await this.redis.getParticipantCount(assessmentId);
+      await this.redis.getParticipantCount(sessionCode);
 
     const result = {
       questionId: session.currentQuestionId,
@@ -495,7 +496,7 @@ export class RealtimeSessionService {
       participantResults,
     };
 
-    await this.redis.updateSession(assessmentId, { status: 'revealed' });
+    await this.redis.updateSession(sessionCode, { status: 'revealed' });
 
     return result;
   }
@@ -504,7 +505,7 @@ export class RealtimeSessionService {
   // GET RANK DATA — SHOW_RANK
   // ---------------------------------------------------------------------------
 
-  async getRankData(assessmentId: string): Promise<{
+  async getRankData(sessionCode: string): Promise<{
     top5: {
       rank: number;
       id: string;
@@ -513,8 +514,8 @@ export class RealtimeSessionService {
     }[];
   }> {
     const [topScoresRaw, members] = await Promise.all([
-      this.redis.getTopScores(assessmentId, 5),
-      this.redis.getMembers(assessmentId),
+      this.redis.getTopScores(sessionCode, 5),
+      this.redis.getMembers(sessionCode),
     ]);
     const participantMembers = Array.from(
       new Map(
@@ -535,7 +536,7 @@ export class RealtimeSessionService {
         name:
           member.name ||
           (await this.redis.getName(
-            assessmentId,
+            sessionCode,
             member.participantId as string,
           )),
         score: scoreByParticipant.get(member.participantId as string) ?? 0,
@@ -557,35 +558,35 @@ export class RealtimeSessionService {
   // END SESSION — SHOW_FINAL_RANK
   // ---------------------------------------------------------------------------
 
-  async endSession(assessmentId: string): Promise<{
+  async endSession(sessionCode: string): Promise<{
     leaderboard: { id: string; name: string; score: number; rank: number }[];
   }> {
-    const session = await this.redis.getSession(assessmentId);
-    await this.redis.updateSession(assessmentId, { status: 'ended' });
+    const session = await this.redis.getSession(sessionCode);
+    await this.redis.updateSession(sessionCode, { status: 'ended' });
 
-    const allScores = await this.redis.getAllScores(assessmentId);
+    const allScores = await this.redis.getAllScores(sessionCode);
 
     const leaderboard = await Promise.all(
       allScores.map(async (entry) => ({
         id: entry.participantId,
-        name: await this.redis.getName(assessmentId, entry.participantId),
+        name: await this.redis.getName(sessionCode, entry.participantId),
         score: entry.score,
         rank: entry.rank,
       })),
     );
 
     if (session?.isPreview) {
-      await this.redis.cleanupSession(assessmentId);
+      await this.redis.cleanupSession(sessionCode);
       return { leaderboard };
     }
 
     // FLUSH REDIS TO POSTGRESQL FOR REPORTS
     try {
-      const assessment = await this.assessments.findById(assessmentId);
+      const assessment = await this.assessments.findById(session!.assessmentId);
       const settings =
-        await this.assessmentSettings.findByAssessment(assessmentId);
+        await this.assessmentSettings.findByAssessment(session!.assessmentId);
       const questions =
-        await this.assessmentQuestions.findByAssessment(assessmentId);
+        await this.assessmentQuestions.findByAssessment(session!.assessmentId);
 
       const clientId = assessment?.clientId;
       const passMark = settings?.passMark ?? null;
@@ -600,7 +601,7 @@ export class RealtimeSessionService {
       const answersByQuestion: Record<string, Record<string, any>> = {};
       for (const q of questions) {
         answersByQuestion[q.id] = await this.redis.getAnswers(
-          assessmentId,
+          sessionCode,
           q.id,
         );
       }
@@ -624,7 +625,7 @@ export class RealtimeSessionService {
         // Create the AnswerSheet
         const sheet = await this.answerSheets.save({
           clientId,
-          assessmentId,
+          sessionCode,
           assessmentParticipantId: participantId, // Expects valid UUID from db
           status: AnswerSheetStatus.GRADED,
           totalScore,
@@ -687,24 +688,24 @@ export class RealtimeSessionService {
         }
       }
       this.logger.log(
-        `Successfully flushed Real-time session ${assessmentId} to Postgres`,
+        `Successfully flushed Real-time session ${sessionCode} to Postgres`,
       );
 
       // Dispatch webhook
       await this.webhooks.dispatch(clientId, 'assessment.completed', {
-        assessmentId,
+        sessionCode,
         leaderboard,
       });
     } catch (error) {
       this.logger.error(
-        `Failed to flush Real-time session ${assessmentId} to Postgres`,
+        `Failed to flush Real-time session ${sessionCode} to Postgres`,
         error,
       );
     }
 
     setTimeout(
       () => {
-        this.redis.cleanupSession(assessmentId).catch(() => {});
+        this.redis.cleanupSession(sessionCode).catch(() => {});
       },
       30 * 60 * 1000,
     );
@@ -718,10 +719,10 @@ export class RealtimeSessionService {
 
   async handleDisconnect(
     socketId: string,
-    assessmentId: string,
+    sessionCode: string,
   ): Promise<{ count: number; participants: any[] }> {
-    await this.redis.removeMember(assessmentId, socketId);
-    const members = await this.redis.getMembers(assessmentId);
+    await this.redis.removeMember(sessionCode, socketId);
+    const members = await this.redis.getMembers(sessionCode);
     const participants = members.filter((m) => m.role === 'participant');
 
     return {
