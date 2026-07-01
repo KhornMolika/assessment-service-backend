@@ -196,7 +196,28 @@ export class AssessmentsController {
       // Flatten the payload and omit null/empty snapshot fields to make it cleaner
       const isSnapshotEmpty =
         !q.questionSnapshot || Object.keys(q.questionSnapshot).length === 0;
-      const snapshot = isSnapshotEmpty ? q.question : q.questionSnapshot;
+      const sourceQuestion = (q.question ?? {}) as any;
+      const snapshotBase = (
+        isSnapshotEmpty ? sourceQuestion : q.questionSnapshot
+      ) as any;
+      const snapshot = {
+        ...sourceQuestion,
+        ...snapshotBase,
+        questionText:
+          snapshotBase?.questionText ??
+          sourceQuestion?.questionText ??
+          sourceQuestion?.text,
+        type: snapshotBase?.type ?? sourceQuestion?.type,
+        options:
+          this.hasQuestionOptions(snapshotBase?.options)
+            ? snapshotBase?.options
+            : sourceQuestion?.options,
+        correctAnswer:
+          snapshotBase?.correctAnswer ??
+          snapshotBase?.correctAnswers ??
+          sourceQuestion?.correctAnswer ??
+          sourceQuestion?.correctAnswers,
+      };
 
       return {
         id: q.id, // The assessmentQuestionId
@@ -209,6 +230,13 @@ export class AssessmentsController {
         updatedAt: q.updatedAt,
       };
     });
+  }
+
+  private hasQuestionOptions(options: unknown): boolean {
+    if (typeof options === 'string') return options.trim().length > 0;
+    if (Array.isArray(options)) return options.length > 0;
+    if (!options || typeof options !== 'object') return false;
+    return Object.keys(options).length > 0;
   }
 
   /** POST /assessments/:id/questions — DRAFT only */

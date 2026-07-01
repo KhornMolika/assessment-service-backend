@@ -26,6 +26,8 @@ import { clientStorage } from '../../../common/context/client.storage';
     credentials: true,
   },
   namespace: '/realtime',
+  pingInterval: 3000,
+  pingTimeout: 5000,
 })
 export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
@@ -35,6 +37,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   // socketId → assessmentId (for disconnect handling)
   private readonly socketRooms = new Map<string, string>();
+  private readonly questionTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(private readonly sessionService: RealtimeSessionService) {}
 
@@ -122,52 +125,9 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
         this.logger.log(`${dto.role} ${socket.id} joined room ${sessionCode}`);
 
-        // Reconnect resilience for participants
-        if (dto.role === RoomRole.PARTICIPANT) {
-          const session =
-            await this.sessionService['redis'].getSession(sessionCode);
-          if (
-            session &&
-            session.status === 'active' &&
-            session.currentQuestionId
-          ) {
-            const endTimeStr = session.questionEndTime;
-            const endTime = endTimeStr ? new Date(endTimeStr).getTime() : 0;
-            const now = Date.now();
-
-            if (endTime > now) {
-              const questions =
-                await this.sessionService[
-                  'assessmentQuestions'
-                ].findByAssessment(session.sessionCode);
-              const targetQuestion = questions.find(
-                (q: any) => q.id === session.currentQuestionId,
-              );
-
-              if (targetQuestion) {
-                const snapshot = targetQuestion.questionSnapshot as any;
-                const options = this.sessionService['buildOptions'](snapshot);
-
-                socket.emit(RealtimeEvents.NEW_QUESTION, {
-                  questionNumber: session.currentQuestionIndex + 1,
-                  totalQuestions: session.totalQuestions,
-                  q: {
-                    id: snapshot.id,
-                    assessmentQuestionId: targetQuestion.id,
-                    type: snapshot.type,
-                    questionText: snapshot.questionText,
-                    difficulty: snapshot.difficulty,
-                    points: targetQuestion.points,
-                  },
-                  options,
-                  endTime: new Date(endTime).toISOString(),
-                });
-                this.logger.log(
-                  `Resent active question to reconnecting participant ${socket.id}`,
-                );
-              }
-            }
-          }
+        const roomState = await this.buildRoomStateSnapshot(sessionCode);
+        if (roomState) {
+          socket.emit(RealtimeEvents.ROOM_STATE, roomState);
         }
       });
     } catch (error) {
@@ -176,6 +136,18 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         message: (error as Error).message,
       });
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // LEAVE_ROOM
+  // ---------------------------------------------------------------------------
+
+  @SubscribeMessage(RealtimeEvents.LEAVE_ROOM)
+  async handleLeaveRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data?: { roomId?: string },
+  ) {
+    await this.removeSocketFromRoom(socket, data?.roomId);
   }
 
   // ---------------------------------------------------------------------------
@@ -208,6 +180,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
           this.server
             .to(sessionCode)
             .emit(RealtimeEvents.NEW_QUESTION, questionData);
+          this.scheduleQuestionAutoEnd(sessionCode, questionData.endTime);
 
           this.logger.log(
             `Question ${questionData.questionNumber}/${questionData.totalQuestions} started in room ${sessionCode}`,
@@ -316,6 +289,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         if (result.totalAnswered >= result.totalParticipants) {
+          this.clearQuestionTimer(sessionCode);
           await this.endCurrentQuestion(sessionCode);
         }
       });
@@ -332,7 +306,11 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
   // ---------------------------------------------------------------------------
 
   async handleDisconnect(socket: Socket) {
-    const sessionCode = this.socketRooms.get(socket.id);
+    await this.removeSocketFromRoom(socket);
+  }
+
+  private async removeSocketFromRoom(socket: Socket, fallbackRoomId?: string) {
+    const sessionCode = this.socketRooms.get(socket.id) ?? fallbackRoomId;
     if (!sessionCode) return;
 
     try {
@@ -347,6 +325,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
       });
 
       this.socketRooms.delete(socket.id);
+      await socket.leave(sessionCode);
     } catch {
       // Session may already be ended
     }
@@ -358,6 +337,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   private async endCurrentQuestion(sessionCode: string): Promise<void> {
     try {
+      this.clearQuestionTimer(sessionCode);
       const results = await this.sessionService.endQuestion(sessionCode);
       if (results.alreadyEnded) {
         return;
@@ -418,6 +398,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   private async endSession(sessionCode: string): Promise<void> {
     try {
+      this.clearQuestionTimer(sessionCode);
       const { leaderboard } =
         await this.sessionService.endSession(sessionCode);
 
@@ -435,5 +416,120 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         error,
       );
     }
+  }
+
+  private async buildRoomStateSnapshot(sessionCode: string) {
+    const session = await this.sessionService['redis'].getSession(sessionCode);
+    if (!session) return null;
+
+    const members = await this.sessionService['redis'].getMembers(sessionCode);
+    const participants = Array.from(
+      new Map(
+        members
+          .filter((member) => member.role === 'participant' && member.participantId)
+          .map((member) => [member.participantId, member]),
+      ).values(),
+    ).map((member) => ({
+      id: member.participantId,
+      name: member.name,
+      status: 'CONNECTED',
+    }));
+
+    const baseState: Record<string, any> = {
+      roomId: sessionCode,
+      serverTime: new Date().toISOString(),
+      phase:
+        session.status === 'ended'
+          ? 'results'
+          : session.status === 'revealed'
+            ? 'leaderboard'
+            : session.status === 'active'
+              ? 'active'
+              : 'lobby',
+      participants,
+      questionNumber: Math.max(0, session.currentQuestionIndex + 1),
+      totalQuestions: session.totalQuestions,
+      currentQuestion: null,
+      endTime: session.questionEndTime,
+      questionResults: null,
+      leaderboard: null,
+    };
+
+    if (session.currentQuestionId) {
+      const questions =
+        await this.sessionService['assessmentQuestions'].findByAssessment(
+          session.assessmentId,
+        );
+      const targetQuestion = questions.find(
+        (question: any) => question.id === session.currentQuestionId,
+      );
+
+      if (targetQuestion) {
+        const snapshot =
+          this.sessionService['buildRuntimeQuestionSnapshot'](targetQuestion);
+        const options = this.sessionService['buildOptions'](snapshot);
+        baseState.currentQuestion = {
+          id: snapshot.id,
+          assessmentQuestionId: targetQuestion.id,
+          type: snapshot.type,
+          questionText: snapshot.questionText,
+          difficulty: snapshot.difficulty,
+          points: targetQuestion.points,
+          options,
+          rawOptions: options,
+        };
+        baseState.options = options;
+
+        if (session.status === 'active') {
+          const [totalAnswered, totalParticipants] = await Promise.all([
+            this.sessionService['redis'].getAnswerCount(
+              sessionCode,
+              session.currentQuestionId,
+            ),
+            this.sessionService['redis'].getParticipantCount(sessionCode),
+          ]);
+          baseState.questionResults = {
+            totalAnswered,
+            totalParticipants,
+          };
+        }
+      }
+    }
+
+    if (session.status === 'revealed' || session.status === 'ended') {
+      const rankData = await this.sessionService.getRankData(sessionCode);
+      baseState.leaderboard = rankData.top5;
+    }
+
+    return baseState;
+  }
+
+  private scheduleQuestionAutoEnd(sessionCode: string, endTime: string): void {
+    this.clearQuestionTimer(sessionCode);
+
+    const delay = Math.max(0, new Date(endTime).getTime() - Date.now() + 150);
+    const timer = setTimeout(() => {
+      this.withContext(sessionCode, async () => {
+        const session =
+          await this.sessionService['redis'].getSession(sessionCode);
+        if (session?.status === 'active' && session.currentQuestionId) {
+          await this.endCurrentQuestion(sessionCode);
+        }
+      }).catch((error) => {
+        this.logger.error(
+          `Failed to auto-end question in room ${sessionCode}`,
+          error,
+        );
+      });
+    }, delay);
+
+    this.questionTimers.set(sessionCode, timer);
+  }
+
+  private clearQuestionTimer(sessionCode: string): void {
+    const timer = this.questionTimers.get(sessionCode);
+    if (!timer) return;
+    clearTimeout(timer);
+    this.questionTimers.delete(sessionCode);
   }
 }

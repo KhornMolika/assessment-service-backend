@@ -206,8 +206,9 @@ export class RealtimeSessionService {
     questionNumber: number;
     totalQuestions: number;
     q: Record<string, any>;
-    options: any[] | null;
+    options: any[] | Record<string, any> | null;
     endTime: string;
+    serverTime: string;
   }> {
     const session = await this.redis.getSession(sessionCode);
     if (!session) throw new NotFoundException('Session not found');
@@ -240,7 +241,7 @@ export class RealtimeSessionService {
       targetQuestion = questions[nextIndex];
     }
 
-    const snapshot = targetQuestion.questionSnapshot;
+    const snapshot = this.buildRuntimeQuestionSnapshot(targetQuestion);
     const timeLimit = 30; // default 30s per question — could come from settings
     const endTime = new Date(Date.now() + timeLimit * 1000).toISOString();
 
@@ -265,9 +266,12 @@ export class RealtimeSessionService {
         type: snapshot.type,
         difficulty: snapshot.difficulty,
         points: targetQuestion.points,
+        options,
+        rawOptions: options,
       },
       options,
       endTime,
+      serverTime: new Date().toISOString(),
     };
   }
 
@@ -374,16 +378,23 @@ export class RealtimeSessionService {
       session.currentQuestionId,
     );
     if (!claimedEnd) {
-      return {
-        alreadyEnded: true,
-        questionId: session.currentQuestionId,
-        questionNumber: session.currentQuestionIndex + 1,
-        correctAnswer: null,
-        stats: [],
-        totalAnswered: 0,
-        totalParticipants: 0,
-        participantResults: {},
-      };
+      const latestSession = await this.redis.getSession(sessionCode);
+      if (latestSession?.status !== 'active') {
+        return {
+          alreadyEnded: true,
+          questionId: session.currentQuestionId,
+          questionNumber: session.currentQuestionIndex + 1,
+          correctAnswer: null,
+          stats: [],
+          totalAnswered: 0,
+          totalParticipants: 0,
+          participantResults: {},
+        };
+      }
+
+      this.logger.warn(
+        `Recovering active question ${session.currentQuestionId} in room ${sessionCode} after stale end claim`,
+      );
     }
 
     const questions =
@@ -391,7 +402,7 @@ export class RealtimeSessionService {
     const currentAQ = questions.find((q) => q.id === session.currentQuestionId);
     if (!currentAQ) throw new NotFoundException('Current question not found');
 
-    const snapshot = currentAQ.questionSnapshot as any;
+    const snapshot = this.buildRuntimeQuestionSnapshot(currentAQ);
     const correctAnswer = snapshot.correctAnswer;
     const maxScore = Number(currentAQ.points);
 
@@ -641,9 +652,10 @@ export class RealtimeSessionService {
           if (!pAnswer) continue; // participant didn't answer this question
 
           let responsePayload: Record<string, any> = {};
-          if (q.questionSnapshot?.type === QuestionType.SINGLE_CHOICE) {
+          const snapshot = this.buildRuntimeQuestionSnapshot(q);
+          if (snapshot.type === QuestionType.SINGLE_CHOICE) {
             responsePayload = { optionId: pAnswer.choice };
-          } else if (q.questionSnapshot?.type === QuestionType.TRUE_FALSE) {
+          } else if (snapshot.type === QuestionType.TRUE_FALSE) {
             responsePayload = { value: pAnswer.choice === 'true' };
           } else {
             responsePayload = pAnswer.response ?? {};
@@ -651,9 +663,9 @@ export class RealtimeSessionService {
 
           // We must calculate purely what portion of points they earned for report display
           const scoreMultiplier = this.getScoreMultiplier(
-            q.questionSnapshot?.type ?? '',
+            snapshot.type ?? '',
             pAnswer,
-            q.questionSnapshot?.correctAnswer,
+            snapshot.correctAnswer,
           );
           const questionPoints = Number.isFinite(Number(q.points))
             ? Number(q.points)
@@ -723,7 +735,13 @@ export class RealtimeSessionService {
   ): Promise<{ count: number; participants: any[] }> {
     await this.redis.removeMember(sessionCode, socketId);
     const members = await this.redis.getMembers(sessionCode);
-    const participants = members.filter((m) => m.role === 'participant');
+    const participants = Array.from(
+      new Map(
+        members
+          .filter((m) => m.role === 'participant' && m.participantId)
+          .map((m) => [m.participantId, m]),
+      ).values(),
+    );
 
     return {
       count: participants.length,
@@ -739,47 +757,165 @@ export class RealtimeSessionService {
   // PRIVATE HELPERS
   // ---------------------------------------------------------------------------
 
-  private buildOptions(snapshot: any): any[] | null {
+  private buildOptions(snapshot: any): any[] | Record<string, any> | null {
     const type = snapshot.type;
-    const options = snapshot.options;
-
-    if (!options) return null;
+    const options = this.resolveQuestionOptions(snapshot);
 
     switch (type) {
       case 'SINGLE_CHOICE':
       case 'MULTIPLE_CHOICE':
-        return (Array.isArray(options) ? options : (options.options ?? [])).map(
-          (o: any) => ({ id: o.id, text: o.text }),
-        );
+        return this.normalizeOptionArray(options);
 
       case 'TRUE_FALSE':
         return [
-          { id: 'true', text: options.trueLabel ?? 'True' },
-          { id: 'false', text: options.falseLabel ?? 'False' },
+          { id: 'true', text: this.getRecordValue(options, 'trueLabel') ?? 'True' },
+          { id: 'false', text: this.getRecordValue(options, 'falseLabel') ?? 'False' },
         ];
 
       case 'ORDERING':
-        return (options.items ?? options).map((o: any) => ({
-          id: o.id,
-          text: o.text,
-        }));
+        return this.normalizeOptionArray(
+          this.getRecordValue(options, 'items') ?? options,
+        );
 
       case 'MATCHING':
         return {
-          leftSide: options.leftSide,
-          rightSide: options.rightSide,
+          leftSide: this.normalizeOptionArray(
+            this.getRecordValue(options, 'leftSide') ??
+              this.getRecordValue(options, 'left') ??
+              this.getRecordValue(options, 'prompts') ??
+              [],
+          ),
+          rightSide: this.normalizeOptionArray(
+            this.getRecordValue(options, 'rightSide') ??
+              this.getRecordValue(options, 'right') ??
+              this.getRecordValue(options, 'matches') ??
+              [],
+          ),
         } as any;
 
       case 'FILL_IN_THE_BLANK':
         return {
-          template: options.template,
+          template: this.getRecordValue(options, 'template') ?? '',
         } as any;
 
       case 'RATING':
-        return options;
+        return this.toRecord(options);
 
       default:
         return null;
+    }
+  }
+
+  private buildRuntimeQuestionSnapshot(assessmentQuestion: any): any {
+    const sourceQuestion = assessmentQuestion?.question ?? {};
+    const snapshot = assessmentQuestion?.questionSnapshot ?? {};
+    const snapshotOptions = this.resolveQuestionOptions(snapshot);
+    const sourceOptions = this.resolveQuestionOptions(sourceQuestion);
+    const snapshotCorrectAnswer =
+      snapshot?.correctAnswer ?? snapshot?.correctAnswers;
+    const sourceCorrectAnswer =
+      sourceQuestion?.correctAnswer ?? sourceQuestion?.correctAnswers;
+
+    return {
+      ...sourceQuestion,
+      ...snapshot,
+      questionText:
+        snapshot?.questionText ??
+        sourceQuestion?.questionText ??
+        sourceQuestion?.text,
+      type: snapshot?.type ?? sourceQuestion?.type,
+      difficulty: snapshot?.difficulty ?? sourceQuestion?.difficulty,
+      options: this.hasOptionContent(snapshotOptions)
+        ? snapshotOptions
+        : sourceOptions,
+      correctAnswer:
+        snapshotCorrectAnswer !== undefined && snapshotCorrectAnswer !== null
+          ? snapshotCorrectAnswer
+          : sourceCorrectAnswer,
+    };
+  }
+
+  private resolveQuestionOptions(snapshot: any): unknown {
+    const candidates = [
+      snapshot?.options,
+      snapshot?.questionSnapshot?.options,
+      snapshot?.choices,
+      snapshot?.items,
+      snapshot?.answers,
+      snapshot?.possibleAnswers,
+      snapshot?.questionOptions,
+    ];
+
+    for (const candidate of candidates) {
+      if (this.hasOptionContent(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private hasOptionContent(value: unknown): boolean {
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value !== 'object' || value === null) return false;
+
+    const record = value as Record<string, unknown>;
+    return [
+      'options',
+      'choices',
+      'items',
+      'leftSide',
+      'rightSide',
+      'left',
+      'right',
+      'prompts',
+      'matches',
+      'template',
+      'trueLabel',
+      'falseLabel',
+      'min',
+      'max',
+    ].some((key) => record[key] !== undefined && record[key] !== null);
+  }
+
+  private normalizeOptionArray(value: unknown): any[] {
+    const parsedValue = this.tryParseJson(value);
+    const nested =
+      this.getRecordValue(parsedValue, 'options') ??
+      this.getRecordValue(parsedValue, 'choices') ??
+      this.getRecordValue(parsedValue, 'items') ??
+      this.getRecordValue(parsedValue, 'answers') ??
+      this.getRecordValue(parsedValue, 'possibleAnswers') ??
+      parsedValue;
+
+    if (!Array.isArray(nested)) return [];
+
+    return nested.map((option: any, index: number) => ({
+      id:
+        option?.id ??
+        option?.optionId ??
+        option?.value ??
+        option?.label ??
+        String(index),
+      text:
+        option?.text ??
+        option?.optionText ??
+        option?.answer ??
+        option?.name ??
+        option?.title ??
+        option?.label ??
+        option?.value ??
+        String(option),
+    }));
+  }
+
+  private tryParseJson(value: unknown): unknown {
+    if (typeof value !== 'string') return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
     }
   }
 
@@ -982,17 +1118,37 @@ export class RealtimeSessionService {
   }
 
   private buildCorrectAnswerPayload(type: string, correctAnswer: any): any {
+    if (correctAnswer === undefined || correctAnswer === null) {
+      return null;
+    }
+
     switch (type) {
       case 'SINGLE_CHOICE':
-        return { optionId: correctAnswer.optionId };
+        return {
+          optionId:
+            correctAnswer.optionId ??
+            correctAnswer.id ??
+            (typeof correctAnswer === 'string' ? correctAnswer : undefined),
+        };
       case 'MULTIPLE_CHOICE':
-        return { optionIds: correctAnswer.optionIds };
+        return {
+          optionIds:
+            correctAnswer.optionIds ??
+            correctAnswer.correctOptionIds ??
+            (Array.isArray(correctAnswer) ? correctAnswer : []),
+        };
       case 'TRUE_FALSE':
-        return { value: correctAnswer.value };
+        return {
+          value:
+            correctAnswer.value ??
+            (typeof correctAnswer === 'boolean' ? correctAnswer : undefined),
+        };
       case 'ORDERING':
-        return { sequence: correctAnswer.sequence };
+        return { sequence: correctAnswer.sequence ?? correctAnswer.optionIds ?? [] };
       case 'MATCHING':
-        return { pairs: correctAnswer.pairs };
+        return { pairs: correctAnswer.pairs ?? [] };
+      case 'FILL_IN_THE_BLANK':
+        return { answers: correctAnswer.answers ?? [] };
       default:
         return null;
     }
