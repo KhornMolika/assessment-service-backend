@@ -9,7 +9,9 @@ import {
 } from '@nestjs/common';
 
 import { ReportService } from '../services/report.service';
+import { AllowWidget } from '../../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller()
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}

@@ -17,8 +17,10 @@ import { CreateParticipantDto } from './dto/create-participant.dto';
 import { UpdateParticipantDto } from './dto/update-participant.dto';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { Public } from '../auth/guards/public.decorator';
+import { AllowWidget } from '../auth/guards/allow-widget.decorator';
 
 //@Controller('assessments/:assessmentId/participants')
+@AllowWidget()
 @Controller('participants')
 export class ParticipantsController {
   constructor(private readonly participantsService: ParticipantsService) {}
