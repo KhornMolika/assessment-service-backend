@@ -6,14 +6,14 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
 import { TokenRequestDto } from './dto/token-request.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
+import { EmbedTokenRequestDto } from './dto/embed-token-request.dto';
 import { Public } from './guards/public.decorator';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 
-@ApiTags('Auth')
 @Controller('auth')
 @UseGuards(AuthThrottlerGuard)
 export class AuthController {
@@ -22,15 +22,16 @@ export class AuthController {
   @Public() // exempt from global ClientAuthGuard
   @Post('token')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'OAuth2 client credentials grant — returns Bearer token',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Token generated successfully',
-    type: TokenResponseDto,
-  })
   async token(@Body() dto: TokenRequestDto): Promise<TokenResponseDto> {
     return this.authService.token(dto);
+  }
+
+  @Public() // exempt from global ClientAuthGuard
+  @Post('embed-token')
+  @HttpCode(HttpStatus.OK)
+  async embedToken(
+    @Body() dto: EmbedTokenRequestDto,
+  ): Promise<TokenResponseDto> {
+    return this.authService.embedToken(dto);
   }
 }

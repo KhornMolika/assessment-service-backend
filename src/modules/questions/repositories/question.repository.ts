@@ -16,6 +16,7 @@ export class QuestionRepository extends ClientRepository<Question> {
     bankId: string | undefined,
     count: number,
     difficulty?: Difficulty,
+    excludeQuestionIds: string[] = [],
   ): Promise<Question[]> {
     const builder = this.qb('q').andWhere('q.deletedAt IS NULL');
 
@@ -30,6 +31,12 @@ export class QuestionRepository extends ClientRepository<Question> {
 
     if (difficulty) {
       builder.andWhere('q.difficulty = :difficulty', { difficulty });
+    }
+
+    if (excludeQuestionIds.length > 0) {
+      builder.andWhere('q.id NOT IN (:...excludeQuestionIds)', {
+        excludeQuestionIds,
+      });
     }
 
     return builder.orderBy('RANDOM()').take(count).getMany();

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ClientRepository } from '@common/base/client-repository';
 import { AssessmentQuestion } from '../entities/assessment-question.entity';
 import { ClientContextService } from '@common/context/client-context.service';
@@ -25,6 +25,22 @@ export class AssessmentQuestionRepository extends ClientRepository<AssessmentQue
       .andWhere('aq.deletedAt IS NULL')
       .orderBy('aq.order', 'ASC')
       .getMany();
+  }
+
+  async findByIdsPreservingOrder(ids: string[]): Promise<AssessmentQuestion[]> {
+    if (ids.length === 0) return [];
+
+    const questions = await this.repo.find({
+      where: this.clientWhere({ id: In(ids) }),
+      relations: ['question'],
+    });
+    const order = new Map(ids.map((id, index) => [id, index]));
+
+    return questions.sort(
+      (left, right) =>
+        (order.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+        (order.get(right.id) ?? Number.MAX_SAFE_INTEGER),
+    );
   }
 
   /**

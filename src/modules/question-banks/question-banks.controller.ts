@@ -14,48 +14,24 @@ import { QuestionBanksService } from './question-banks.service';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { AddQuestionsToBankDto } from './dto/add-questions-to-bank.dto';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { AllowWidget } from '../auth/guards/allow-widget.decorator';
 
-@ApiTags('Question Banks')
-@ApiBearerAuth()
+@AllowWidget()
 @Controller('banks')
 export class QuestionBanksController {
   constructor(private readonly bankService: QuestionBanksService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get a paginated list of all banks globally' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of banks retrieved successfully.',
-  })
   async findAll(@Query() query: PaginationQueryDto) {
     return await this.bankService.findAll(query);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a question bank by ID' })
-  @ApiParam({ name: 'id', description: 'Question bank UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Question bank retrieved successfully.',
-  })
   async findById(@Param('id', ParseUUIDPipe) id: string) {
     return await this.bankService.findById(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a question bank by ID' })
-  @ApiParam({ name: 'id', description: 'Question bank UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Question bank updated successfully.',
-  })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateQuestionBankDto,
@@ -64,23 +40,11 @@ export class QuestionBanksController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a question bank by ID' })
-  @ApiParam({ name: 'id', description: 'Question bank UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Question bank deleted successfully.',
-  })
   async delete(@Param('id', ParseUUIDPipe) id: string) {
     return await this.bankService.delete(id);
   }
 
   @Get(':id/questions')
-  @ApiOperation({ summary: 'List all questions in a question bank' })
-  @ApiParam({ name: 'id', description: 'Question bank UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of questions retrieved successfully.',
-  })
   async getQuestions(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: PaginationQueryDto,
@@ -89,12 +53,6 @@ export class QuestionBanksController {
   }
 
   @Post(':id/questions')
-  @ApiOperation({ summary: 'Add questions to a bank' })
-  @ApiParam({ name: 'id', description: 'Question bank UUID' })
-  @ApiResponse({
-    status: 201,
-    description: 'Questions added to bank successfully.',
-  })
   async addQuestion(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: AddQuestionsToBankDto,
@@ -109,13 +67,6 @@ export class QuestionBanksController {
   }
 
   @Delete(':id/questions/:questionId')
-  @ApiOperation({ summary: 'Remove a question from a bank' })
-  @ApiParam({ name: 'id', description: 'Question bank UUID' })
-  @ApiParam({ name: 'questionId', description: 'Question UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Question removed from bank successfully.',
-  })
   async removeQuestion(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('questionId', ParseUUIDPipe) questionId: string,

@@ -10,6 +10,9 @@ export interface JwtPayload {
   sub: string; // clientId (UUID)
   slug: string;
   scopes: string[];
+  origin?: string;
+  participantId?: string;
+  participantName?: string;
 }
 
 @Injectable()
@@ -25,6 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('app.auth.jwtSecret'),
+      passReqToCallback: true,
     });
     this.tokenTtl = config.get<number>('app.auth.accessTokenTtl', 3600);
   }
@@ -32,7 +36,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   // Called after signature + expiry are verified by passport-jwt
   // Re-fetches Client to catch suspension that happened after token was issued
   // Uses CacheService to avoid hitting Postgres on every protected route
-  async validate(payload: JwtPayload): Promise<Client> {
+  async validate(request: any, payload: JwtPayload): Promise<Client> {
+    request.jwtPayload = payload;
     const cacheKey = `client:${payload.sub}`;
 
     const client = await this.cacheService.getOrSet<Client | null>(
