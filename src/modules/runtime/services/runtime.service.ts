@@ -27,6 +27,7 @@ import {
   ShowResults,
 } from '@modules/assessments/entities/assessment-settings.entity';
 import { GradingStatus } from '@modules/assessments/entities/answer-entry.entity';
+import { QuestionType } from '@modules/questions/enums/question-type.enum';
 import {
   SESSION_EXPIRY_QUEUE,
   SessionExpiryJobData,
@@ -34,7 +35,7 @@ import {
 import { StartSessionDto } from '../dto/start-session.dto';
 import { SaveAnswerDto } from '../dto/save-answer.dto';
 import { ClientContextService } from '@common/context/client-context.service';
-import { Difficulty } from '@modules/questions/entities/question.entity';
+import { Difficulty, Question } from '@modules/questions/entities/question.entity';
 
 @Injectable()
 export class RuntimeService {
@@ -188,11 +189,22 @@ export class RuntimeService {
         // DYNAMIC — randomly select per selectionRules
         const rules =
           settings.selectionRules as unknown as import('../../assessments/dto/selection-rules.dto').SelectionRulesDto;
-        sessionQuestions = await this.selectDynamicQuestions(
+        const selectedQuestions = await this.selectDynamicQuestions(
           dto.assessmentId,
           rules,
         );
-        selectedQuestionIds = sessionQuestions.map((q) => q.id);
+        if (selectedQuestions.length === 0) {
+          throw new BadRequestException(
+            'No questions are available for this dynamic assessment source.',
+          );
+        }
+        const dynamicAssessmentQuestions =
+          await this.ensureDynamicAssessmentQuestions(
+            dto.assessmentId,
+            selectedQuestions,
+          );
+        sessionQuestions = dynamicAssessmentQuestions;
+        selectedQuestionIds = dynamicAssessmentQuestions.map((q) => q.id);
       }
 
       // 7. Create AnswerSheet
@@ -270,10 +282,16 @@ export class RuntimeService {
       }
 
       // 3. Validate question belongs to this session
-      const aq = await this.assessmentQuestions.findOne({
-        id: dto.assessmentQuestionId,
-        assessmentId: sheet.assessmentId,
-      });
+      const isDynamicSession = (sheet.selectedQuestionIds?.length ?? 0) > 0;
+      const questionBelongsToSession = isDynamicSession
+        ? sheet.selectedQuestionIds?.includes(dto.assessmentQuestionId)
+        : true;
+      const aq = questionBelongsToSession
+        ? await this.assessmentQuestions.findOne({
+            id: dto.assessmentQuestionId,
+            assessmentId: sheet.assessmentId,
+          })
+        : null;
 
       if (!aq) {
         throw new NotFoundException('Question not found in this assessment');
@@ -340,15 +358,25 @@ export class RuntimeService {
       }
 
       // 2. Validate all questions answered
-      const allQuestions = await this.assessmentQuestions.findByAssessment(
+      const settings = await this.assessmentSettings.findByAssessment(
         sheet.assessmentId,
       );
+      const allQuestionIds =
+        settings?.questionSelection === QuestionSelection.DYNAMIC
+          ? (sheet.selectedQuestionIds ?? [])
+          : (
+              await this.assessmentQuestions.findByAssessment(
+                sheet.assessmentId,
+              )
+            ).map((question) => question.id);
 
       const answeredIds = new Set(
         sheet.entries.map((e) => e.assessmentQuestionId),
       );
 
-      const unanswered = allQuestions.filter((aq) => !answeredIds.has(aq.id));
+      const unanswered = allQuestionIds.filter(
+        (questionId) => !answeredIds.has(questionId),
+      );
 
       if (unanswered.length > 0) {
         throw new BadRequestException(
@@ -492,7 +520,7 @@ export class RuntimeService {
         sheet.assessmentId,
       );
     } else {
-      sessionQuestions = await this.questions.findByIdsPreservingOrder(
+      sessionQuestions = await this.assessmentQuestions.findByIdsPreservingOrder(
         sheet.selectedQuestionIds ?? [],
       );
     }
@@ -550,6 +578,8 @@ export class RuntimeService {
 
     const selected: import('../../questions/entities/question.entity').Question[] =
       [];
+    const targetTotal = Number(rules.total || 0);
+    const selectedIds = new Set<string>();
 
     if (rules.distribution) {
       const difficultyMap: Record<string, number> = {
@@ -560,15 +590,22 @@ export class RuntimeService {
 
       for (const [difficulty, count] of Object.entries(difficultyMap)) {
         if (count === 0) continue;
+        const normalizedDifficulty = this.normalizeDifficulty(difficulty);
+        if (!normalizedDifficulty) continue;
 
         const questions = await this.questions.findRandomForDynamic(
           rules.source,
           assessment.topicId,
           rules.bankId,
           count,
-          difficulty as Difficulty,
+          normalizedDifficulty,
+          Array.from(selectedIds),
         );
-        selected.push(...questions);
+        for (const question of questions) {
+          if (selectedIds.has(question.id)) continue;
+          selected.push(question);
+          selectedIds.add(question.id);
+        }
       }
     } else {
       // No distribution — pick randomly up to total
@@ -576,13 +613,91 @@ export class RuntimeService {
         rules.source,
         assessment.topicId,
         rules.bankId,
-        rules.total,
+        targetTotal,
         undefined,
       );
-      selected.push(...questions);
+      for (const question of questions) {
+        if (selectedIds.has(question.id)) continue;
+        selected.push(question);
+        selectedIds.add(question.id);
+      }
+    }
+
+    const remaining = targetTotal - selected.length;
+    if (remaining > 0) {
+      const fallbackQuestions = await this.questions.findRandomForDynamic(
+        rules.source,
+        assessment.topicId,
+        rules.bankId,
+        remaining,
+        undefined,
+        Array.from(selectedIds),
+      );
+      for (const question of fallbackQuestions) {
+        if (selectedIds.has(question.id)) continue;
+        selected.push(question);
+        selectedIds.add(question.id);
+      }
     }
 
     return selected;
+  }
+
+  private async ensureDynamicAssessmentQuestions(
+    assessmentId: string,
+    questions: Question[],
+  ): Promise<
+    import('../../assessments/entities/assessment-question.entity').AssessmentQuestion[]
+  > {
+    const existingQuestions =
+      await this.assessmentQuestions.findByAssessment(assessmentId);
+    const existingByQuestionId = new Map(
+      existingQuestions.map((question) => [question.questionId, question]),
+    );
+    let nextOrder =
+      existingQuestions.reduce(
+        (max, question) => Math.max(max, Number(question.order ?? 0)),
+        0,
+      ) + 1;
+
+    const assessmentQuestions: import('../../assessments/entities/assessment-question.entity').AssessmentQuestion[] =
+      [];
+
+    for (const question of questions) {
+      const existing = existingByQuestionId.get(question.id);
+      if (existing) {
+        assessmentQuestions.push(existing);
+        continue;
+      }
+
+      const saved = await this.assessmentQuestions.save({
+        assessmentId,
+        questionId: question.id,
+        order: nextOrder++,
+        points: question.points ?? 1,
+        questionType: question.type as unknown as QuestionType,
+        questionSnapshot: {
+          id: question.id,
+          type: question.type,
+          questionText: question.questionText,
+          options: question.options,
+          correctAnswer: question.correctAnswer,
+          difficulty: question.difficulty,
+        },
+      });
+      assessmentQuestions.push(saved);
+      existingByQuestionId.set(question.id, saved);
+    }
+
+    return assessmentQuestions;
+  }
+
+  private normalizeDifficulty(value: string): Difficulty | undefined {
+    const normalized = value.trim().toUpperCase();
+    if (normalized === Difficulty.EASY) return Difficulty.EASY;
+    if (normalized === Difficulty.MEDIUM) return Difficulty.MEDIUM;
+    if (normalized === Difficulty.HARD) return Difficulty.HARD;
+    return undefined;
   }
 
   /**
@@ -606,17 +721,20 @@ export class RuntimeService {
         q as import('../../assessments/entities/assessment-question.entity').AssessmentQuestion;
       const question =
         q as import('../../questions/entities/question.entity').Question;
+      const hasAssessmentQuestionSnapshot = Boolean(aq.questionSnapshot);
 
-      const source = isManual ? aq.questionSnapshot : question;
+      const source =
+        isManual || hasAssessmentQuestionSnapshot ? aq.questionSnapshot : question;
 
       return {
         order: index + 1,
-        assessmentQuestionId: isManual ? aq.id : undefined,
+        assessmentQuestionId:
+          isManual || hasAssessmentQuestionSnapshot ? aq.id : undefined,
         questionId: source.id,
         type: source.type as string,
         questionText: source.questionText,
         difficulty: source.difficulty,
-        points: isManual ? aq.points : question.points,
+        points: isManual || hasAssessmentQuestionSnapshot ? aq.points : question.points,
         options: source.options ?? null,
       };
     });

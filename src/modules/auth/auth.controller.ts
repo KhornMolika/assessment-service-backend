@@ -10,6 +10,7 @@ import {
 import { AuthService } from './auth.service';
 import { TokenRequestDto } from './dto/token-request.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
+import { EmbedTokenRequestDto } from './dto/embed-token-request.dto';
 import { Public } from './guards/public.decorator';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 
@@ -23,5 +24,14 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async token(@Body() dto: TokenRequestDto): Promise<TokenResponseDto> {
     return this.authService.token(dto);
+  }
+
+  @Public() // exempt from global ClientAuthGuard
+  @Post('embed-token')
+  @HttpCode(HttpStatus.OK)
+  async embedToken(
+    @Body() dto: EmbedTokenRequestDto,
+  ): Promise<TokenResponseDto> {
+    return this.authService.embedToken(dto);
   }
 }

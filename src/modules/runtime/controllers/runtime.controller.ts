@@ -12,7 +12,9 @@ import {
 import { RuntimeService } from '../services/runtime.service';
 import { StartSessionDto } from '../dto/start-session.dto';
 import { SaveAnswerDto } from '../dto/save-answer.dto';
+import { AllowWidget } from '../../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller('runtime')
 export class RuntimeController {
   constructor(private readonly runtimeService: RuntimeService) {}

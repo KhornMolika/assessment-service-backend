@@ -12,7 +12,9 @@ import {
 
 import { RealtimeSessionService } from '../services/realtime-session.service';
 import { Public } from '../../auth/guards/public.decorator';
+import { AllowWidget } from '../../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller('runtime/real-time')
 export class RealtimeController {
   constructor(private readonly sessionService: RealtimeSessionService) {}

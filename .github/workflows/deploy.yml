@@ -61,23 +61,41 @@ jobs:
 
       - name: Copy .env to Compute Engine
         run: |
-          gcloud compute scp .env assessment-service:~/assessment-backend.env --zone=asia-southeast1-a
+          for i in {1..5}; do
+            if gcloud compute scp .env assessment-service:~/assessment-backend.env --zone=asia-southeast1-a; then
+              echo "SCP succeeded"
+              exit 0
+            fi
+            echo "SCP failed, retrying in 10 seconds..."
+            sleep 10
+          done
+          echo "SCP failed after 5 retries"
+          exit 1
 
       - name: Deploy to Compute Engine
         run: |
-          gcloud compute ssh assessment-service --zone=asia-southeast1-a --command="
-            sudo docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-            sudo docker stop ${{ env.SERVICE_NAME }} || true
-            sudo docker rm ${{ env.SERVICE_NAME }} || true
-            sudo docker run -d --name ${{ env.SERVICE_NAME }} \
-              --restart unless-stopped \
-              --network traefik-public \
-              --env-file ~/assessment-backend.env \
-              --label 'traefik.enable=true' \
-              --label 'traefik.http.routers.backend.rule=Host(\`assessment-backend.molika.app\`)' \
-              --label 'traefik.http.routers.backend.entrypoints=websecure' \
-              --label 'traefik.http.routers.backend.tls.certresolver=myresolver' \
-              --label 'traefik.http.services.backend.loadbalancer.server.port=3001' \
-              docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-            sudo docker system prune -af
-          "
+          for i in {1..5}; do
+            if gcloud compute ssh assessment-service --zone=asia-southeast1-a --command="
+              sudo docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+              sudo docker stop ${{ env.SERVICE_NAME }} || true
+              sudo docker rm ${{ env.SERVICE_NAME }} || true
+              sudo docker run -d --name ${{ env.SERVICE_NAME }} \
+                --restart unless-stopped \
+                --network traefik-public \
+                --env-file ~/assessment-backend.env \
+                --label 'traefik.enable=true' \
+                --label 'traefik.http.routers.backend.rule=Host(\`assessment-backend.molika.app\`)' \
+                --label 'traefik.http.routers.backend.entrypoints=websecure' \
+                --label 'traefik.http.routers.backend.tls.certresolver=myresolver' \
+                --label 'traefik.http.services.backend.loadbalancer.server.port=3001' \
+                docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+              sudo docker system prune -af
+            "; then
+              echo "SSH succeeded"
+              exit 0
+            fi
+            echo "SSH failed, retrying in 10 seconds..."
+            sleep 10
+          done
+          echo "SSH failed after 5 retries"
+          exit 1
