@@ -10,7 +10,9 @@ import {
 import { QuestionBanksService } from './question-banks.service';
 import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
+import { AllowWidget } from '../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller('topics/:topicId/banks')
 export class TopicBanksController {
   constructor(private readonly bankService: QuestionBanksService) {}
