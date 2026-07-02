@@ -62,6 +62,7 @@ describe('RuntimeService', () => {
     };
     answerEntriesMock = {
       findBySheetAndQuestion: jest.fn(),
+      findBySheet: jest.fn(),
       save: jest.fn(),
       update: jest.fn(),
       findById: jest.fn(),
@@ -375,6 +376,7 @@ describe('RuntimeService', () => {
         isPassed: true,
         totalScore: 10,
       } as unknown as AnswerSheet);
+      answerEntriesMock.findBySheet!.mockResolvedValue([]);
       const result = await service.getResult('s1');
       expect(result.isPassed).toBe(true);
       expect(result.totalScore).toBe(10);

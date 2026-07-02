@@ -45,6 +45,7 @@ export interface ParticipantResult {
   name: string | null;
   email: string | null;
   sessionId: string;
+  status: string;
   score: number | null;
   grade: string | null;
   isPassed: boolean;
@@ -360,6 +361,7 @@ export class ReportRepository {
       name: string | null;
       email: string | null;
       sessionId: string;
+      status: string;
       score: string | null;
       grade: string | null;
       isPassed: boolean;
@@ -379,6 +381,7 @@ export class ReportRepository {
           p.name,
           p.email,
           sheet.id              AS "sessionId",
+          sheet.status          AS status,
           sheet."totalScore"    AS score,
           sheet.grade,
           sheet."isPassed",
@@ -413,6 +416,7 @@ export class ReportRepository {
       name: row.name,
       email: row.email,
       sessionId: row.sessionId,
+      status: row.status,
       score: row.score !== null ? Number(row.score) : null,
       grade: row.grade,
       isPassed: row.isPassed,
