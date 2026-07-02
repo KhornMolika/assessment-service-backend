@@ -30,7 +30,12 @@ export class CreateClientDto {
     description: 'Allowed origin URLs for CORS',
   })
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsUrl(
+    {
+      require_tld: false,
+    },
+    { each: true },
+  )
   @ArrayUnique()
   @IsOptional()
   allowedOrigins?: string[];
