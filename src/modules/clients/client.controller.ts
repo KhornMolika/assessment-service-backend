@@ -9,14 +9,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiSecurity,
-  ApiOperation,
-  ApiTags,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+
 import { plainToInstance } from 'class-transformer';
 import { Throttle } from '@nestjs/throttler';
 import { ClientService } from './client.service';
@@ -31,7 +24,6 @@ import { SuperAdmin } from '../auth/guards/super-admin.decorator';
 import { CurrentClient } from '../../common/decorators/current-client.decorator';
 import { Client } from './client.entity';
 
-@ApiTags('Clients')
 @Throttle({ default: { limit: 20, ttl: 60000 } })
 @Controller('clients')
 export class ClientController {
@@ -41,13 +33,6 @@ export class ClientController {
 
   @Post()
   @SuperAdmin()
-  @ApiSecurity('x-admin-api-key')
-  @ApiOperation({ summary: '[Admin] Provision new client — secret shown once' })
-  @ApiResponse({
-    status: 201,
-    description: 'Client successfully provisioned.',
-    type: ClientCreatedResponseDto,
-  })
   async create(
     @Body() dto: CreateClientDto,
   ): Promise<ClientCreatedResponseDto> {
@@ -61,13 +46,6 @@ export class ClientController {
 
   @Get()
   @SuperAdmin()
-  @ApiSecurity('x-admin-api-key')
-  @ApiOperation({ summary: '[Admin] List all clients' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of all clients.',
-    type: [ClientResponseDto],
-  })
   async findAll(): Promise<ClientResponseDto[]> {
     const clients = await this.clientService.findAll();
     return plainToInstance(ClientResponseDto, clients, {
@@ -78,13 +56,6 @@ export class ClientController {
   // ── Tenant self-service endpoints (/me) ───────────────────────
 
   @Get('me')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get own client profile' })
-  @ApiResponse({
-    status: 200,
-    description: 'Client profile retrieved successfully.',
-    type: ClientResponseDto,
-  })
   // eslint-disable-next-line @typescript-eslint/require-await
   async getMe(@CurrentClient() client: Client): Promise<ClientResponseDto> {
     return plainToInstance(ClientResponseDto, client, {
@@ -93,13 +64,6 @@ export class ClientController {
   }
 
   @Patch('me')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update own client configuration' })
-  @ApiResponse({
-    status: 200,
-    description: 'Client configuration updated successfully.',
-    type: ClientResponseDto,
-  })
   async updateMe(
     @CurrentClient() client: Client,
     @Body() dto: UpdateMeDto,
@@ -114,14 +78,6 @@ export class ClientController {
 
   @Get(':id')
   @SuperAdmin()
-  @ApiSecurity('x-admin-api-key')
-  @ApiOperation({ summary: '[Admin] Get client by ID' })
-  @ApiParam({ name: 'id', description: 'Client UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Client retrieved successfully.',
-    type: ClientResponseDto,
-  })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ClientResponseDto> {
@@ -133,14 +89,6 @@ export class ClientController {
 
   @Patch(':id')
   @SuperAdmin()
-  @ApiSecurity('x-admin-api-key')
-  @ApiOperation({ summary: '[Admin] Update any client' })
-  @ApiParam({ name: 'id', description: 'Client UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Client updated successfully.',
-    type: ClientResponseDto,
-  })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateClientDto,
@@ -154,14 +102,6 @@ export class ClientController {
   @Post(':id/rotate-secret')
   @SuperAdmin()
   @HttpCode(HttpStatus.OK)
-  @ApiSecurity('x-admin-api-key')
-  @ApiOperation({ summary: '[Admin] Rotate client secret' })
-  @ApiParam({ name: 'id', description: 'Client UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Client secret rotated successfully.',
-    type: ClientCreatedResponseDto,
-  })
   async rotateSecret(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ClientCreatedResponseDto> {
@@ -175,14 +115,6 @@ export class ClientController {
 
   @Patch(':id/suspend')
   @SuperAdmin()
-  @ApiSecurity('x-admin-api-key')
-  @ApiOperation({ summary: '[Admin] Suspend a client' })
-  @ApiParam({ name: 'id', description: 'Client UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Client suspended successfully.',
-    type: ClientResponseDto,
-  })
   async suspend(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ClientResponseDto> {
@@ -194,14 +126,6 @@ export class ClientController {
 
   @Patch(':id/activate')
   @SuperAdmin()
-  @ApiSecurity('x-admin-api-key')
-  @ApiOperation({ summary: '[Admin] Activate a client' })
-  @ApiParam({ name: 'id', description: 'Client UUID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Client activated successfully.',
-    type: ClientResponseDto,
-  })
   async activate(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ClientResponseDto> {

@@ -125,6 +125,7 @@ export class AssessmentReportService {
           name: p.name,
           email: p.email,
           sessionId: p.sessionId,
+          status: p.status,
           score: p.score,
           grade: p.grade,
           isPassed: p.isPassed,

@@ -1,31 +1,24 @@
 import {
   Controller,
   Post,
+  Get,
   Param,
   ParseUUIDPipe,
   Query,
   HttpCode,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { RealtimeSessionService } from '../services/realtime-session.service';
 
-@ApiTags('Realtime')
+import { RealtimeSessionService } from '../services/realtime-session.service';
+import { Public } from '../../auth/guards/public.decorator';
+import { AllowWidget } from '../../auth/guards/allow-widget.decorator';
+
+@AllowWidget()
 @Controller('runtime/real-time')
 export class RealtimeController {
   constructor(private readonly sessionService: RealtimeSessionService) {}
 
-  @ApiOperation({ summary: 'Starts a real-time assessment session' })
-  @ApiParam({
-    name: 'assessmentId',
-    type: 'string',
-    format: 'uuid',
-    description: 'The ID of the assessment',
-  })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Session started successfully',
-  })
   @Post(':assessmentId/start')
   @HttpCode(HttpStatus.CREATED)
   startSession(
@@ -37,5 +30,15 @@ export class RealtimeController {
       reset: reset === 'true',
       preview: preview === 'true',
     });
+  }
+
+  @Public()
+  @Get('sessions/:sessionCode')
+  async getSessionByCode(@Param('sessionCode') sessionCode: string) {
+    const session = await this.sessionService.getSessionInfo(sessionCode);
+    if (!session) {
+      throw new NotFoundException('Invalid session code or session has ended.');
+    }
+    return session;
   }
 }

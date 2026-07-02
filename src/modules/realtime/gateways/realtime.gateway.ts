@@ -26,6 +26,8 @@ import { clientStorage } from '../../../common/context/client.storage';
     credentials: true,
   },
   namespace: '/realtime',
+  pingInterval: 3000,
+  pingTimeout: 5000,
 })
 export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
   @WebSocketServer()
@@ -35,6 +37,10 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
 
   // socketId → assessmentId (for disconnect handling)
   private readonly socketRooms = new Map<string, string>();
+  private readonly questionTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
 
   constructor(private readonly sessionService: RealtimeSessionService) {}
 
@@ -43,18 +49,18 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
   }
 
   private async withContext<T>(
-    assessmentId: string,
+    sessionCode: string,
     fn: () => Promise<T>,
   ): Promise<T> {
-    const session = await this.sessionService['redis'].getSession(assessmentId);
+    const session = await this.sessionService['redis'].getSession(sessionCode);
     this.logger.log(
-      `withContext: assessmentId=${assessmentId}, session=${!!session}, clientId=${session?.clientId || 'NONE'}`,
+      `withContext: sessionCode=${sessionCode}, session=${!!session}, clientId=${session?.clientId || 'NONE'}`,
     );
     if (session && session.clientId) {
       return clientStorage.run({ clientId: session.clientId }, fn);
     }
     this.logger.warn(
-      `withContext: No clientId found for assessmentId=${assessmentId}, running without context`,
+      `withContext: No clientId found for sessionCode=${sessionCode}, running without context`,
     );
     return fn();
   }
@@ -101,73 +107,30 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     @MessageBody() dto: JoinRoomDto,
   ) {
     try {
-      const assessmentId = dto.roomId;
+      const sessionCode = dto.roomId;
 
-      await this.withContext(assessmentId, async () => {
-        await socket.join(assessmentId);
-        this.socketRooms.set(socket.id, assessmentId);
+      await this.withContext(sessionCode, async () => {
+        await socket.join(sessionCode);
+        this.socketRooms.set(socket.id, sessionCode);
 
         const result = await this.sessionService.joinRoom(
-          assessmentId,
+          sessionCode,
           socket.id,
           dto.participantId ?? null,
           dto.role,
           dto.name ?? null,
         );
 
-        this.server.to(assessmentId).emit(RealtimeEvents.ROOM_UPDATE, {
+        this.server.to(sessionCode).emit(RealtimeEvents.ROOM_UPDATE, {
           count: result.count,
           participants: result.participants,
         });
 
-        this.logger.log(`${dto.role} ${socket.id} joined room ${assessmentId}`);
+        this.logger.log(`${dto.role} ${socket.id} joined room ${sessionCode}`);
 
-        // Reconnect resilience for participants
-        if (dto.role === RoomRole.PARTICIPANT) {
-          const session =
-            await this.sessionService['redis'].getSession(assessmentId);
-          if (
-            session &&
-            session.status === 'active' &&
-            session.currentQuestionId
-          ) {
-            const endTimeStr = session.questionEndTime;
-            const endTime = endTimeStr ? new Date(endTimeStr).getTime() : 0;
-            const now = Date.now();
-
-            if (endTime > now) {
-              const questions =
-                await this.sessionService[
-                  'assessmentQuestions'
-                ].findByAssessment(assessmentId);
-              const targetQuestion = questions.find(
-                (q: any) => q.id === session.currentQuestionId,
-              );
-
-              if (targetQuestion) {
-                const snapshot = targetQuestion.questionSnapshot as any;
-                const options = this.sessionService['buildOptions'](snapshot);
-
-                socket.emit(RealtimeEvents.NEW_QUESTION, {
-                  questionNumber: session.currentQuestionIndex + 1,
-                  totalQuestions: session.totalQuestions,
-                  q: {
-                    id: snapshot.id,
-                    assessmentQuestionId: targetQuestion.id,
-                    type: snapshot.type,
-                    questionText: snapshot.questionText,
-                    difficulty: snapshot.difficulty,
-                    points: targetQuestion.points,
-                  },
-                  options,
-                  endTime: new Date(endTime).toISOString(),
-                });
-                this.logger.log(
-                  `Resent active question to reconnecting participant ${socket.id}`,
-                );
-              }
-            }
-          }
+        const roomState = await this.buildRoomStateSnapshot(sessionCode);
+        if (roomState) {
+          socket.emit(RealtimeEvents.ROOM_STATE, roomState);
         }
       });
     } catch (error) {
@@ -176,6 +139,18 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         message: (error as Error).message,
       });
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // LEAVE_ROOM
+  // ---------------------------------------------------------------------------
+
+  @SubscribeMessage(RealtimeEvents.LEAVE_ROOM)
+  async handleLeaveRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data?: { roomId?: string },
+  ) {
+    await this.removeSocketFromRoom(socket, data?.roomId);
   }
 
   // ---------------------------------------------------------------------------
@@ -188,33 +163,34 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     @MessageBody() dto: StartQuestionDto,
   ) {
     try {
-      const assessmentId = dto.roomId || this.socketRooms.get(socket.id);
-      if (!assessmentId) throw new Error('Not in a room');
+      const sessionCode = dto.roomId || this.socketRooms.get(socket.id);
+      if (!sessionCode) throw new Error('Not in a room');
 
-      await this.withContext(assessmentId, async () => {
+      await this.withContext(sessionCode, async () => {
         const session =
-          await this.sessionService['redis'].getSession(assessmentId);
+          await this.sessionService['redis'].getSession(sessionCode);
         if (session?.status === 'active' && session.currentQuestionId) {
-          await this.endCurrentQuestion(assessmentId);
+          await this.endCurrentQuestion(sessionCode);
         }
 
         try {
           const questionData = await this.sessionService.startQuestion(
-            assessmentId,
+            sessionCode,
             socket.id,
             dto.questionId,
           );
 
           this.server
-            .to(assessmentId)
+            .to(sessionCode)
             .emit(RealtimeEvents.NEW_QUESTION, questionData);
+          this.scheduleQuestionAutoEnd(sessionCode, questionData.endTime);
 
           this.logger.log(
-            `Question ${questionData.questionNumber}/${questionData.totalQuestions} started in room ${assessmentId}`,
+            `Question ${questionData.questionNumber}/${questionData.totalQuestions} started in room ${sessionCode}`,
           );
         } catch (err: any) {
           if (err.message === 'No more questions') {
-            await this.endSession(assessmentId);
+            await this.endSession(sessionCode);
           } else {
             throw err;
           }
@@ -238,18 +214,18 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     @MessageBody() data?: { roomId?: string },
   ) {
     try {
-      const assessmentId = this.socketRooms.get(socket.id) ?? data?.roomId;
-      if (!assessmentId) throw new Error('Not in a room');
+      const sessionCode = this.socketRooms.get(socket.id) ?? data?.roomId;
+      if (!sessionCode) throw new Error('Not in a room');
 
-      await this.withContext(assessmentId, async () => {
+      await this.withContext(sessionCode, async () => {
         const session =
-          await this.sessionService['redis'].getSession(assessmentId);
+          await this.sessionService['redis'].getSession(sessionCode);
         if (!session?.isPreview && session?.hostSocketId !== socket.id) {
           throw new Error('Only the host can reveal answers');
         }
 
         if (session?.status === 'active' && session.currentQuestionId) {
-          await this.endCurrentQuestion(assessmentId);
+          await this.endCurrentQuestion(sessionCode);
         }
       });
     } catch (error) {
@@ -270,12 +246,12 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
     @MessageBody() dto: SubmitAnswerDto,
   ) {
     try {
-      const assessmentId = dto.roomId || this.socketRooms.get(socket.id);
-      if (!assessmentId) throw new Error('Not in a room');
+      const sessionCode = dto.roomId || this.socketRooms.get(socket.id);
+      if (!sessionCode) throw new Error('Not in a room');
 
-      await this.withContext(assessmentId, async () => {
+      await this.withContext(sessionCode, async () => {
         const members =
-          await this.sessionService['redis'].getMembers(assessmentId);
+          await this.sessionService['redis'].getMembers(sessionCode);
         const member = members.find((m) => m.socketId === socket.id);
         if (!member?.participantId) {
           socket.emit(RealtimeEvents.ERROR, {
@@ -286,12 +262,12 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         const session =
-          await this.sessionService['redis'].getSession(assessmentId);
+          await this.sessionService['redis'].getSession(sessionCode);
         if (!session || !session.currentQuestionId)
           throw new Error('No active question');
 
         const result = await this.sessionService.submitAnswer(
-          assessmentId,
+          sessionCode,
           member.participantId,
           session.currentQuestionId,
           dto.choice,
@@ -304,7 +280,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         const hostSession =
-          await this.sessionService['redis'].getSession(assessmentId);
+          await this.sessionService['redis'].getSession(sessionCode);
         if (hostSession?.hostSocketId) {
           this.server
             .to(hostSession.hostSocketId)
@@ -316,7 +292,8 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         if (result.totalAnswered >= result.totalParticipants) {
-          await this.endCurrentQuestion(assessmentId);
+          this.clearQuestionTimer(sessionCode);
+          await this.endCurrentQuestion(sessionCode);
         }
       });
     } catch (error) {
@@ -332,21 +309,26 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
   // ---------------------------------------------------------------------------
 
   async handleDisconnect(socket: Socket) {
-    const assessmentId = this.socketRooms.get(socket.id);
-    if (!assessmentId) return;
+    await this.removeSocketFromRoom(socket);
+  }
+
+  private async removeSocketFromRoom(socket: Socket, fallbackRoomId?: string) {
+    const sessionCode = this.socketRooms.get(socket.id) ?? fallbackRoomId;
+    if (!sessionCode) return;
 
     try {
       const result = await this.sessionService.handleDisconnect(
         socket.id,
-        assessmentId,
+        sessionCode,
       );
 
-      this.server.to(assessmentId).emit(RealtimeEvents.ROOM_UPDATE, {
+      this.server.to(sessionCode).emit(RealtimeEvents.ROOM_UPDATE, {
         count: result.count,
         participants: result.participants,
       });
 
       this.socketRooms.delete(socket.id);
+      await socket.leave(sessionCode);
     } catch {
       // Session may already be ended
     }
@@ -356,9 +338,10 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
   // PRIVATE HELPERS
   // ---------------------------------------------------------------------------
 
-  private async endCurrentQuestion(assessmentId: string): Promise<void> {
+  private async endCurrentQuestion(sessionCode: string): Promise<void> {
     try {
-      const results = await this.sessionService.endQuestion(assessmentId);
+      this.clearQuestionTimer(sessionCode);
+      const results = await this.sessionService.endQuestion(sessionCode);
       if (results.alreadyEnded) {
         return;
       }
@@ -374,19 +357,19 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
       }
 
-      this.server.to(assessmentId).emit(RealtimeEvents.Q_RESULTS, {
+      this.server.to(sessionCode).emit(RealtimeEvents.Q_RESULTS, {
         correct: correctStr,
         stats: results.stats,
       });
 
-      const rankData = await this.sessionService.getRankData(assessmentId);
+      const rankData = await this.sessionService.getRankData(sessionCode);
       const members =
-        await this.sessionService['redis'].getMembers(assessmentId);
+        await this.sessionService['redis'].getMembers(sessionCode);
 
       for (const member of members) {
         if (member.role === 'participant' && member.participantId) {
           const myRank = await this.sessionService['redis'].getParticipantRank(
-            assessmentId,
+            sessionCode,
             member.participantId,
           );
 
@@ -409,31 +392,141 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
       }
     } catch (error) {
-      this.logger.error(
-        `Failed to end question in room ${assessmentId}`,
-        error,
-      );
+      this.logger.error(`Failed to end question in room ${sessionCode}`, error);
     }
   }
 
-  private async endSession(assessmentId: string): Promise<void> {
+  private async endSession(sessionCode: string): Promise<void> {
     try {
-      const { leaderboard } =
-        await this.sessionService.endSession(assessmentId);
+      this.clearQuestionTimer(sessionCode);
+      const { leaderboard } = await this.sessionService.endSession(sessionCode);
 
       this.server
-        .to(assessmentId)
+        .to(sessionCode)
         .emit(RealtimeEvents.SHOW_FINAL_RANK, leaderboard);
       this.server
-        .to(assessmentId)
-        .emit(RealtimeEvents.SESSION_ENDED, { assessmentId });
+        .to(sessionCode)
+        .emit(RealtimeEvents.SESSION_ENDED, { sessionCode });
 
-      this.logger.log(`Session ended for assessment ${assessmentId}`);
+      this.logger.log(`Session ended for room ${sessionCode}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to end session for assessment ${assessmentId}`,
-        error,
-      );
+      this.logger.error(`Failed to end session for room ${sessionCode}`, error);
     }
+  }
+
+  private async buildRoomStateSnapshot(sessionCode: string) {
+    const session = await this.sessionService['redis'].getSession(sessionCode);
+    if (!session) return null;
+
+    const members = await this.sessionService['redis'].getMembers(sessionCode);
+    const participants = Array.from(
+      new Map(
+        members
+          .filter(
+            (member) => member.role === 'participant' && member.participantId,
+          )
+          .map((member) => [member.participantId, member]),
+      ).values(),
+    ).map((member) => ({
+      id: member.participantId,
+      name: member.name,
+      status: 'CONNECTED',
+    }));
+
+    const baseState: Record<string, any> = {
+      roomId: sessionCode,
+      serverTime: new Date().toISOString(),
+      phase:
+        session.status === 'ended'
+          ? 'results'
+          : session.status === 'revealed'
+            ? 'leaderboard'
+            : session.status === 'active'
+              ? 'active'
+              : 'lobby',
+      participants,
+      questionNumber: Math.max(0, session.currentQuestionIndex + 1),
+      totalQuestions: session.totalQuestions,
+      currentQuestion: null,
+      endTime: session.questionEndTime,
+      questionResults: null,
+      leaderboard: null,
+    };
+
+    if (session.currentQuestionId) {
+      const questions = await this.sessionService[
+        'assessmentQuestions'
+      ].findByAssessment(session.assessmentId);
+      const targetQuestion = questions.find(
+        (question: any) => question.id === session.currentQuestionId,
+      );
+
+      if (targetQuestion) {
+        const snapshot =
+          this.sessionService['buildRuntimeQuestionSnapshot'](targetQuestion);
+        const options = this.sessionService['buildOptions'](snapshot);
+        baseState.currentQuestion = {
+          id: snapshot.id,
+          assessmentQuestionId: targetQuestion.id,
+          type: snapshot.type,
+          questionText: snapshot.questionText,
+          difficulty: snapshot.difficulty,
+          points: targetQuestion.points,
+          options,
+          rawOptions: options,
+        };
+        baseState.options = options;
+
+        if (session.status === 'active') {
+          const [totalAnswered, totalParticipants] = await Promise.all([
+            this.sessionService['redis'].getAnswerCount(
+              sessionCode,
+              session.currentQuestionId,
+            ),
+            this.sessionService['redis'].getParticipantCount(sessionCode),
+          ]);
+          baseState.questionResults = {
+            totalAnswered,
+            totalParticipants,
+          };
+        }
+      }
+    }
+
+    if (session.status === 'revealed' || session.status === 'ended') {
+      const rankData = await this.sessionService.getRankData(sessionCode);
+      baseState.leaderboard = rankData.top5;
+    }
+
+    return baseState;
+  }
+
+  private scheduleQuestionAutoEnd(sessionCode: string, endTime: string): void {
+    this.clearQuestionTimer(sessionCode);
+
+    const delay = Math.max(0, new Date(endTime).getTime() - Date.now() + 150);
+    const timer = setTimeout(() => {
+      this.withContext(sessionCode, async () => {
+        const session =
+          await this.sessionService['redis'].getSession(sessionCode);
+        if (session?.status === 'active' && session.currentQuestionId) {
+          await this.endCurrentQuestion(sessionCode);
+        }
+      }).catch((error) => {
+        this.logger.error(
+          `Failed to auto-end question in room ${sessionCode}`,
+          error,
+        );
+      });
+    }, delay);
+
+    this.questionTimers.set(sessionCode, timer);
+  }
+
+  private clearQuestionTimer(sessionCode: string): void {
+    const timer = this.questionTimers.get(sessionCode);
+    if (!timer) return;
+    clearTimeout(timer);
+    this.questionTimers.delete(sessionCode);
   }
 }

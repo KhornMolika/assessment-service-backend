@@ -3,6 +3,7 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 
 export interface SessionState {
+  sessionCode: string;
   assessmentId: string;
   clientId: string;
   status: 'waiting' | 'active' | 'revealed' | 'ended';
@@ -33,12 +34,12 @@ export class RealtimeRedisService {
   // SESSION STATE
   // ---------------------------------------------------------------------------
 
-  private sessionKey(assessmentId: string) {
-    return `realtime:session:${assessmentId}`;
+  private sessionKey(sessionCode: string) {
+    return `realtime:session:${sessionCode}`;
   }
 
-  private endedQuestionKey(assessmentId: string, questionId: string) {
-    return `realtime:ended-question:${assessmentId}:${questionId}`;
+  private endedQuestionKey(sessionCode: string, questionId: string) {
+    return `realtime:ended-question:${sessionCode}:${questionId}`;
   }
 
   /**
@@ -46,8 +47,9 @@ export class RealtimeRedisService {
    * Called when host starts the session via REST.
    */
   async createSession(state: SessionState): Promise<void> {
-    const key = this.sessionKey(state.assessmentId);
+    const key = this.sessionKey(state.sessionCode);
     await this.redis.hset(key, {
+      sessionCode: state.sessionCode,
       assessmentId: state.assessmentId,
       clientId: state.clientId,
       status: state.status,
@@ -66,12 +68,13 @@ export class RealtimeRedisService {
    * Returns current session state.
    * Returns null if session does not exist.
    */
-  async getSession(assessmentId: string): Promise<SessionState | null> {
-    const key = this.sessionKey(assessmentId);
+  async getSession(sessionCode: string): Promise<SessionState | null> {
+    const key = this.sessionKey(sessionCode);
     const data = await this.redis.hgetall(key);
     if (!data || !data.assessmentId) return null;
 
     return {
+      sessionCode: data.sessionCode || sessionCode,
       assessmentId: data.assessmentId,
       clientId: data.clientId,
       status: data.status as SessionState['status'],
@@ -89,10 +92,10 @@ export class RealtimeRedisService {
    * Updates specific fields of the session state.
    */
   async updateSession(
-    assessmentId: string,
+    sessionCode: string,
     fields: Partial<SessionState>,
   ): Promise<void> {
-    const key = this.sessionKey(assessmentId);
+    const key = this.sessionKey(sessionCode);
     const update: Record<string, string> = {};
     for (const [k, v] of Object.entries(fields)) {
       if (v !== undefined) update[k] = String(v);
@@ -101,11 +104,11 @@ export class RealtimeRedisService {
   }
 
   async claimQuestionEnd(
-    assessmentId: string,
+    sessionCode: string,
     questionId: string,
   ): Promise<boolean> {
     const claimed = await this.redis.set(
-      this.endedQuestionKey(assessmentId, questionId),
+      this.endedQuestionKey(sessionCode, questionId),
       '1',
       'EX',
       this.TTL,
@@ -118,34 +121,34 @@ export class RealtimeRedisService {
    * Deletes the session from Redis.
    * Called when session ends.
    */
-  async deleteSession(assessmentId: string): Promise<void> {
-    await this.redis.del(this.sessionKey(assessmentId));
+  async deleteSession(sessionCode: string): Promise<void> {
+    await this.redis.del(this.sessionKey(sessionCode));
   }
 
   // ---------------------------------------------------------------------------
   // ROOM MEMBERS
   // ---------------------------------------------------------------------------
 
-  private roomKey(assessmentId: string) {
-    return `realtime:room:${assessmentId}`;
+  private roomKey(sessionCode: string) {
+    return `realtime:room:${sessionCode}`;
   }
 
-  private namesKey(assessmentId: string) {
-    return `realtime:names:${assessmentId}`;
+  private namesKey(sessionCode: string) {
+    return `realtime:names:${sessionCode}`;
   }
 
   /**
    * Adds a member to the room.
    * socketId → JSON of member info.
    */
-  async addMember(assessmentId: string, member: RoomMember): Promise<void> {
-    const key = this.roomKey(assessmentId);
+  async addMember(sessionCode: string, member: RoomMember): Promise<void> {
+    const key = this.roomKey(sessionCode);
     await this.redis.hset(key, member.socketId, JSON.stringify(member));
     await this.redis.expire(key, this.TTL);
 
     if (member.participantId && member.name) {
       await this.redis.hset(
-        this.namesKey(assessmentId),
+        this.namesKey(sessionCode),
         member.participantId,
         member.name,
       );
@@ -156,23 +159,23 @@ export class RealtimeRedisService {
    * Removes a member from the room by socketId.
    * Called on disconnect.
    */
-  async removeMember(assessmentId: string, socketId: string): Promise<void> {
-    await this.redis.hdel(this.roomKey(assessmentId), socketId);
+  async removeMember(sessionCode: string, socketId: string): Promise<void> {
+    await this.redis.hdel(this.roomKey(sessionCode), socketId);
   }
 
   /**
    * Returns all members in the room.
    */
-  async getMembers(assessmentId: string): Promise<RoomMember[]> {
-    const data = await this.redis.hgetall(this.roomKey(assessmentId));
+  async getMembers(sessionCode: string): Promise<RoomMember[]> {
+    const data = await this.redis.hgetall(this.roomKey(sessionCode));
     return Object.values(data).map((v) => JSON.parse(v));
   }
 
   /**
    * Returns participant count (excludes host).
    */
-  async getParticipantCount(assessmentId: string): Promise<number> {
-    const members = await this.getMembers(assessmentId);
+  async getParticipantCount(sessionCode: string): Promise<number> {
+    const members = await this.getMembers(sessionCode);
     const uniqueParticipants = new Set(
       members
         .filter((m) => m.role === 'participant' && m.participantId)
@@ -184,9 +187,9 @@ export class RealtimeRedisService {
   /**
    * Returns participant name by participantId.
    */
-  async getName(assessmentId: string, participantId: string): Promise<string> {
+  async getName(sessionCode: string, participantId: string): Promise<string> {
     const name = await this.redis.hget(
-      this.namesKey(assessmentId),
+      this.namesKey(sessionCode),
       participantId,
     );
     return name ?? 'Anonymous';
@@ -196,8 +199,8 @@ export class RealtimeRedisService {
   // ANSWERS
   // ---------------------------------------------------------------------------
 
-  private answersKey(assessmentId: string, questionId: string) {
-    return `realtime:answers:${assessmentId}:${questionId}`;
+  private answersKey(sessionCode: string, questionId: string) {
+    return `realtime:answers:${sessionCode}:${questionId}`;
   }
 
   /**
@@ -206,7 +209,7 @@ export class RealtimeRedisService {
    * Returns false if already answered, true if stored.
    */
   async storeAnswer(
-    assessmentId: string,
+    sessionCode: string,
     questionId: string,
     participantId: string,
     answer: {
@@ -215,7 +218,7 @@ export class RealtimeRedisService {
       timeTaken?: number;
     },
   ): Promise<boolean> {
-    const key = this.answersKey(assessmentId, questionId);
+    const key = this.answersKey(sessionCode, questionId);
     const exists = await this.redis.hexists(key, participantId);
     if (exists) return false; // already answered — ignore
 
@@ -229,11 +232,11 @@ export class RealtimeRedisService {
    * Used to compute stats for Q_RESULTS.
    */
   async getAnswers(
-    assessmentId: string,
+    sessionCode: string,
     questionId: string,
   ): Promise<Record<string, any>> {
     const data = await this.redis.hgetall(
-      this.answersKey(assessmentId, questionId),
+      this.answersKey(sessionCode, questionId),
     );
     const result: Record<string, any> = {};
     for (const [participantId, v] of Object.entries(data)) {
@@ -246,18 +249,18 @@ export class RealtimeRedisService {
    * Returns count of participants who answered a question.
    */
   async getAnswerCount(
-    assessmentId: string,
+    sessionCode: string,
     questionId: string,
   ): Promise<number> {
-    return this.redis.hlen(this.answersKey(assessmentId, questionId));
+    return this.redis.hlen(this.answersKey(sessionCode, questionId));
   }
 
   // ---------------------------------------------------------------------------
   // SCORES (SORTED SET — LEADERBOARD)
   // ---------------------------------------------------------------------------
 
-  private scoresKey(assessmentId: string) {
-    return `realtime:scores:${assessmentId}`;
+  private scoresKey(sessionCode: string) {
+    return `realtime:scores:${sessionCode}`;
   }
 
   /**
@@ -265,12 +268,12 @@ export class RealtimeRedisService {
    * Uses ZINCRBY — atomic increment.
    */
   async addScore(
-    assessmentId: string,
+    sessionCode: string,
     participantId: string,
     points: number,
   ): Promise<void> {
     await this.redis.zincrby(
-      this.scoresKey(assessmentId),
+      this.scoresKey(sessionCode),
       points,
       participantId,
     );
@@ -281,11 +284,11 @@ export class RealtimeRedisService {
    * Used for SHOW_RANK and SHOW_FINAL_RANK.
    */
   async getTopScores(
-    assessmentId: string,
+    sessionCode: string,
     count: number = 5,
   ): Promise<{ participantId: string; score: number; rank: number }[]> {
     const data = await this.redis.zrevrange(
-      this.scoresKey(assessmentId),
+      this.scoresKey(sessionCode),
       0,
       count - 1,
       'WITHSCORES',
@@ -307,12 +310,12 @@ export class RealtimeRedisService {
    * Returns a specific participant's rank and score.
    */
   async getParticipantRank(
-    assessmentId: string,
+    sessionCode: string,
     participantId: string,
   ): Promise<{ rank: number; score: number }> {
     const [rank, score] = await Promise.all([
-      this.redis.zrevrank(this.scoresKey(assessmentId), participantId),
-      this.redis.zscore(this.scoresKey(assessmentId), participantId),
+      this.redis.zrevrank(this.scoresKey(sessionCode), participantId),
+      this.redis.zscore(this.scoresKey(sessionCode), participantId),
     ]);
 
     return {
@@ -325,17 +328,17 @@ export class RealtimeRedisService {
    * Returns all scores for final leaderboard.
    */
   async getAllScores(
-    assessmentId: string,
+    sessionCode: string,
   ): Promise<{ participantId: string; score: number; rank: number }[]> {
-    const total = await this.redis.zcard(this.scoresKey(assessmentId));
-    return this.getTopScores(assessmentId, total);
+    const total = await this.redis.zcard(this.scoresKey(sessionCode));
+    return this.getTopScores(sessionCode, total);
   }
 
   /**
    * Cleans up all Redis keys for a session.
    */
-  async cleanupSession(assessmentId: string): Promise<void> {
-    const keys = await this.redis.keys(`realtime:*:${assessmentId}*`);
+  async cleanupSession(sessionCode: string): Promise<void> {
+    const keys = await this.redis.keys(`realtime:*:${sessionCode}*`);
     if (keys.length > 0) {
       await this.redis.del(...keys);
     }
