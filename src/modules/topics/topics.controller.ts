@@ -14,7 +14,9 @@ import { TopicsService } from './topics.service';
 import { CreateTopicDto } from './dto/create-topic.dto';
 import { UpdateTopicDto } from './dto/update-topic.dto';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
+import { AllowWidget } from '../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller('topics')
 export class TopicsController {
   constructor(private readonly topicService: TopicsService) {}

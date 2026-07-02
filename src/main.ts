@@ -53,8 +53,7 @@ async function bootstrap() {
       : ['http://localhost:3001', 'https://app.apidog.com'];
 
   app.enableCors({
-    origin:
-      allowedOrigins.length > 0 ? allowedOrigins : ['http://localhost:3000'],
+    origin: (origin, callback) => callback(null, true),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-api-key'],
     credentials: true,

@@ -12,7 +12,9 @@ import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { QuestionsService } from './question.service';
 import { QuestionSchemaValidationPipe } from '@common/pipes/question-schema-validation.pipe';
+import { AllowWidget } from '../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller('questions')
 export class QuestionsController {
   constructor(private readonly questionsService: QuestionsService) {}

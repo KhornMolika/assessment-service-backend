@@ -32,7 +32,9 @@ import { AnswerEntryRepository } from '@modules/runtime/repositories/answer-entr
 import { GradingStatus } from './entities/answer-entry.entity';
 
 import { Public } from '../auth/guards/public.decorator';
+import { AllowWidget } from '../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller()
 export class AssessmentsController {
   constructor(

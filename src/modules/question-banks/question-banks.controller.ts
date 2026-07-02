@@ -14,7 +14,9 @@ import { QuestionBanksService } from './question-banks.service';
 import { PaginationQueryDto } from '@common/dto/pagination-query.dto';
 import { UpdateQuestionBankDto } from './dto/update-question-bank.dto';
 import { AddQuestionsToBankDto } from './dto/add-questions-to-bank.dto';
+import { AllowWidget } from '../auth/guards/allow-widget.decorator';
 
+@AllowWidget()
 @Controller('banks')
 export class QuestionBanksController {
   constructor(private readonly bankService: QuestionBanksService) {}
