@@ -17,7 +17,12 @@ export class CreateClientDto {
   slug!: string;
 
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsUrl(
+    {
+      require_tld: false,
+    },
+    { each: true },
+  )
   @ArrayUnique()
   @IsOptional()
   allowedOrigins?: string[];
